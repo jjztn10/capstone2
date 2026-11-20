@@ -1,0 +1,238 @@
+<div class="admin-section">
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h1 class="h3 mb-1 text-gray-800">User Management</h1>
+      <p class="text-muted mb-0"><span id="usersCount">0</span> users</p>
+    </div>
+
+    <button id="btnAddUser" type="button" class="btn btn-primary shadow-sm">
+      <i class="fas fa-user-plus mr-2"></i>Add User
+    </button>
+  </div>
+
+  <div class="card shadow mb-4">
+    <div
+      class="card-header py-3 d-flex flex-wrap align-items-center justify-content-between"
+    >
+      <h6 class="m-0 font-weight-bold text-primary">All Users</h6>
+      <input
+        id="usersSearch"
+        type="search"
+        class="form-control form-control-sm w-auto mt-2 mt-sm-0"
+        style="min-width: 240px"
+        placeholder="Search name or email..."
+      />
+    </div>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Streak</th>
+              <th>Total Points</th>
+              <th>Weekly Points</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                Loading...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD USER MODAL (moved to <body> by the script so it works from any section) -->
+  <div
+    class="modal fade"
+    id="addUserModal"
+    tabindex="-1"
+    role="dialog"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <form id="addUserForm" autocomplete="off">
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-user-plus mr-2"></i>Add User
+            </h5>
+            <button
+              type="button"
+              class="close text-white"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="addName">Full Name</label>
+              <input
+                id="addName"
+                name="name"
+                type="text"
+                class="form-control"
+                placeholder="Juan Dela Cruz"
+              />
+            </div>
+            <div class="form-group">
+              <label for="addEmail"
+                >Email Address <span class="text-danger">*</span></label
+              >
+              <input
+                id="addEmail"
+                name="email"
+                type="email"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="addPassword"
+                >Password <span class="text-danger">*</span></label
+              >
+              <input
+                id="addPassword"
+                name="password"
+                type="password"
+                class="form-control"
+                minlength="8"
+                autocomplete="new-password"
+                required
+              />
+              <small class="form-text text-muted">At least 8 characters.</small>
+            </div>
+            <div class="form-group mb-0">
+              <label for="addConfirm"
+                >Confirm Password <span class="text-danger">*</span></label
+              >
+              <input
+                id="addConfirm"
+                type="password"
+                class="form-control"
+                minlength="8"
+                autocomplete="new-password"
+                required
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save mr-1"></i>Save User
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT USER MODAL -->
+  <div
+    class="modal fade"
+    id="editUserModal"
+    tabindex="-1"
+    role="dialog"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <form id="editUserForm" autocomplete="off">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-user-edit mr-2"></i>Edit User
+            </h5>
+            <button
+              type="button"
+              class="close text-white"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editUid" name="uid" />
+            <div class="form-group">
+              <label for="editName">Full Name</label>
+              <input
+                id="editName"
+                name="name"
+                type="text"
+                class="form-control"
+              />
+            </div>
+            <div class="form-group">
+              <label for="editEmail"
+                >Email Address <span class="text-danger">*</span></label
+              >
+              <input
+                id="editEmail"
+                name="email"
+                type="email"
+                class="form-control"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="editPassword">New Password</label>
+              <input
+                id="editPassword"
+                name="password"
+                type="password"
+                class="form-control"
+                minlength="8"
+                autocomplete="new-password"
+              />
+              <small class="form-text text-muted"
+                >Leave blank to keep the current password.</small
+              >
+            </div>
+            <div class="form-group mb-0">
+              <label for="editConfirm">Confirm New Password</label>
+              <input
+                id="editConfirm"
+                type="password"
+                class="form-control"
+                minlength="8"
+                autocomplete="new-password"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save mr-1"></i>Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

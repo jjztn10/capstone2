@@ -4,7 +4,7 @@ const connectMongo = require("connect-mongo");
 require("dotenv").config();
 
 const MongoStore = connectMongo.default || connectMongo;
-
+console.log("MONGODB_URL =", process.env.MONGODB_URL);
 const options = {
   store: MongoStore.create({ mongoUrl: process.env.MONGODB_URL }),
   name: process.env.SESSION_COLLECTION,
@@ -16,6 +16,7 @@ const options = {
     sameSite: "lax",
     secure: false,
   },
+  
 };
 
 const initSession = (app) => {

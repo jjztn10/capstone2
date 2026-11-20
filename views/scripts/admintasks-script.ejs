@@ -1,1 +1,459 @@
-<script src="/js/admin/tasks.js"></script>
+<script>
+  (() => {
+    "use strict";
+
+    const API = "/admindashboard/api/tasks";
+    const GREEN = "#2d5a3d";
+    const PAGE_SIZE = 10;
+    const $ = (id) => document.getElementById(id);
+
+    let tasks = [];
+    let meta = { statuses: [], users: [] };
+    let page = 1;
+    let ready = false; // true once meta + tasks loaded successfully
+    let saving = false;
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+
+    const fmtDeadline = (v) => {
+      if (!v) return "-";
+      const d = new Date(v);
+      return isNaN(d) ? esc(v) : d.toLocaleString();
+    };
+
+    function notify(icon, title, html) {
+      if (window.Swal) {
+        return Swal.fire({
+          icon,
+          title,
+          html: html || "",
+          confirmButtonColor: GREEN,
+          timer: icon === "success" ? 2500 : undefined,
+          timerProgressBar: icon === "success",
+        });
+      }
+      alert(title + (html ? "\n\n" + html.replace(/<[^>]+>/g, " ") : ""));
+      return Promise.resolve();
+    }
+
+    async function confirmBox(html) {
+      if (window.Swal) {
+        const r = await Swal.fire({
+          icon: "warning",
+          title: "Are you sure?",
+          html,
+          showCancelButton: true,
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          confirmButtonColor: "#dc3545",
+          cancelButtonColor: "#6c757d",
+          reverseButtons: true,
+          focusCancel: true,
+        });
+        return r.isConfirmed;
+      }
+      return confirm("Are you sure?\n\n" + html.replace(/<[^>]+>/g, " "));
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function modalAction(id, action) {
+      const el = $(id);
+      if (!el) return console.warn("Modal not found: #" + id);
+      if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+        return window.jQuery(el).modal(action);
+      }
+      if (window.bootstrap) {
+        const m = bootstrap.Modal.getOrCreateInstance(el);
+        return action === "show" ? m.show() : m.hide();
+      }
+    }
+
+    // modal must sit directly under <body> so it can open while the
+    // section is hidden
+    function moveModalToBody() {
+      const el = $("taskModal");
+      if (el && el.parentElement !== document.body)
+        document.body.appendChild(el);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", moveModalToBody);
+    } else {
+      moveModalToBody();
+    }
+
+    /* ---------- badges ---------- */
+    const priorityBadge = (p) =>
+      '<span class="badge badge-' +
+      (p === "High" ? "danger" : p === "Medium" ? "warning" : "success") +
+      '">' +
+      esc(p) +
+      "</span>";
+
+    const isDone = (s) => /complete|done/i.test(s || "");
+
+    const statusBadge = (s) => {
+      const cls = isDone(s)
+        ? "success"
+        : /progress|ongoing|doing/i.test(s || "")
+          ? "primary"
+          : "secondary";
+      return '<span class="badge badge-' + cls + '">' + esc(s) + "</span>";
+    };
+
+    /* ---------- dropdowns from /meta ---------- */
+    function fillSelects() {
+      const filter = $("statusFilter");
+      const keep = filter.value;
+      filter.innerHTML =
+        '<option value="">All Status</option>' +
+        meta.statuses
+          .map((s) => '<option value="' + esc(s) + '">' + esc(s) + "</option>")
+          .join("");
+      filter.value = meta.statuses.includes(keep) ? keep : "";
+
+      $("taskStatus").innerHTML = meta.statuses
+        .map((s) => '<option value="' + esc(s) + '">' + esc(s) + "</option>")
+        .join("");
+
+      const userSel = $("taskUser");
+      const keepUser = userSel.value;
+      userSel.innerHTML =
+        '<option value="">' +
+        (meta.users.length ? "Select user..." : "No users available") +
+        "</option>" +
+        meta.users
+          .map(
+            (u) =>
+              '<option value="' +
+              esc(u.uid) +
+              '">' +
+              esc(u.name ? u.name + " (" + u.email + ")" : u.email) +
+              "</option>",
+          )
+          .join("");
+      userSel.value = keepUser;
+    }
+
+    /* ---------- table + filters + pagination ---------- */
+    function filtered() {
+      const term = ($("searchTask")?.value || "").trim().toLowerCase();
+      const status = $("statusFilter")?.value || "";
+      const priority = $("priorityFilter")?.value || "";
+
+      return tasks.filter((t) => {
+        if (status && t.status !== status) return false;
+        if (priority && t.priority !== priority) return false;
+        if (!term) return true;
+        return [
+          t.title,
+          t.description,
+          t.subject,
+          t.user_name,
+          t.user_email,
+        ].some((v) =>
+          String(v || "")
+            .toLowerCase()
+            .includes(term),
+        );
+      });
+    }
+
+    function render() {
+      const rows = filtered();
+      const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+      if (page > pages) page = pages;
+      const start = (page - 1) * PAGE_SIZE;
+      const slice = rows.slice(start, start + PAGE_SIZE);
+
+      $("tasksTableBody").innerHTML = slice.length
+        ? slice
+            .map((t, i) => {
+              const overdue =
+                t.deadline &&
+                !isDone(t.status) &&
+                new Date(t.deadline) < new Date();
+              return `
+        <tr>
+          <td>${start + i + 1}</td>
+          <td>
+            <strong>${esc(t.title)}</strong>
+            ${t.subject ? ' <span class="badge badge-light border">' + esc(t.subject) + "</span>" : ""}
+            ${t.description ? '<br><small class="text-muted">' + esc(t.description) + "</small>" : ""}
+          </td>
+          <td>
+            <div class="font-weight-bold">${esc(t.user_name || "Unknown")}</div>
+            <small class="text-muted">${esc(t.user_email || "")}</small>
+          </td>
+          <td>${priorityBadge(t.priority)}</td>
+          <td>${statusBadge(t.status)}</td>
+          <td class="${overdue ? "text-danger font-weight-bold" : ""}">${fmtDeadline(t.deadline)}</td>
+          <td class="text-center text-nowrap">
+            <button type="button" class="btn btn-sm btn-info btn-edit-task" data-id="${esc(t.id)}" title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-danger btn-delete-task" data-id="${esc(t.id)}" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>`;
+            })
+            .join("")
+        : `<tr><td colspan="7" class="text-center py-5 text-muted">
+             <i class="fas fa-tasks fa-3x mb-3 d-block"></i>No tasks found.
+           </td></tr>`;
+
+      $("taskCount").innerHTML =
+        "Showing <strong>" +
+        rows.length +
+        "</strong>" +
+        (rows.length !== tasks.length ? " of " + tasks.length : "") +
+        " task(s)";
+
+      const pag = $("taskPagination");
+      if (pages <= 1) {
+        pag.innerHTML = "";
+        return;
+      }
+      let html =
+        '<li class="page-item ' +
+        (page === 1 ? "disabled" : "") +
+        '"><a class="page-link" href="#" data-page="' +
+        (page - 1) +
+        '">&laquo;</a></li>';
+      for (let p = 1; p <= pages; p++) {
+        html +=
+          '<li class="page-item ' +
+          (p === page ? "active" : "") +
+          '"><a class="page-link" href="#" data-page="' +
+          p +
+          '">' +
+          p +
+          "</a></li>";
+      }
+      html +=
+        '<li class="page-item ' +
+        (page === pages ? "disabled" : "") +
+        '"><a class="page-link" href="#" data-page="' +
+        (page + 1) +
+        '">&raquo;</a></li>';
+      pag.innerHTML = html;
+    }
+
+    async function load() {
+      const [m, rows] = await Promise.all([request("/meta"), request("")]);
+
+      // catches a leftover old api.get("/tasks") in admindashboard.js
+      if (rows.length && !("priority" in rows[0] && "uid" in rows[0])) {
+        throw new Error(
+          "The tasks API is returning the old format. Delete the old api.get('/tasks') block in routes/admindashboard.js and restart the server.",
+        );
+      }
+
+      meta = m;
+      tasks = rows;
+      ready = true;
+      fillSelects();
+      render();
+    }
+
+    const changed = () =>
+      document.dispatchEvent(new CustomEvent("tasks:changed"));
+
+    /* ---------- modal ---------- */
+    async function openTaskModal(task) {
+      // make sure dropdown data exists even if the section was never loaded
+      if (!ready) {
+        try {
+          await load();
+        } catch (err) {
+          return notify("error", "Could not load task data", esc(err.message));
+        }
+      }
+      if (!meta.users.length) {
+        return notify(
+          "warning",
+          "No users yet",
+          "Create a user first, then assign the task to them.",
+        );
+      }
+
+      $("taskModalTitle").textContent = task ? "Edit Task" : "Add Task";
+      $("taskId").value = task ? task.id : "";
+      $("taskTitle").value = task ? task.title || "" : "";
+      $("taskDescription").value = task ? task.description || "" : "";
+      $("taskSubject").value = task ? task.subject || "" : "";
+      $("taskUser").value = task ? task.uid : "";
+      $("taskPriority").value = task ? task.priority : "Medium";
+      if (task) $("taskStatus").value = task.status;
+      else if (meta.statuses.length) $("taskStatus").value = meta.statuses[0];
+      $("taskDeadline").value = task && task.deadline ? task.deadline : "";
+      $("taskHours").value = task ? task.estimated_hours : 1;
+      $("taskWeight").value = task ? task.weight : 1;
+      modalAction("taskModal", "show");
+    }
+
+    /* ---------- filters ---------- */
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "searchTask") {
+        page = 1;
+        render();
+      }
+    });
+    document.addEventListener("change", (e) => {
+      if (
+        e.target &&
+        (e.target.id === "statusFilter" || e.target.id === "priorityFilter")
+      ) {
+        page = 1;
+        render();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.target && e.target.id === "searchTask" && e.key === "Enter") {
+        e.preventDefault();
+        page = 1;
+        render();
+      }
+    });
+
+    /* ---------- save (add / edit) ---------- */
+    document.addEventListener("submit", async (e) => {
+      if (e.target.id !== "taskForm") return;
+      e.preventDefault();
+      if (saving) return;
+
+      const id = $("taskId").value;
+      const payload = {
+        title: $("taskTitle").value.trim(),
+        description: $("taskDescription").value,
+        subject: $("taskSubject").value,
+        uid: $("taskUser").value,
+        priority: $("taskPriority").value,
+        status: $("taskStatus").value,
+        deadline: $("taskDeadline").value,
+        estimated_hours: $("taskHours").value,
+        weight: $("taskWeight").value,
+      };
+
+      // visible validation (the form has novalidate)
+      if (!payload.title) return notify("warning", "Task title is required");
+      if (!payload.uid)
+        return notify("warning", "Please choose who the task is assigned to");
+      if (!payload.status) return notify("warning", "Please choose a status");
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      saving = true;
+      if (btn) btn.disabled = true;
+
+      try {
+        await request(id ? "/" + encodeURIComponent(id) : "", {
+          method: id ? "PUT" : "POST",
+          body: JSON.stringify(payload),
+        });
+        modalAction("taskModal", "hide");
+        try {
+          await load();
+        } catch (err) {
+          console.error(err);
+        }
+        changed();
+        notify("success", id ? "Task updated!" : "Task created!");
+      } catch (err) {
+        notify("error", "Could not save task", esc(err.message));
+      } finally {
+        saving = false;
+        if (btn) btn.disabled = false;
+      }
+    });
+
+    /* ---------- clicks ---------- */
+    document.addEventListener("click", async (e) => {
+      if (e.target.closest("#btnAddTask")) return openTaskModal(null);
+
+      if (e.target.closest("#btnSearchTask")) {
+        page = 1;
+        return render();
+      }
+
+      if (e.target.closest("#btnResetTask")) {
+        $("searchTask").value = "";
+        $("statusFilter").value = "";
+        $("priorityFilter").value = "";
+        page = 1;
+        return render();
+      }
+
+      const pageLink = e.target.closest("#taskPagination [data-page]");
+      if (pageLink) {
+        e.preventDefault();
+        const p = Number(pageLink.dataset.page);
+        if (p >= 1) {
+          page = p;
+          render();
+        }
+        return;
+      }
+
+      const edit = e.target.closest(".btn-edit-task");
+      if (edit) {
+        const task = tasks.find((t) => t.id === edit.dataset.id);
+        if (task) openTaskModal(task);
+        return;
+      }
+
+      const del = e.target.closest(".btn-delete-task");
+      if (del) {
+        const task = tasks.find((t) => t.id === del.dataset.id);
+        const ok = await confirmBox(
+          "Task <b>" +
+            esc(task ? task.title : "this task") +
+            "</b> will be permanently deleted.",
+        );
+        if (!ok) return;
+        try {
+          await request("/" + encodeURIComponent(del.dataset.id), {
+            method: "DELETE",
+          });
+          await load();
+          changed();
+          notify("success", "Task deleted");
+        } catch (err) {
+          notify("error", "Could not delete task", esc(err.message));
+          load().catch(() => {}); // resync (e.g. task was already gone)
+        }
+      }
+    });
+
+    window.AdminTasks = {
+      load: async () => {
+        try {
+          await load();
+        } catch (err) {
+          ready = false;
+          throw err; // main script shows the "Could not load data" popup
+        }
+      },
+    };
+  })();
+</script>

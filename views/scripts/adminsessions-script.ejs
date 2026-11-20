@@ -1,1 +1,515 @@
-<script src="/js/admin/sessions.js"></script>
+<script>
+  (() => {
+    "use strict";
+
+    const API = "/admindashboard/api/sessions";
+    const GREEN = "#2d5a3d";
+    const PAGE_SIZE = 10;
+    const $ = (id) => document.getElementById(id);
+
+    let sessions = [];
+    let meta = { users: [] };
+    let page = 1;
+    let ready = false;
+    let saving = false;
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+
+    // current local time as "YYYY-MM-DDTHH:mm"
+    const nowLocal = () => {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, "0");
+      return (
+        d.getFullYear() +
+        "-" +
+        p(d.getMonth() + 1) +
+        "-" +
+        p(d.getDate()) +
+        "T" +
+        p(d.getHours()) +
+        ":" +
+        p(d.getMinutes())
+      );
+    };
+
+    // "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm" -> local Date (no UTC day shift)
+    const parseLocal = (s) => {
+      const m = String(s || "").match(
+        /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/,
+      );
+      return m
+        ? new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0))
+        : null;
+    };
+    const fmtDay = (s) => {
+      const d = parseLocal(s);
+      return d ? d.toLocaleDateString() : "-";
+    };
+    const fmtTime = (s) => {
+      const d = s ? parseLocal(s) : null;
+      return d
+        ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        : "-";
+    };
+    const hours = (min) => (Number(min || 0) / 60).toFixed(2);
+
+    function notify(icon, title, html) {
+      if (window.Swal) {
+        return Swal.fire({
+          icon,
+          title,
+          html: html || "",
+          confirmButtonColor: GREEN,
+          timer: icon === "success" ? 2500 : undefined,
+          timerProgressBar: icon === "success",
+        });
+      }
+      alert(title + (html ? "\n\n" + html.replace(/<[^>]+>/g, " ") : ""));
+      return Promise.resolve();
+    }
+
+    async function confirmBox(html) {
+      if (window.Swal) {
+        const r = await Swal.fire({
+          icon: "warning",
+          title: "Are you sure?",
+          html,
+          showCancelButton: true,
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          confirmButtonColor: "#dc3545",
+          cancelButtonColor: "#6c757d",
+          reverseButtons: true,
+          focusCancel: true,
+        });
+        return r.isConfirmed;
+      }
+      return confirm("Are you sure?\n\n" + html.replace(/<[^>]+>/g, " "));
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function modalAction(id, action) {
+      const el = $(id);
+      if (!el) return console.warn("Modal not found: #" + id);
+      if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+        return window.jQuery(el).modal(action);
+      }
+      if (window.bootstrap) {
+        const m = bootstrap.Modal.getOrCreateInstance(el);
+        return action === "show" ? m.show() : m.hide();
+      }
+    }
+
+    function moveModalToBody() {
+      const el = $("sessionModal");
+      if (el && el.parentElement !== document.body)
+        document.body.appendChild(el);
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", moveModalToBody);
+    } else {
+      moveModalToBody();
+    }
+
+    const statusBadge = (s) =>
+      '<span class="badge badge-' +
+      (s === "Active" ? "success" : s === "Upcoming" ? "info" : "secondary") +
+      '">' +
+      esc(s) +
+      "</span>";
+
+    // what to show in "Total Hours" for each status
+    const hoursCell = (s) =>
+      s.status === "Upcoming"
+        ? '<span class="text-muted">Not started</span>'
+        : s.status === "Active"
+          ? '<span class="text-muted">In progress</span>'
+          : hours(s.duration_minutes);
+
+    /* ---------- student dropdown ---------- */
+    function fillUsers() {
+      const sel = $("sessionUser");
+      const keep = sel.value;
+      sel.innerHTML =
+        '<option value="">' +
+        (meta.users.length ? "Select student..." : "No users available") +
+        "</option>" +
+        meta.users
+          .map(
+            (u) =>
+              '<option value="' +
+              esc(u.uid) +
+              '">' +
+              esc(u.name ? u.name + " (" + u.email + ")" : u.email) +
+              "</option>",
+          )
+          .join("");
+      sel.value = keep;
+    }
+
+    /* ---------- table + filters + pagination ---------- */
+    function filtered() {
+      const term = ($("searchSession")?.value || "").trim().toLowerCase();
+      const status = $("sessionStatusFilter")?.value || "";
+      return sessions.filter((s) => {
+        if (status && s.status !== status) return false;
+        if (!term) return true;
+        return [s.user_name, s.user_email].some((v) =>
+          String(v || "")
+            .toLowerCase()
+            .includes(term),
+        );
+      });
+    }
+
+    function render() {
+      const rows = filtered();
+      const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+      if (page > pages) page = pages;
+      const start = (page - 1) * PAGE_SIZE;
+      const slice = rows.slice(start, start + PAGE_SIZE);
+
+      $("sessionTableBody").innerHTML = slice.length
+        ? slice
+            .map(
+              (s, i) => `
+        <tr>
+          <td>${start + i + 1}</td>
+          <td>
+            <div class="font-weight-bold">${esc(s.user_name || "Unknown")}</div>
+            <small class="text-muted">${esc(s.user_email || "")}</small>
+          </td>
+          <td>${fmtDay(s.session_date)}</td>
+          <td>${fmtTime(s.started_at)}</td>
+          <td>${fmtTime(s.ended_at)}</td>
+          <td>${hoursCell(s)}</td>
+          <td>${statusBadge(s.status)}</td>
+          <td class="text-center text-nowrap">
+            <button type="button" class="btn btn-sm btn-info btn-view-session" data-id="${esc(s.id)}" title="View">
+              <i class="fas fa-eye"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-primary btn-edit-session" data-id="${esc(s.id)}" title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-danger btn-delete-session" data-id="${esc(s.id)}" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>`,
+            )
+            .join("")
+        : `<tr><td colspan="8" class="text-center py-5 text-muted">
+             <i class="fas fa-clock fa-3x mb-3 d-block"></i>No work sessions found.
+           </td></tr>`;
+
+      $("sessionCount").innerHTML =
+        "Showing <strong>" +
+        rows.length +
+        "</strong>" +
+        (rows.length !== sessions.length ? " of " + sessions.length : "") +
+        " session(s)";
+
+      const pag = $("sessionPagination");
+      if (pages <= 1) {
+        pag.innerHTML = "";
+        return;
+      }
+      let html =
+        '<li class="page-item ' +
+        (page === 1 ? "disabled" : "") +
+        '"><a class="page-link" href="#" data-page="' +
+        (page - 1) +
+        '">&laquo;</a></li>';
+      for (let p = 1; p <= pages; p++) {
+        html +=
+          '<li class="page-item ' +
+          (p === page ? "active" : "") +
+          '"><a class="page-link" href="#" data-page="' +
+          p +
+          '">' +
+          p +
+          "</a></li>";
+      }
+      html +=
+        '<li class="page-item ' +
+        (page === pages ? "disabled" : "") +
+        '"><a class="page-link" href="#" data-page="' +
+        (page + 1) +
+        '">&raquo;</a></li>';
+      pag.innerHTML = html;
+    }
+
+    async function load() {
+      const days = $("sessionRange") ? $("sessionRange").value : "30";
+      const qs =
+        "?days=" +
+        encodeURIComponent(days) +
+        "&now=" +
+        encodeURIComponent(nowLocal());
+      const [m, d] = await Promise.all([request("/meta"), request(qs)]);
+
+      // catches a leftover old api.get("/sessions") in admindashboard.js
+      if (Array.isArray(d) || !d.stats) {
+        throw new Error(
+          "The sessions API is returning the old format. Delete the old api.get('/sessions') block in routes/admindashboard.js and restart the server.",
+        );
+      }
+
+      meta = m;
+      sessions = d.sessions;
+      ready = true;
+
+      $("sessActive").textContent = d.stats.active;
+      $("sessCompleted").textContent = d.stats.completed;
+      $("sessAvg").textContent = d.stats.averageHours;
+      $("sessProductivity").textContent = d.stats.productivity;
+
+      fillUsers();
+      render();
+    }
+
+    const changed = () =>
+      document.dispatchEvent(new CustomEvent("sessions:changed"));
+
+    /* ---------- modal ---------- */
+    async function openSessionModal(s) {
+      if (!ready) {
+        try {
+          await load();
+        } catch (err) {
+          return notify(
+            "error",
+            "Could not load session data",
+            esc(err.message),
+          );
+        }
+      }
+      if (!meta.users.length) {
+        return notify(
+          "warning",
+          "No users yet",
+          "Create a user first, then add a session for them.",
+        );
+      }
+
+      $("sessionModalTitle").textContent = s ? "Edit Session" : "Add Session";
+      $("sessionId").value = s ? s.id : "";
+      $("sessionUser").value = s ? s.uid : "";
+      $("sessionDate").value = s ? s.session_date || "" : "";
+      $("sessionStart").value = s && s.started_at ? s.started_at : "";
+      $("sessionEnd").value = s && s.ended_at ? s.ended_at : "";
+      $("sessionDuration").value = s ? s.duration_minutes : "";
+      modalAction("sessionModal", "show");
+    }
+
+    // auto-fill duration (and date) from start / end
+    document.addEventListener("change", (e) => {
+      const id = e.target && e.target.id;
+      if (id === "sessionStart" || id === "sessionEnd") {
+        const a = parseLocal($("sessionStart").value);
+        const b = parseLocal($("sessionEnd").value);
+        if (a && !$("sessionDate").value) {
+          $("sessionDate").value = $("sessionStart").value.slice(0, 10);
+        }
+        if (a && b && b >= a) {
+          $("sessionDuration").value =
+            Math.round(((b - a) / 60000) * 100) / 100;
+        }
+      }
+      if (id === "sessionStatusFilter") {
+        page = 1;
+        render();
+      }
+      if (id === "sessionRange") {
+        page = 1;
+        load().catch((err) =>
+          notify("error", "Could not load sessions", esc(err.message)),
+        );
+      }
+    });
+
+    /* ---------- filters ---------- */
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "searchSession") {
+        page = 1;
+        render();
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.target && e.target.id === "searchSession" && e.key === "Enter") {
+        e.preventDefault();
+        page = 1;
+        render();
+      }
+    });
+
+    /* ---------- save (add / edit) ---------- */
+    document.addEventListener("submit", async (e) => {
+      if (e.target.id !== "sessionForm") return;
+      e.preventDefault();
+      if (saving) return;
+
+      const id = $("sessionId").value;
+      const payload = {
+        uid: $("sessionUser").value,
+        session_date: $("sessionDate").value,
+        started_at: $("sessionStart").value,
+        ended_at: $("sessionEnd").value,
+        duration_minutes: $("sessionDuration").value,
+      };
+
+      if (!payload.uid) return notify("warning", "Please choose a student");
+      if (!payload.session_date && !payload.started_at)
+        return notify("warning", "Please enter the session date");
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      saving = true;
+      if (btn) btn.disabled = true;
+
+      try {
+        await request(id ? "/" + encodeURIComponent(id) : "", {
+          method: id ? "PUT" : "POST",
+          body: JSON.stringify(payload),
+        });
+        modalAction("sessionModal", "hide");
+        try {
+          await load();
+        } catch (err) {
+          console.error(err);
+        }
+        changed();
+        notify("success", id ? "Session updated!" : "Session added!");
+      } catch (err) {
+        notify("error", "Could not save session", esc(err.message));
+      } finally {
+        saving = false;
+        if (btn) btn.disabled = false;
+      }
+    });
+
+    /* ---------- clicks ---------- */
+    document.addEventListener("click", async (e) => {
+      if (e.target.closest("#btnAddSession")) return openSessionModal(null);
+
+      if (e.target.closest("#btnRefreshSessions")) {
+        return load().catch((err) =>
+          notify("error", "Could not load sessions", esc(err.message)),
+        );
+      }
+
+      if (e.target.closest("#btnSearchSession")) {
+        page = 1;
+        return render();
+      }
+
+      if (e.target.closest("#btnResetSession")) {
+        $("searchSession").value = "";
+        $("sessionStatusFilter").value = "";
+        page = 1;
+        return render();
+      }
+
+      const pageLink = e.target.closest("#sessionPagination [data-page]");
+      if (pageLink) {
+        e.preventDefault();
+        const p = Number(pageLink.dataset.page);
+        if (p >= 1) {
+          page = p;
+          render();
+        }
+        return;
+      }
+
+      const view = e.target.closest(".btn-view-session");
+      if (view) {
+        const s = sessions.find((x) => x.id === view.dataset.id);
+        if (!s) return;
+        return notify(
+          "info",
+          esc(s.user_name || s.user_email || "Session"),
+          "<div class='text-left'>" +
+            "<b>Date:</b> " +
+            fmtDay(s.session_date) +
+            "<br>" +
+            "<b>Started:</b> " +
+            fmtTime(s.started_at) +
+            "<br>" +
+            "<b>Ended:</b> " +
+            fmtTime(s.ended_at) +
+            "<br>" +
+            "<b>Duration:</b> " +
+            Number(s.duration_minutes || 0) +
+            " min (" +
+            hours(s.duration_minutes) +
+            " hrs)<br>" +
+            "<b>Status:</b> " +
+            esc(s.status) +
+            "</div>",
+        );
+      }
+
+      const edit = e.target.closest(".btn-edit-session");
+      if (edit) {
+        const s = sessions.find((x) => x.id === edit.dataset.id);
+        if (s) openSessionModal(s);
+        return;
+      }
+
+      const del = e.target.closest(".btn-delete-session");
+      if (del) {
+        const s = sessions.find((x) => x.id === del.dataset.id);
+        const ok = await confirmBox(
+          "The session of <b>" +
+            esc(s ? s.user_name || s.user_email || "this user" : "this user") +
+            "</b> on " +
+            fmtDay(s && s.session_date) +
+            " will be permanently deleted.",
+        );
+        if (!ok) return;
+        try {
+          await request("/" + encodeURIComponent(del.dataset.id), {
+            method: "DELETE",
+          });
+          await load();
+          changed();
+          notify("success", "Session deleted");
+        } catch (err) {
+          notify("error", "Could not delete session", esc(err.message));
+          load().catch(() => {});
+        }
+      }
+    });
+
+    window.AdminSessions = {
+      load: async () => {
+        try {
+          await load();
+        } catch (err) {
+          ready = false;
+          throw err; // main script shows the "Could not load data" popup
+        }
+      },
+    };
+  })();
+</script>

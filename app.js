@@ -52,7 +52,9 @@ app.use(
 /* ==========================================
    STATIC FILES
 ========================================== */
-testConnection();
+testConnection().catch((err) =>
+  console.error("❌ Database connection failed:", err.message)
+);
 app.use(express.static(path.join(__dirname, "public")));
 
 /* ==========================================

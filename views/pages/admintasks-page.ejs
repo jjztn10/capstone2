@@ -1,343 +1,244 @@
-<!-- ==========================================
-     TASK MANAGEMENT
-========================================== -->
+<section id="tasks" class="admin-section">
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="h3 mb-1 text-gray-800">
+        <i class="fas fa-tasks mr-2"></i>Task Management
+      </h2>
+      <p class="text-muted mb-0">
+        Create, assign, monitor, and manage student tasks.
+      </p>
+    </div>
+    <button id="btnAddTask" type="button" class="btn btn-primary shadow">
+      <i class="fas fa-plus mr-2"></i>Add Task
+    </button>
+  </div>
 
-<section
-    id="tasks"
-    class="admin-section">
-
-    <!-- ==========================
-         PAGE HEADER
-    =========================== -->
-
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-
-        <div>
-
-            <h2 class="h3 mb-1 text-gray-800">
-
-                <i class="fas fa-tasks mr-2"></i>
-
-                Task Management
-
-            </h2>
-
-            <p class="text-muted mb-0">
-
-                Create, assign, monitor, and manage employee tasks.
-
-            </p>
-
+  <!-- SEARCH & FILTER -->
+  <div class="card shadow mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <input
+            type="text"
+            id="searchTask"
+            class="form-control"
+            placeholder="Search task..."
+          />
         </div>
+        <div class="col-md-2 mb-3">
+          <select id="statusFilter" class="form-control">
+            <option value="">All Status</option>
+          </select>
+        </div>
+        <div class="col-md-2 mb-3">
+          <select id="priorityFilter" class="form-control">
+            <option value="">All Priority</option>
+            <option value="High">High</option>
+            <option value="Medium">Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div class="col-md-2 mb-3">
+          <button
+            id="btnSearchTask"
+            type="button"
+            class="btn btn-primary btn-block"
+          >
+            <i class="fas fa-search mr-2"></i>Search
+          </button>
+        </div>
+        <div class="col-md-2 mb-3">
+          <button
+            id="btnResetTask"
+            type="button"
+            class="btn btn-secondary btn-block"
+          >
+            <i class="fas fa-redo mr-2"></i>Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <button
-            id="btnAddTask"
-            class="btn btn-primary shadow">
-
-            <i class="fas fa-plus mr-2"></i>
-
-            Add Task
-
-        </button>
-
+  <!-- TASK TABLE -->
+  <div class="card shadow">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">Task List</h6>
     </div>
 
-    <!-- ==========================
-         SEARCH & FILTER
-    =========================== -->
-
-    <div class="card shadow mb-4">
-
-        <div class="card-body">
-
-            <div class="row">
-
-                <!-- Search -->
-
-                <div class="col-md-4 mb-3">
-
-                    <input
-                        type="text"
-                        id="searchTask"
-                        class="form-control"
-                        placeholder="Search task...">
-
-                </div>
-
-                <!-- Status -->
-
-                <div class="col-md-2 mb-3">
-
-                    <select
-                        id="statusFilter"
-                        class="form-control">
-
-                        <option value="">
-
-                            All Status
-
-                        </option>
-
-                        <option value="Pending">
-
-                            Pending
-
-                        </option>
-
-                        <option value="In Progress">
-
-                            In Progress
-
-                        </option>
-
-                        <option value="Completed">
-
-                            Completed
-
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <!-- Priority -->
-
-                <div class="col-md-2 mb-3">
-
-                    <select
-                        id="priorityFilter"
-                        class="form-control">
-
-                        <option value="">
-
-                            All Priority
-
-                        </option>
-
-                        <option value="High">
-
-                            High
-
-                        </option>
-
-                        <option value="Medium">
-
-                            Medium
-
-                        </option>
-
-                        <option value="Low">
-
-                            Low
-
-                        </option>
-
-                    </select>
-
-                </div>
-
-                <!-- Search Button -->
-
-                <div class="col-md-2 mb-3">
-
-                    <button
-                        id="btnSearchTask"
-                        class="btn btn-primary btn-block">
-
-                        <i class="fas fa-search mr-2"></i>
-
-                        Search
-
-                    </button>
-
-                </div>
-
-                <!-- Reset -->
-
-                <div class="col-md-2 mb-3">
-
-                    <button
-                        id="btnResetTask"
-                        class="btn btn-secondary btn-block">
-
-                        <i class="fas fa-redo mr-2"></i>
-
-                        Reset
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- ==========================
-         TASK TABLE
-    =========================== -->
-
-    <div class="card shadow">
-
-        <div class="card-header py-3">
-
-            <h6 class="m-0 font-weight-bold text-primary">
-
-                Task List
-
-            </h6>
-
-        </div>
-
-        <div class="card-body">
-
-            <div class="table-responsive">
-
-                <table
-                    id="taskTable"
-                    class="table table-bordered table-hover">
-
-                    <thead class="thead-light">
-
-                        <tr>
-
-                            <th width="60">#</th>
-
-                            <th>Task</th>
-
-                            <th>Assigned To</th>
-
-                            <th>Priority</th>
-
-                            <th>Status</th>
-
-                            <th>Due Date</th>
-
-                            <th width="150" class="text-center">
-
-                                Actions
-
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="tasksTableBody">
-
-    <% const taskList = typeof tasks !== "undefined" && Array.isArray(tasks) ? tasks : []; %>
-
-    <% if (taskList.length > 0) { %>
-
-        <% taskList.forEach((task, index) => { %>
-
+    <div class="card-body">
+      <div class="table-responsive">
+        <table id="taskTable" class="table table-bordered table-hover">
+          <thead class="thead-light">
             <tr>
-                <td><%= index + 1 %></td>
-
-                <td>
-                    <strong><%= task.title %></strong>
-
-                    <% if (task.description) { %>
-                        <br>
-                        <small class="text-muted"><%= task.description %></small>
-                    <% } %>
-                </td>
-
-                <td><%= task.assignedTo || "-" %></td>
-
-                <td>
-                    <% if (task.priority === "High") { %>
-                        <span class="badge badge-danger">High</span>
-                    <% } else if (task.priority === "Medium") { %>
-                        <span class="badge badge-warning">Medium</span>
-                    <% } else { %>
-                        <span class="badge badge-success">Low</span>
-                    <% } %>
-                </td>
-
-                <td>
-                    <% if (task.status === "Completed") { %>
-                        <span class="badge badge-success">Completed</span>
-                    <% } else if (task.status === "In Progress") { %>
-                        <span class="badge badge-primary">In Progress</span>
-                    <% } else { %>
-                        <span class="badge badge-secondary">Pending</span>
-                    <% } %>
-                </td>
-
-                <td><%= task.dueDate || "-" %></td>
-
-                <td class="text-center">
-                    <button
-                        class="btn btn-sm btn-info btn-edit-task"
-                        data-id="<%= task.id %>">
-                        <i class="fas fa-edit"></i>
-                    </button>
-
-                    <button
-                        class="btn btn-sm btn-danger btn-delete-task"
-                        data-id="<%= task.id %>">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
+              <th width="60">#</th>
+              <th>Task</th>
+              <th>Assigned To</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Due Date</th>
+              <th width="150" class="text-center">Actions</th>
             </tr>
-
-        <% }) %>
-
-    <% } else { %>
-
-        <tr>
-            <td colspan="7" class="text-center py-5 text-muted">
-                <i class="fas fa-tasks fa-3x mb-3 d-block"></i>
-                No tasks available.
-            </td>
-        </tr>
-
-    <% } %>
-
-</tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-        <div class="card-footer bg-white">
-
-            <div class="d-flex justify-content-between align-items-center">
-
-                <small class="text-muted">
-
-                    Showing
-
-                    <strong>
-
-                        <%= (typeof tasks !== "undefined" && Array.isArray(tasks)) ? tasks.length : 0 %>
-
-                    </strong>
-
-                    task(s)
-
-                </small>
-
-                <nav>
-
-                    <ul
-                        class="pagination pagination-sm mb-0"
-                        id="taskPagination">
-
-                        <!-- Pagination generated by JavaScript -->
-
-                    </ul>
-
-                </nav>
-
-            </div>
-
-        </div>
-
+          </thead>
+          <tbody id="tasksTableBody">
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                Loading...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
+    <div class="card-footer bg-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted" id="taskCount"
+          >Showing <strong>0</strong> task(s)</small
+        >
+        <nav>
+          <ul class="pagination pagination-sm mb-0" id="taskPagination"></ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT TASK MODAL (moved to <body> by the script) -->
+  <div
+    class="modal fade"
+    id="taskModal"
+    tabindex="-1"
+    role="dialog"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content">
+        <form id="taskForm" autocomplete="off" novalidate>
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">
+              <i class="fas fa-tasks mr-2"></i
+              ><span id="taskModalTitle">Add Task</span>
+            </h5>
+            <button
+              type="button"
+              class="close text-white"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <input type="hidden" id="taskId" />
+
+            <div class="form-group">
+              <label for="taskTitle"
+                >Task Title <span class="text-danger">*</span></label
+              >
+              <input
+                id="taskTitle"
+                type="text"
+                class="form-control"
+                maxlength="255"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="taskDescription">Description</label>
+              <textarea
+                id="taskDescription"
+                class="form-control"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="taskUser"
+                  >Assigned To <span class="text-danger">*</span></label
+                >
+                <select id="taskUser" class="form-control" required></select>
+              </div>
+              <div class="form-group col-md-6">
+                <label for="taskSubject">Subject</label>
+                <input
+                  id="taskSubject"
+                  type="text"
+                  class="form-control"
+                  maxlength="120"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label for="taskPriority">Priority</label>
+                <select id="taskPriority" class="form-control">
+                  <option value="High">High</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="taskStatus">Status</label>
+                <select id="taskStatus" class="form-control"></select>
+              </div>
+              <div class="form-group col-md-4">
+                <label for="taskDeadline">Due Date</label>
+                <input
+                  id="taskDeadline"
+                  type="datetime-local"
+                  class="form-control"
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-md-6 mb-0">
+                <label for="taskHours">Estimated Hours</label>
+                <input
+                  id="taskHours"
+                  type="number"
+                  class="form-control"
+                  min="0"
+                  max="999"
+                  step="0.25"
+                  value="1"
+                />
+              </div>
+              <div class="form-group col-md-6 mb-0">
+                <label for="taskWeight">Weight</label>
+                <input
+                  id="taskWeight"
+                  type="number"
+                  class="form-control"
+                  min="0"
+                  max="999"
+                  step="0.1"
+                  value="1"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+              data-bs-dismiss="modal"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save mr-1"></i>Save Task
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </section>

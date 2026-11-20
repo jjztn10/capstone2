@@ -2,42 +2,46 @@
      SMARTWORK ADMIN DASHBOARD
 ========================================== -->
 
-<div class="admin-dashboard">
+<!-- DASHBOARD HEADER -->
+<%- include("../components/header", {
+    layoutType: "admin",
+    headerTitle: "SmartWork Admin Dashboard",
+    showRefreshButton: false
+}) %>
 
-    <!-- DASHBOARD HEADER -->
-    <%- include("../components/header", {
-        layoutType: "admin",
-        headerTitle: "SmartWork Admin Dashboard",
-        showRefreshButton: false
-    }) %>
+<!-- OVERVIEW -->
+<section id="overviewSection" class="dashboard-section">
+    <%- include("overview") %>
+</section>
 
-    <!-- OVERVIEW -->
-    <section id="overviewSection" class="dashboard-section">
-        <%- include("overview") %>
-    </section>
+<!-- USERS -->
+<section id="usersSection" class="dashboard-section d-none">
+    <%- include("adminuser-page") %>
+</section>
 
-    <!-- USERS -->
-    <section id="usersSection" class="dashboard-section d-none">
-        <%- include("adminuser-page") %>
-    </section>
+<!-- TASKS -->
+<section id="tasksSection" class="dashboard-section d-none">
+    <%- include("admintasks-page") %>
+</section>
 
-    <!-- TASKS -->
-    <section id="tasksSection" class="dashboard-section d-none">
-        <%- include("admintasks-page") %>
-    </section>
+<!-- MOOD -->
+<section id="moodSection" class="dashboard-section d-none">
+    <%- include("adminmood-page") %>
+</section>
 
-    <!-- MOOD -->
-    <section id="moodSection" class="dashboard-section d-none">
-        <%- include("adminmood-page") %>
-    </section>
+<!-- SESSIONS -->
+<section id="sessionsSection" class="dashboard-section d-none">
+    <%- include("adminsessions-page") %>
+</section>
 
-    <!-- SESSIONS -->
-    <section id="sessionsSection" class="dashboard-section d-none">
-        <%- include("adminsessions-page") %>
-    </section>
 
-    <!-- USER MODALS -->
-    <%- include("add-user-modal") %>
-    <%- include("edit-user-modal") %>
-
-</div>
+<!-- SCRIPTS (Chart.js once, then your EJS script partials) -->
+<!-- SCRIPTS -->
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+<%- include("../scripts/adminusers-script") %>
+<%- include("../scripts/admintasks-script") %>
+<%- include("../scripts/adminmood-script") %>
+<%- include("../scripts/adminsessions-script") %>
+<%- include("../scripts/admindashboard-script") %>

@@ -1,1 +1,280 @@
-<script src="/js/admin/mood.js"></script>
+<script>
+  (() => {
+    "use strict";
+
+    const API = "/admindashboard/api/mood";
+    const $ = (id) => document.getElementById(id);
+
+    const COLORS = {
+      happy: "#2d5a3d",
+      neutral: "#4e73df",
+      stressed: "#f6c23e",
+    };
+    const PALETTE = [
+      "#2d5a3d",
+      "#9bc27a",
+      "#4e73df",
+      "#f6c23e",
+      "#e74a3b",
+      "#858796",
+      "#17a2b8",
+    ];
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+
+    // "YYYY-MM-DD" -> local date (avoids the UTC day-shift of new Date("YYYY-MM-DD"))
+    const parseDay = (s) => {
+      const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+      return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+    };
+    const fmtDay = (s) => {
+      const d = parseDay(s);
+      return d ? d.toLocaleDateString() : esc(s || "-");
+    };
+    const fmtShort = (s) => {
+      const d = parseDay(s);
+      return d
+        ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+        : s;
+    };
+
+    async function request(path = "") {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function drawChart(canvasId, emptyId, hasData, config) {
+      const canvas = $(canvasId);
+      const empty = $(emptyId);
+      if (!canvas || typeof Chart === "undefined") return;
+      const existing = Chart.getChart(canvas);
+      if (existing) existing.destroy();
+      canvas.classList.toggle("d-none", !hasData);
+      if (empty) empty.classList.toggle("d-none", hasData);
+      if (hasData) new Chart(canvas, config);
+    }
+
+    const badge = (log) => {
+      const cls =
+        log.category === "happy"
+          ? "success"
+          : log.category === "stressed"
+            ? "warning"
+            : "primary";
+      return (
+        '<span class="badge badge-' + cls + '">' + esc(log.mood) + "</span>"
+      );
+    };
+
+    /* ---------- insights ---------- */
+    function renderInsights(d) {
+      const {
+        currentStress: cur,
+        previousStress: prev,
+        repeatedStress,
+      } = d.insights;
+      const box = $("moodInsights");
+      let html = "";
+
+      if (cur === null) {
+        html +=
+          '<div class="alert alert-info"><strong>Not enough data</strong>' +
+          '<p class="mb-0">No mood entries were logged in the last ' +
+          d.days +
+          " days.</p></div>";
+      } else if (prev === null) {
+        html +=
+          '<div class="alert alert-info"><strong>Average stress: ' +
+          cur.toFixed(1) +
+          "</strong>" +
+          '<p class="mb-0">There is no earlier period yet to compare with.</p></div>';
+      } else {
+        const diff = cur - prev;
+        if (diff <= -0.3) {
+          html +=
+            '<div class="alert alert-success"><strong>Positive Trend</strong>' +
+            '<p class="mb-0">Average stress fell from ' +
+            prev.toFixed(1) +
+            " to " +
+            cur.toFixed(1) +
+            " compared with the previous " +
+            d.days +
+            " days.</p></div>";
+        } else if (diff >= 0.3) {
+          html +=
+            '<div class="alert alert-danger"><strong>Rising Stress</strong>' +
+            '<p class="mb-0">Average stress rose from ' +
+            prev.toFixed(1) +
+            " to " +
+            cur.toFixed(1) +
+            " compared with the previous " +
+            d.days +
+            " days.</p></div>";
+        } else {
+          html +=
+            '<div class="alert alert-info"><strong>Stable</strong>' +
+            '<p class="mb-0">Average stress is steady at ' +
+            cur.toFixed(1) +
+            " compared with the previous " +
+            d.days +
+            " days.</p></div>";
+        }
+      }
+
+      if (repeatedStress.length) {
+        html +=
+          '<div class="alert alert-warning"><strong>Attention Needed</strong>' +
+          '<p class="mb-1">Students with repeated stressed moods:</p><ul class="mb-0 pl-3">' +
+          repeatedStress
+            .map(
+              (u) => "<li>" + esc(u.name) + " (" + u.count + " entries)</li>",
+            )
+            .join("") +
+          "</ul></div>";
+      } else {
+        html +=
+          '<div class="alert alert-success"><strong>No repeated stress</strong>' +
+          '<p class="mb-0">No student has 3 or more stressed entries in this period.</p></div>';
+      }
+
+      html +=
+        '<div class="alert alert-info mb-0"><strong>Recommendation</strong><p class="mb-0">' +
+        (d.stats.burnout > 0
+          ? d.stats.burnout +
+            " student(s) are flagged for burnout risk. Schedule check-ins and review their workload."
+          : "Keep up regular check-ins and wellness activities to maintain morale.") +
+        "</p></div>";
+
+      box.innerHTML = html;
+    }
+
+    /* ---------- render ---------- */
+    function render(d) {
+      $("moodHappy").textContent = d.stats.happy;
+      $("moodNeutral").textContent = d.stats.neutral;
+      $("moodStressed").textContent = d.stats.stressed;
+      $("moodBurnout").textContent = d.stats.burnout;
+
+      drawChart("moodTrendChart", "moodTrendEmpty", d.trend.labels.length > 0, {
+        type: "line",
+        data: {
+          labels: d.trend.labels.map(fmtShort),
+          datasets: [
+            {
+              label: "Avg stress",
+              data: d.trend.stress,
+              borderColor: "#e74a3b",
+              backgroundColor: "rgba(231,74,59,0.08)",
+              fill: true,
+              tension: 0.35,
+            },
+            {
+              label: "Avg workload",
+              data: d.trend.workload,
+              borderColor: COLORS.happy,
+              backgroundColor: "rgba(45,90,61,0.08)",
+              fill: true,
+              tension: 0.35,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+
+      drawChart(
+        "moodPieChart",
+        "moodPieEmpty",
+        d.distribution.values.length > 0,
+        {
+          type: "doughnut",
+          data: {
+            labels: d.distribution.labels,
+            datasets: [
+              {
+                data: d.distribution.values,
+                backgroundColor: d.distribution.labels.map(
+                  (_, i) => PALETTE[i % PALETTE.length],
+                ),
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: "bottom" } },
+          },
+        },
+      );
+
+      $("moodTableBody").innerHTML = d.logs.length
+        ? d.logs
+            .map(
+              (l) => `
+        <tr>
+          <td>${fmtDay(l.local_day)}</td>
+          <td>
+            <div class="font-weight-bold">${esc(l.user_name || "Unknown")}</div>
+            <small class="text-muted">${esc(l.user_email || "")}</small>
+          </td>
+          <td>${badge(l)}</td>
+          <td>${esc(l.stress_level)}</td>
+          <td>${esc(l.workload)}</td>
+          <td>${esc(l.notes || "-")}</td>
+        </tr>`,
+            )
+            .join("")
+        : `<tr><td colspan="6" class="text-center text-muted py-4">
+             <i class="fas fa-smile fa-2x d-block mb-3"></i>No mood records available.
+           </td></tr>`;
+
+      renderInsights(d);
+    }
+
+    async function load() {
+      const days = $("moodRange") ? $("moodRange").value : "30";
+      render(await request("?days=" + encodeURIComponent(days)));
+    }
+
+    /* ---------- events ---------- */
+    const showError = (err) => {
+      console.error(err);
+      if (window.Swal)
+        Swal.fire({
+          icon: "error",
+          title: "Could not load mood data",
+          text: err.message,
+          confirmButtonColor: "#2d5a3d",
+        });
+    };
+
+    document.addEventListener("change", (e) => {
+      if (e.target && e.target.id === "moodRange") load().catch(showError);
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("#btnRefreshMood")) load().catch(showError);
+    });
+
+    window.AdminMood = { load };
+  })();
+</script>

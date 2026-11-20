@@ -1,1 +1,262 @@
-<script src="/js/admin/users.js"></script>
+<script>
+  (() => {
+    "use strict";
+
+    const API = "/admindashboard/api/users";
+    const GREEN = "#2d5a3d";
+    const $ = (id) => document.getElementById(id);
+
+    let users = [];
+
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+
+    const fmtDate = (v) => {
+      if (!v) return "-";
+      const d = new Date(v);
+      return isNaN(d) ? esc(v) : d.toLocaleDateString();
+    };
+
+    function notify(icon, title, html) {
+      if (window.Swal) {
+        return Swal.fire({
+          icon,
+          title,
+          html: html || "",
+          confirmButtonColor: GREEN,
+          timer: icon === "success" ? 2500 : undefined,
+          timerProgressBar: icon === "success",
+        });
+      }
+      alert(title + (html ? "\n\n" + html.replace(/<[^>]+>/g, " ") : ""));
+      return Promise.resolve();
+    }
+
+    async function confirmBox(html) {
+      if (window.Swal) {
+        const r = await Swal.fire({
+          icon: "warning",
+          title: "Are you sure?",
+          html,
+          showCancelButton: true,
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          confirmButtonColor: "#dc3545",
+          cancelButtonColor: "#6c757d",
+          reverseButtons: true,
+          focusCancel: true,
+        });
+        return r.isConfirmed;
+      }
+      return confirm("Are you sure?\n\n" + html.replace(/<[^>]+>/g, " "));
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function modalAction(id, action) {
+      const el = $(id);
+      if (!el) return console.warn("Modal not found: #" + id);
+      if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+        return window.jQuery(el).modal(action);
+      }
+      if (window.bootstrap) {
+        const m = bootstrap.Modal.getOrCreateInstance(el);
+        return action === "show" ? m.show() : m.hide();
+      }
+    }
+
+    // Modals must live directly under <body>, otherwise they cannot show
+    // while the users section is hidden (d-none).
+    function moveModalsToBody() {
+      ["addUserModal", "editUserModal"].forEach((id) => {
+        const el = $(id);
+        if (el && el.parentElement !== document.body) {
+          document.body.appendChild(el);
+        }
+      });
+    }
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", moveModalsToBody);
+    } else {
+      moveModalsToBody();
+    }
+
+    /* ---------- table + search ---------- */
+    function render() {
+      const term = ($("usersSearch")?.value || "").trim().toLowerCase();
+      const rows = term
+        ? users.filter(
+            (u) =>
+              (u.name || "").toLowerCase().includes(term) ||
+              (u.email || "").toLowerCase().includes(term),
+          )
+        : users;
+
+      if ($("usersCount")) {
+        $("usersCount").textContent = term
+          ? rows.length + " of " + users.length
+          : users.length;
+      }
+
+      const body = $("usersTableBody");
+      if (!body) return;
+
+      body.innerHTML = rows.length
+        ? rows
+            .map(
+              (u) => `
+        <tr>
+          <td>${esc(u.name || "-")}</td>
+          <td>${esc(u.email)}</td>
+          <td>${esc(u.study_streak)}</td>
+          <td>${esc(u.total_points)}</td>
+          <td>${esc(u.weekly_points)}</td>
+          <td>${fmtDate(u.created_at)}</td>
+          <td class="text-nowrap">
+            <button type="button" class="btn btn-sm btn-outline-success"
+                    data-edit-user="${esc(u.uid)}"
+                    data-name="${esc(u.name)}" data-email="${esc(u.email)}">Edit</button>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    data-delete-user="${esc(u.uid)}"
+                    data-label="${esc(u.name || u.email)}">Delete</button>
+          </td>
+        </tr>`,
+            )
+            .join("")
+        : '<tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>';
+    }
+
+    async function load() {
+      users = await request("");
+      render();
+    }
+
+    const changed = () =>
+      document.dispatchEvent(new CustomEvent("users:changed"));
+
+    /* ---------- search ---------- */
+    document.addEventListener("input", (e) => {
+      if (e.target && e.target.id === "usersSearch") render();
+    });
+
+    /* ---------- add / edit submit ---------- */
+    document.addEventListener("submit", async (e) => {
+      const form = e.target;
+
+      if (form.id === "addUserForm") {
+        e.preventDefault();
+        const password = $("addPassword").value;
+        if (password !== $("addConfirm").value) {
+          return notify("error", "Passwords do not match");
+        }
+        try {
+          const created = await request("", {
+            method: "POST",
+            body: JSON.stringify({
+              name: $("addName").value,
+              email: $("addEmail").value,
+              password,
+            }),
+          });
+          form.reset();
+          modalAction("addUserModal", "hide");
+          await load();
+          changed();
+          notify(
+            "success",
+            "User created!",
+            "<b>" +
+              esc(created.name || "(no name)") +
+              "</b><br>" +
+              esc(created.email),
+          );
+        } catch (err) {
+          notify("error", "Could not create user", esc(err.message));
+        }
+      }
+
+      if (form.id === "editUserForm") {
+        e.preventDefault();
+        const password = $("editPassword").value;
+        if (password !== $("editConfirm").value) {
+          return notify("error", "Passwords do not match");
+        }
+        try {
+          const body = {
+            name: $("editName").value,
+            email: $("editEmail").value,
+          };
+          if (password) body.password = password;
+          await request("/" + encodeURIComponent($("editUid").value), {
+            method: "PUT",
+            body: JSON.stringify(body),
+          });
+          modalAction("editUserModal", "hide");
+          await load();
+          changed();
+          notify("success", "User updated!");
+        } catch (err) {
+          notify("error", "Could not update user", esc(err.message));
+        }
+      }
+    });
+
+    /* ---------- clicks ---------- */
+    document.addEventListener("click", async (e) => {
+      if (e.target.closest("#btnAddUser")) {
+        return modalAction("addUserModal", "show");
+      }
+
+      const edit = e.target.closest("[data-edit-user]");
+      if (edit) {
+        $("editUid").value = edit.dataset.editUser;
+        $("editName").value = edit.dataset.name || "";
+        $("editEmail").value = edit.dataset.email || "";
+        $("editPassword").value = "";
+        $("editConfirm").value = "";
+        return modalAction("editUserModal", "show");
+      }
+
+      const del = e.target.closest("[data-delete-user]");
+      if (del) {
+        const ok = await confirmBox(
+          "<b>" +
+            esc(del.dataset.label || "this user") +
+            "</b> and ALL their tasks, sessions, and mood entries will be permanently deleted.",
+        );
+        if (!ok) return;
+        try {
+          await request("/" + encodeURIComponent(del.dataset.deleteUser), {
+            method: "DELETE",
+          });
+          await load();
+          changed();
+          notify("success", "User deleted");
+        } catch (err) {
+          notify("error", "Could not delete user", esc(err.message));
+        }
+      }
+    });
+
+    window.AdminUsers = { load };
+  })();
+</script>

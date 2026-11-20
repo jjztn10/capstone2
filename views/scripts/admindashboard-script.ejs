@@ -1,672 +1,298 @@
-
 <script>
-"use strict";
-
-$(document).ready(function () {
-
-    /* =========================================================
-       SMARTWORK ADMIN DASHBOARD
-       Navigation, Charts, Quick Actions and Refresh
-    ========================================================= */
-
-    const AdminDashboard = {
-
-        currentSection: "overviewSection",
-
-        sections: [],
-        navLinks: [],
-        sidebarLinks: [],
-
-        charts: {
-            productivity: null,
-            taskCompletion: null
-        },
-
-        /* ==========================================
-           INITIALIZE
-        ========================================== */
-
-        init() {
-
-            this.cacheDOM();
-            this.bindNavigation();
-            this.bindButtons();
-
-            this.showSection(this.currentSection, false);
-
-            this.initializeCharts();
-
-            console.log("SmartWork Admin Dashboard Initialized");
-
-        },
-
-        /* ==========================================
-           CACHE DOM
-        ========================================== */
-
-        cacheDOM() {
-
-            this.sections = Array.from(
-                document.querySelectorAll(".dashboard-section")
-            );
-
-            this.navLinks = Array.from(
-                document.querySelectorAll("#dashboardTabs [data-target]")
-            );
-
-            this.sidebarLinks = Array.from(
-                document.querySelectorAll("#accordionSidebar [data-target]")
-            );
-
-        },
-
-        /* ==========================================
-           NAVIGATION
-        ========================================== */
-
-        bindNavigation() {
-
-            const allLinks = [
-                ...this.navLinks,
-                ...this.sidebarLinks
-            ];
-
-            allLinks.forEach(link => {
-
-                link.addEventListener("click", event => {
-
-                    const target = link.dataset.target;
-
-                    if (!target) return;
-
-                    event.preventDefault();
-
-                    this.showSection(target);
-
-                });
-
-            });
-
-        },
-
-        /* ==========================================
-           SHOW SECTION
-        ========================================== */
-
-        showSection(sectionId, scroll = true) {
-
-            const activeSection =
-                document.getElementById(sectionId);
-
-            if (!activeSection) {
-
-                console.warn(
-                    "Dashboard section not found:",
-                    sectionId
-                );
-
-                return;
-
-            }
-
-            this.currentSection = sectionId;
-
-            this.sections.forEach(section => {
-
-                section.classList.add("d-none");
-                section.classList.remove("show");
-
-            });
-
-            activeSection.classList.remove("d-none");
-            activeSection.classList.add("show");
-
-            this.setActiveNavigation(sectionId);
-            this.updatePageTitle(sectionId);
-            this.resizeCharts();
-
-            if (scroll) {
-
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
-
-            }
-
-        },
-
-        /* ==========================================
-           ACTIVE NAVIGATION
-        ========================================== */
-
-        setActiveNavigation(sectionId) {
-
-            const allLinks = [
-                ...this.navLinks,
-                ...this.sidebarLinks
-            ];
-
-            allLinks.forEach(link => {
-
-                const isActive =
-                    link.dataset.target === sectionId;
-
-                link.classList.toggle("active", isActive);
-
-                const parent = link.closest(".nav-item");
-
-                if (
-                    parent &&
-                    link.closest("#accordionSidebar")
-                ) {
-
-                    parent.classList.toggle("active", isActive);
-
-                }
-
-                if (isActive) {
-
-                    link.setAttribute("aria-current", "page");
-
-                } else {
-
-                    link.removeAttribute("aria-current");
-
-                }
-
-            });
-
-        },
-
-        /* ==========================================
-           PAGE TITLES
-        ========================================== */
-
-        updatePageTitle(sectionId) {
-
-            const pageTitle =
-                document.getElementById("pageTitle");
-
-            if (!pageTitle) return;
-
-            const titles = {
-
-                overviewSection: "Dashboard Overview",
-                usersSection: "User Management",
-                tasksSection: "Task Management",
-                moodSection: "Mood Analytics",
-                sessionsSection: "Work Sessions",
-                leaderboardSection: "Leaderboard"
-
-            };
-
-            pageTitle.textContent =
-                titles[sectionId] || "Admin Dashboard";
-
-        },
-
-        /* ==========================================
-           BUTTON EVENTS
-        ========================================== */
-
-        bindButtons() {
-
-            // Refresh buttons
-            const refreshButtons = [
-                "btnRefreshDashboard",
-                "refreshDashboardBtn"
-            ];
-
-            refreshButtons.forEach(id => {
-
-                const button = document.getElementById(id);
-
-                if (button) {
-
-                    button.addEventListener("click", () => {
-                        this.refreshDashboard();
-                    });
-
-                }
-
-            });
-
-            // Quick Add User
-            $("#quickAddUser").on("click", () => {
-
-                this.openAddUserModal();
-
-            });
-
-            // Quick Add Task
-            $("#quickAddTask").on("click", () => {
-
-                this.showSection("tasksSection");
-
-            });
-
-            // Quick Mood
-            $("#quickMood").on("click", () => {
-
-                this.showSection("moodSection");
-
-            });
-
-            // Quick Leaderboard
-            $("#quickLeaderboard").on("click", () => {
-
-                this.showSection("leaderboardSection");
-
-            });
-
-        },
-
-        /* ==========================================
-           REFRESH DASHBOARD
-        ========================================== */
-
-        refreshDashboard() {
-
-            this.showLoading();
-
-            this.updateCharts();
-
-            this.hideLoading();
-
-            this.showToast(
-                "Dashboard refreshed successfully!",
-                "success"
-            );
-
-        },
-
-        /* ==========================================
-           INITIALIZE CHARTS
-        ========================================== */
-
-        initializeCharts() {
-
-            if (typeof Chart === "undefined") {
-
-                console.warn(
-                    "Chart.js is not loaded."
-                );
-
-                return;
-
-            }
-
-            this.createProductivityChart();
-            this.createTaskCompletionChart();
-
-        },
-
-        /* ==========================================
-           PRODUCTIVITY CHART
-        ========================================== */
-
-        createProductivityChart() {
-
-            const canvas =
-                document.getElementById("productivityChart");
-
-            if (!canvas) return;
-
-            if (this.charts.productivity) {
-                this.charts.productivity.destroy();
-            }
-
-            this.charts.productivity = new Chart(canvas, {
-
-                type: "line",
-
-                data: {
-
-                    labels: [
-                        "Monday",
-                        "Tuesday",
-                        "Wednesday",
-                        "Thursday",
-                        "Friday",
-                        "Saturday",
-                        "Sunday"
-                    ],
-
-                    datasets: [{
-
-                        label: "Productivity",
-
-                        data: [35, 48, 42, 65, 58, 78, 85],
-
-                        borderColor: "#2E5A44",
-                        backgroundColor: "rgba(46, 90, 68, 0.12)",
-
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-
-                        pointBackgroundColor: "#9BC17A",
-                        pointBorderColor: "#153126",
-
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-
-                    }]
-
-                },
-
-                options: {
-
-                    responsive: true,
-                    maintainAspectRatio: false,
-
-                    plugins: {
-
-                        legend: {
-                            display: true,
-                            position: "top"
-                        },
-
-                        tooltip: {
-                            enabled: true
-                        }
-
-                    },
-
-                    scales: {
-
-                        y: {
-
-                            beginAtZero: true,
-                            max: 100,
-
-                            ticks: {
-                                stepSize: 20
-                            },
-
-                            grid: {
-                                color: "#E5E4DC"
-                            }
-
-                        },
-
-                        x: {
-
-                            grid: {
-                                display: false
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            });
-
-        },
-
-        /* ==========================================
-           TASK COMPLETION CHART
-        ========================================== */
-
-        createTaskCompletionChart() {
-
-            const canvas =
-                document.getElementById("taskCompletionChart");
-
-            if (!canvas) return;
-
-            if (this.charts.taskCompletion) {
-                this.charts.taskCompletion.destroy();
-            }
-
-            this.charts.taskCompletion = new Chart(canvas, {
-
-                type: "doughnut",
-
-                data: {
-
-                    labels: [
-                        "Completed",
-                        "In Progress",
-                        "Pending"
-                    ],
-
-                    datasets: [{
-
-                        data: [65, 25, 10],
-
-                        backgroundColor: [
-                            "#2E5A44",
-                            "#9BC17A",
-                            "#D9B66F"
-                        ],
-
-                        borderColor: "#FFFFFF",
-                        borderWidth: 3,
-                        hoverOffset: 8
-
-                    }]
-
-                },
-
-                options: {
-
-                    responsive: true,
-                    maintainAspectRatio: false,
-
-                    cutout: "65%",
-
-                    plugins: {
-
-                        legend: {
-
-                            display: true,
-                            position: "bottom",
-
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            });
-
-        },
-
-        /* ==========================================
-           UPDATE CHARTS
-        ========================================== */
-
-        updateCharts() {
-
-            if (this.charts.productivity) {
-                this.charts.productivity.update();
-            }
-
-            if (this.charts.taskCompletion) {
-                this.charts.taskCompletion.update();
-            }
-
-        },
-
-        /* ==========================================
-           RESIZE CHARTS
-        ========================================== */
-
-        resizeCharts() {
-
-            requestAnimationFrame(() => {
-
-                if (this.charts.productivity) {
-                    this.charts.productivity.resize();
-                }
-
-                if (this.charts.taskCompletion) {
-                    this.charts.taskCompletion.resize();
-                }
-
-            });
-
-        },
-
-        /* ==========================================
-           ADD USER MODAL
-        ========================================== */
-
-        openAddUserModal() {
-
-            const modalIds = [
-                "addUserModal",
-                "userModal",
-                "add-user-modal"
-            ];
-
-            let modal = null;
-
-            for (const id of modalIds) {
-
-                const element =
-                    document.getElementById(id);
-
-                if (element) {
-                    modal = element;
-                    break;
-                }
-
-            }
-
-            if (modal) {
-
-                $(modal).modal("show");
-
-            } else {
-
-                this.showToast(
-                    "Add User modal was not found.",
-                    "warning"
-                );
-
-            }
-
-        },
-
-        /* ==========================================
-           LOADING
-        ========================================== */
-
-        showLoading() {
-
-            document
-                .getElementById("loadingOverlay")
-                ?.classList.remove("d-none");
-
-        },
-
-        hideLoading() {
-
-            document
-                .getElementById("loadingOverlay")
-                ?.classList.add("d-none");
-
-        },
-
-        /* ==========================================
-           TOAST NOTIFICATIONS
-        ========================================== */
-
-        showToast(message, type = "success") {
-
-            if (typeof Swal !== "undefined") {
-
-                Swal.fire({
-
-                    toast: true,
-                    position: "top-end",
-
-                    icon: type,
-                    title: message,
-
-                    showConfirmButton: false,
-
-                    timer: 2500,
-                    timerProgressBar: true
-
-                });
-
-            } else {
-
-                console.log(
-                    `[${type.toUpperCase()}] ${message}`
-                );
-
-            }
-
-        },
-
-        /* ==========================================
-           MODAL HELPERS
-        ========================================== */
-
-        openModal(id) {
-
-            const modal = $("#" + id);
-
-            if (modal.length) {
-                modal.modal("show");
-            }
-
-        },
-
-        closeModal(id) {
-
-            const modal = $("#" + id);
-
-            if (modal.length) {
-                modal.modal("hide");
-            }
-
-        },
-
-        /* ==========================================
-           CURRENT SECTION
-        ========================================== */
-
-        getCurrentSection() {
-
-            return this.currentSection;
-
-        },
-
-        reloadCurrentSection() {
-
-            this.showSection(
-                this.currentSection,
-                false
-            );
-
-        }
-
+  (() => {
+    "use strict";
+
+    const API = "/admindashboard/api";
+    const $ = (id) => document.getElementById(id);
+    const q = (sel) => document.querySelector(sel);
+
+    const SECTIONS = {
+      overview: "overviewSection",
+      users: "usersSection",
+      tasks: "tasksSection",
+      mood: "moodSection",
+      sessions: "sessionsSection",
     };
 
-    /* ==========================================
-       GLOBAL ACCESS
-    ========================================== */
+    const LABELS = {
+      dashboard: "overview",
+      users: "users",
+      "task management": "tasks",
+      "mood analytics": "mood",
+      "work sessions": "sessions",
+      leaderboard: "overview",
+    };
 
-    window.AdminDashboard = AdminDashboard;
+    const GREEN = "#2d5a3d";
+    const loaded = {};
 
-    /* ==========================================
-       INITIALIZE DASHBOARD
-    ========================================== */
+    /* ---------- helpers ---------- */
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
 
-    AdminDashboard.init();
+    const fmtDate = (v) => {
+      if (!v) return "-";
+      const d = new Date(v);
+      return isNaN(d) ? esc(v) : d.toLocaleDateString();
+    };
 
-});
+    function notify(icon, title, html) {
+      if (window.Swal) {
+        return Swal.fire({
+          icon,
+          title,
+          html: html || "",
+          confirmButtonColor: GREEN,
+          timer: icon === "success" ? 2500 : undefined,
+          timerProgressBar: icon === "success",
+        });
+      }
+      alert(title + (html ? "\n\n" + html.replace(/<[^>]+>/g, " ") : ""));
+      return Promise.resolve();
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function fillTable(body, rows, colspan, rowHtml) {
+      if (!body) return;
+      body.innerHTML = rows.length
+        ? rows.map(rowHtml).join("")
+        : '<tr><td colspan="' +
+          colspan +
+          '" class="text-center text-muted py-4">No records found.</td></tr>';
+    }
+
+    const isVisible = (name) => {
+      const el = $(SECTIONS[name]);
+      return !!el && !el.classList.contains("d-none");
+    };
+
+    /* ---------- overview ---------- */
+    function drawChart(canvasId, config) {
+      const canvas = $(canvasId);
+      if (!canvas || typeof Chart === "undefined") return;
+      const existing = Chart.getChart(canvas);
+      if (existing) existing.destroy();
+      new Chart(canvas, config);
+    }
+
+    function updateStats(stats) {
+      const map = {
+        "total users": stats.totalUsers,
+        "total tasks": stats.totalTasks,
+        "mood entries": stats.totalMoods,
+        "work sessions": stats.totalSessions,
+      };
+      document
+        .querySelectorAll("#overviewSection .text-xs")
+        .forEach((label) => {
+          const key = label.textContent.trim().toLowerCase();
+          const valueEl = label.nextElementSibling;
+          if (valueEl && map[key] !== undefined) valueEl.textContent = map[key];
+        });
+    }
+
+    async function loadOverview() {
+      const d = await request("/overview");
+      updateStats(d.stats);
+
+      drawChart("productivityChart", {
+        type: "line",
+        data: {
+          labels: d.productivity.labels.map(fmtDate),
+          datasets: [
+            {
+              label: "Productivity",
+              data: d.productivity.values,
+              borderColor: GREEN,
+              backgroundColor: "rgba(45,90,61,0.1)",
+              fill: true,
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 100 } },
+        },
+      });
+
+      drawChart("taskCompletionChart", {
+        type: "doughnut",
+        data: {
+          labels: d.taskStatus.labels,
+          datasets: [
+            {
+              data: d.taskStatus.values,
+              backgroundColor: [
+                GREEN,
+                "#9bc27a",
+                "#d9b56b",
+                "#6c757d",
+                "#17a2b8",
+              ],
+            },
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false },
+      });
+
+      fillTable(
+        $("leaderboardBody"),
+        d.leaderboard,
+        5,
+        (r, i) =>
+          "<tr><td>" +
+          (i + 1) +
+          "</td><td>" +
+          esc(r.name || r.email) +
+          "</td><td>" +
+          esc(r.total_points) +
+          "</td><td>" +
+          esc(r.weekly_points) +
+          "</td><td>" +
+          esc(r.study_streak) +
+          "</td></tr>",
+      );
+    }
+
+    /* ---------- users (handled by the users script) ---------- */
+    async function loadUsers() {
+      if (window.AdminUsers) await window.AdminUsers.load();
+      else console.warn("Users script is not loaded.");
+    }
+
+    /* ---------- tasks (handled by the tasks script) ---------- */
+    async function loadTasks() {
+      if (window.AdminTasks) await window.AdminTasks.load();
+      else console.warn("Tasks script is not loaded.");
+    }
+
+    /* ---------- mood (handled by the mood script) ---------- */
+    async function loadMood() {
+      if (window.AdminMood) await window.AdminMood.load();
+      else console.warn("Mood script is not loaded.");
+    }
+
+    /* ---------- sessions (handled by the sessions script) ---------- */
+    async function loadSessions() {
+      if (window.AdminSessions) await window.AdminSessions.load();
+      else console.warn("Sessions script is not loaded.");
+    }
+
+    // users / tasks / sessions scripts fire these after add / edit / delete
+    ["users:changed", "tasks:changed", "sessions:changed"].forEach((evt) =>
+      document.addEventListener(evt, async () => {
+        loaded.overview = false;
+        // deleting a user also deletes their tasks, mood entries and sessions
+        if (evt === "users:changed") {
+          loaded.tasks = false;
+          loaded.mood = false;
+          loaded.sessions = false;
+        }
+        if (isVisible("overview")) {
+          try {
+            await loadOverview();
+            loaded.overview = true;
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      }),
+    );
+
+    const loaders = {
+      overview: loadOverview,
+      users: loadUsers,
+      tasks: loadTasks,
+      mood: loadMood,
+      sessions: loadSessions,
+    };
+
+    /* ---------- navigation ---------- */
+    async function showSection(name, force) {
+      if (!SECTIONS[name]) name = "overview";
+
+      Object.entries(SECTIONS).forEach(([key, id]) => {
+        const el = $(id);
+        if (el) el.classList.toggle("d-none", key !== name);
+      });
+
+      if (force || !loaded[name]) {
+        try {
+          await loaders[name]();
+          loaded[name] = true;
+        } catch (err) {
+          console.error(err);
+          notify("error", "Could not load data", esc(err.message));
+        }
+      }
+
+      history.replaceState(null, "", "#" + name);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    /* ---------- sidebar clicks ---------- */
+    document.addEventListener("click", (e) => {
+      const link = e.target.closest(
+        ".sidebar a, .sidebar button, nav a, aside a, [data-section]",
+      );
+      if (!link) return;
+      const label = (link.dataset.section || link.textContent || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+      const target = SECTIONS[label] ? label : LABELS[label];
+      if (target) {
+        e.preventDefault();
+        showSection(target);
+      }
+    });
+
+    /* ---------- init ---------- */
+    document.addEventListener("DOMContentLoaded", () => {
+      $("btnRefreshDashboard")?.addEventListener("click", () =>
+        showSection(Object.keys(SECTIONS).find(isVisible) || "overview", true),
+      );
+
+      // opens the modal over whatever section is showing
+      $("quickAddUser")?.addEventListener("click", () => {
+        const el = $("addUserModal");
+        if (!el) return;
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+          window.jQuery(el).modal("show");
+        } else if (window.bootstrap) {
+          bootstrap.Modal.getOrCreateInstance(el).show();
+        }
+      });
+      $("quickAddTask")?.addEventListener("click", () => showSection("tasks"));
+      $("quickMood")?.addEventListener("click", () => showSection("mood"));
+      $("quickLeaderboard")?.addEventListener("click", () =>
+        showSection("overview"),
+      );
+
+      const start = location.hash.replace("#", "");
+      showSection(SECTIONS[start] ? start : "overview", true);
+    });
+  })();
 </script>

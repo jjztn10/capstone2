@@ -1,1 +1,126 @@
-<script src="/js/admin/overview.js"></script>
+<!-- Remove this line if your layout already loads Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+  (() => {
+    "use strict";
+
+    const API = "/admindashboard/api";
+    const $ = (id) => document.getElementById(id);
+
+    const SECTIONS = {
+      overview: "overviewSection",
+      users: "usersSection",
+      tasks: "tasksSection",
+      mood: "moodSection",
+      sessions: "sessionsSection",
+    };
+
+    async function request(path) {
+      const res = await fetch(API + path);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function drawChart(canvasId, config) {
+      const canvas = $(canvasId);
+      if (!canvas || typeof Chart === "undefined") return;
+      const existing = Chart.getChart(canvas);
+      if (existing) existing.destroy();
+      new Chart(canvas, config);
+    }
+
+    const fmtDay = (v) => {
+      const d = new Date(v);
+      return isNaN(d)
+        ? String(v)
+        : d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    };
+
+    async function loadCharts() {
+      try {
+        const d = await request("/overview");
+
+        drawChart("productivityChart", {
+          type: "line",
+          data: {
+            labels: d.productivity.labels.map(fmtDay),
+            datasets: [
+              {
+                label: "Productivity",
+                data: d.productivity.values,
+                borderColor: "#2d5a3d",
+                backgroundColor: "rgba(45,90,61,0.1)",
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { min: 0, max: 100 } },
+          },
+        });
+
+        drawChart("taskCompletionChart", {
+          type: "doughnut",
+          data: {
+            labels: d.taskStatus.labels,
+            datasets: [
+              {
+                data: d.taskStatus.values,
+                backgroundColor: [
+                  "#2d5a3d",
+                  "#9bc27a",
+                  "#d9b56b",
+                  "#6c757d",
+                  "#17a2b8",
+                ],
+              },
+            ],
+          },
+          options: { responsive: true, maintainAspectRatio: false },
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function showSection(name) {
+      Object.entries(SECTIONS).forEach(([key, id]) => {
+        const el = $(id);
+        if (el) el.classList.toggle("d-none", key !== name);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function openModal(id) {
+      const el = $(id);
+      if (!el) return;
+      if (window.bootstrap)
+        return bootstrap.Modal.getOrCreateInstance(el).show();
+      if (window.jQuery) return window.jQuery(el).modal("show");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadCharts();
+
+      $("btnRefreshDashboard")?.addEventListener("click", () =>
+        location.reload(),
+      );
+
+      $("quickAddUser")?.addEventListener("click", () => {
+        showSection("users");
+        openModal("addUserModal"); // change if your modal id differs
+      });
+      $("quickAddTask")?.addEventListener("click", () => showSection("tasks"));
+      $("quickMood")?.addEventListener("click", () => showSection("mood"));
+      $("quickLeaderboard")?.addEventListener("click", () =>
+        showSection("overview"),
+      );
+    });
+  })();
+</script>
