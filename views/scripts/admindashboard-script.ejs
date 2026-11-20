@@ -1,0 +1,672 @@
+
+<script>
+"use strict";
+
+$(document).ready(function () {
+
+    /* =========================================================
+       SMARTWORK ADMIN DASHBOARD
+       Navigation, Charts, Quick Actions and Refresh
+    ========================================================= */
+
+    const AdminDashboard = {
+
+        currentSection: "overviewSection",
+
+        sections: [],
+        navLinks: [],
+        sidebarLinks: [],
+
+        charts: {
+            productivity: null,
+            taskCompletion: null
+        },
+
+        /* ==========================================
+           INITIALIZE
+        ========================================== */
+
+        init() {
+
+            this.cacheDOM();
+            this.bindNavigation();
+            this.bindButtons();
+
+            this.showSection(this.currentSection, false);
+
+            this.initializeCharts();
+
+            console.log("SmartWork Admin Dashboard Initialized");
+
+        },
+
+        /* ==========================================
+           CACHE DOM
+        ========================================== */
+
+        cacheDOM() {
+
+            this.sections = Array.from(
+                document.querySelectorAll(".dashboard-section")
+            );
+
+            this.navLinks = Array.from(
+                document.querySelectorAll("#dashboardTabs [data-target]")
+            );
+
+            this.sidebarLinks = Array.from(
+                document.querySelectorAll("#accordionSidebar [data-target]")
+            );
+
+        },
+
+        /* ==========================================
+           NAVIGATION
+        ========================================== */
+
+        bindNavigation() {
+
+            const allLinks = [
+                ...this.navLinks,
+                ...this.sidebarLinks
+            ];
+
+            allLinks.forEach(link => {
+
+                link.addEventListener("click", event => {
+
+                    const target = link.dataset.target;
+
+                    if (!target) return;
+
+                    event.preventDefault();
+
+                    this.showSection(target);
+
+                });
+
+            });
+
+        },
+
+        /* ==========================================
+           SHOW SECTION
+        ========================================== */
+
+        showSection(sectionId, scroll = true) {
+
+            const activeSection =
+                document.getElementById(sectionId);
+
+            if (!activeSection) {
+
+                console.warn(
+                    "Dashboard section not found:",
+                    sectionId
+                );
+
+                return;
+
+            }
+
+            this.currentSection = sectionId;
+
+            this.sections.forEach(section => {
+
+                section.classList.add("d-none");
+                section.classList.remove("show");
+
+            });
+
+            activeSection.classList.remove("d-none");
+            activeSection.classList.add("show");
+
+            this.setActiveNavigation(sectionId);
+            this.updatePageTitle(sectionId);
+            this.resizeCharts();
+
+            if (scroll) {
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+
+            }
+
+        },
+
+        /* ==========================================
+           ACTIVE NAVIGATION
+        ========================================== */
+
+        setActiveNavigation(sectionId) {
+
+            const allLinks = [
+                ...this.navLinks,
+                ...this.sidebarLinks
+            ];
+
+            allLinks.forEach(link => {
+
+                const isActive =
+                    link.dataset.target === sectionId;
+
+                link.classList.toggle("active", isActive);
+
+                const parent = link.closest(".nav-item");
+
+                if (
+                    parent &&
+                    link.closest("#accordionSidebar")
+                ) {
+
+                    parent.classList.toggle("active", isActive);
+
+                }
+
+                if (isActive) {
+
+                    link.setAttribute("aria-current", "page");
+
+                } else {
+
+                    link.removeAttribute("aria-current");
+
+                }
+
+            });
+
+        },
+
+        /* ==========================================
+           PAGE TITLES
+        ========================================== */
+
+        updatePageTitle(sectionId) {
+
+            const pageTitle =
+                document.getElementById("pageTitle");
+
+            if (!pageTitle) return;
+
+            const titles = {
+
+                overviewSection: "Dashboard Overview",
+                usersSection: "User Management",
+                tasksSection: "Task Management",
+                moodSection: "Mood Analytics",
+                sessionsSection: "Work Sessions",
+                leaderboardSection: "Leaderboard"
+
+            };
+
+            pageTitle.textContent =
+                titles[sectionId] || "Admin Dashboard";
+
+        },
+
+        /* ==========================================
+           BUTTON EVENTS
+        ========================================== */
+
+        bindButtons() {
+
+            // Refresh buttons
+            const refreshButtons = [
+                "btnRefreshDashboard",
+                "refreshDashboardBtn"
+            ];
+
+            refreshButtons.forEach(id => {
+
+                const button = document.getElementById(id);
+
+                if (button) {
+
+                    button.addEventListener("click", () => {
+                        this.refreshDashboard();
+                    });
+
+                }
+
+            });
+
+            // Quick Add User
+            $("#quickAddUser").on("click", () => {
+
+                this.openAddUserModal();
+
+            });
+
+            // Quick Add Task
+            $("#quickAddTask").on("click", () => {
+
+                this.showSection("tasksSection");
+
+            });
+
+            // Quick Mood
+            $("#quickMood").on("click", () => {
+
+                this.showSection("moodSection");
+
+            });
+
+            // Quick Leaderboard
+            $("#quickLeaderboard").on("click", () => {
+
+                this.showSection("leaderboardSection");
+
+            });
+
+        },
+
+        /* ==========================================
+           REFRESH DASHBOARD
+        ========================================== */
+
+        refreshDashboard() {
+
+            this.showLoading();
+
+            this.updateCharts();
+
+            this.hideLoading();
+
+            this.showToast(
+                "Dashboard refreshed successfully!",
+                "success"
+            );
+
+        },
+
+        /* ==========================================
+           INITIALIZE CHARTS
+        ========================================== */
+
+        initializeCharts() {
+
+            if (typeof Chart === "undefined") {
+
+                console.warn(
+                    "Chart.js is not loaded."
+                );
+
+                return;
+
+            }
+
+            this.createProductivityChart();
+            this.createTaskCompletionChart();
+
+        },
+
+        /* ==========================================
+           PRODUCTIVITY CHART
+        ========================================== */
+
+        createProductivityChart() {
+
+            const canvas =
+                document.getElementById("productivityChart");
+
+            if (!canvas) return;
+
+            if (this.charts.productivity) {
+                this.charts.productivity.destroy();
+            }
+
+            this.charts.productivity = new Chart(canvas, {
+
+                type: "line",
+
+                data: {
+
+                    labels: [
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                        "Sunday"
+                    ],
+
+                    datasets: [{
+
+                        label: "Productivity",
+
+                        data: [35, 48, 42, 65, 58, 78, 85],
+
+                        borderColor: "#2E5A44",
+                        backgroundColor: "rgba(46, 90, 68, 0.12)",
+
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+
+                        pointBackgroundColor: "#9BC17A",
+                        pointBorderColor: "#153126",
+
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+
+                        legend: {
+                            display: true,
+                            position: "top"
+                        },
+
+                        tooltip: {
+                            enabled: true
+                        }
+
+                    },
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true,
+                            max: 100,
+
+                            ticks: {
+                                stepSize: 20
+                            },
+
+                            grid: {
+                                color: "#E5E4DC"
+                            }
+
+                        },
+
+                        x: {
+
+                            grid: {
+                                display: false
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        },
+
+        /* ==========================================
+           TASK COMPLETION CHART
+        ========================================== */
+
+        createTaskCompletionChart() {
+
+            const canvas =
+                document.getElementById("taskCompletionChart");
+
+            if (!canvas) return;
+
+            if (this.charts.taskCompletion) {
+                this.charts.taskCompletion.destroy();
+            }
+
+            this.charts.taskCompletion = new Chart(canvas, {
+
+                type: "doughnut",
+
+                data: {
+
+                    labels: [
+                        "Completed",
+                        "In Progress",
+                        "Pending"
+                    ],
+
+                    datasets: [{
+
+                        data: [65, 25, 10],
+
+                        backgroundColor: [
+                            "#2E5A44",
+                            "#9BC17A",
+                            "#D9B66F"
+                        ],
+
+                        borderColor: "#FFFFFF",
+                        borderWidth: 3,
+                        hoverOffset: 8
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    cutout: "65%",
+
+                    plugins: {
+
+                        legend: {
+
+                            display: true,
+                            position: "bottom",
+
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            });
+
+        },
+
+        /* ==========================================
+           UPDATE CHARTS
+        ========================================== */
+
+        updateCharts() {
+
+            if (this.charts.productivity) {
+                this.charts.productivity.update();
+            }
+
+            if (this.charts.taskCompletion) {
+                this.charts.taskCompletion.update();
+            }
+
+        },
+
+        /* ==========================================
+           RESIZE CHARTS
+        ========================================== */
+
+        resizeCharts() {
+
+            requestAnimationFrame(() => {
+
+                if (this.charts.productivity) {
+                    this.charts.productivity.resize();
+                }
+
+                if (this.charts.taskCompletion) {
+                    this.charts.taskCompletion.resize();
+                }
+
+            });
+
+        },
+
+        /* ==========================================
+           ADD USER MODAL
+        ========================================== */
+
+        openAddUserModal() {
+
+            const modalIds = [
+                "addUserModal",
+                "userModal",
+                "add-user-modal"
+            ];
+
+            let modal = null;
+
+            for (const id of modalIds) {
+
+                const element =
+                    document.getElementById(id);
+
+                if (element) {
+                    modal = element;
+                    break;
+                }
+
+            }
+
+            if (modal) {
+
+                $(modal).modal("show");
+
+            } else {
+
+                this.showToast(
+                    "Add User modal was not found.",
+                    "warning"
+                );
+
+            }
+
+        },
+
+        /* ==========================================
+           LOADING
+        ========================================== */
+
+        showLoading() {
+
+            document
+                .getElementById("loadingOverlay")
+                ?.classList.remove("d-none");
+
+        },
+
+        hideLoading() {
+
+            document
+                .getElementById("loadingOverlay")
+                ?.classList.add("d-none");
+
+        },
+
+        /* ==========================================
+           TOAST NOTIFICATIONS
+        ========================================== */
+
+        showToast(message, type = "success") {
+
+            if (typeof Swal !== "undefined") {
+
+                Swal.fire({
+
+                    toast: true,
+                    position: "top-end",
+
+                    icon: type,
+                    title: message,
+
+                    showConfirmButton: false,
+
+                    timer: 2500,
+                    timerProgressBar: true
+
+                });
+
+            } else {
+
+                console.log(
+                    `[${type.toUpperCase()}] ${message}`
+                );
+
+            }
+
+        },
+
+        /* ==========================================
+           MODAL HELPERS
+        ========================================== */
+
+        openModal(id) {
+
+            const modal = $("#" + id);
+
+            if (modal.length) {
+                modal.modal("show");
+            }
+
+        },
+
+        closeModal(id) {
+
+            const modal = $("#" + id);
+
+            if (modal.length) {
+                modal.modal("hide");
+            }
+
+        },
+
+        /* ==========================================
+           CURRENT SECTION
+        ========================================== */
+
+        getCurrentSection() {
+
+            return this.currentSection;
+
+        },
+
+        reloadCurrentSection() {
+
+            this.showSection(
+                this.currentSection,
+                false
+            );
+
+        }
+
+    };
+
+    /* ==========================================
+       GLOBAL ACCESS
+    ========================================== */
+
+    window.AdminDashboard = AdminDashboard;
+
+    /* ==========================================
+       INITIALIZE DASHBOARD
+    ========================================== */
+
+    AdminDashboard.init();
+
+});
+</script>

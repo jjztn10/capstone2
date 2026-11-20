@@ -1,0 +1,410 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN THEME
+   Official SmartWork Color Palette
+========================================================= */
+
+/* =========================================================
+   1. THEME VARIABLES
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+
+    --admin-success: #4F8A5B;
+    --admin-warning: #D5A441;
+    --admin-danger: #C94C4C;
+    --admin-info: #5B8792;
+
+    --admin-radius: 12px;
+    --admin-radius-sm: 7px;
+
+    --admin-shadow:
+        0 4px 15px rgba(21, 49, 38, 0.06);
+
+    --admin-transition: all 0.2s ease;
+}
+
+/* =========================================================
+   2. GLOBAL ADMIN THEME
+========================================================= */
+
+.admin-dashboard {
+    color: var(--admin-text);
+    background-color: var(--admin-background);
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.admin-dashboard *,
+.admin-dashboard *::before,
+.admin-dashboard *::after {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   3. BACKGROUND COLORS
+========================================================= */
+
+.admin-dashboard,
+.admin-dashboard .admin-page,
+.admin-dashboard .dashboard-section {
+    background-color: var(--admin-background);
+}
+
+.admin-dashboard .bg-admin-primary {
+    background-color: var(--admin-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.admin-dashboard .bg-admin-secondary {
+    background-color: var(--admin-secondary) !important;
+    color: #FFFFFF !important;
+}
+
+.admin-dashboard .bg-admin-accent {
+    background-color: var(--admin-accent) !important;
+    color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .bg-admin-light {
+    background-color: var(--admin-background) !important;
+}
+
+.admin-dashboard .bg-admin-white {
+    background-color: #FFFFFF !important;
+}
+
+/* =========================================================
+   4. TEXT COLORS
+========================================================= */
+
+.admin-dashboard .text-admin-primary {
+    color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .text-admin-secondary {
+    color: var(--admin-secondary) !important;
+}
+
+.admin-dashboard .text-admin-accent {
+    color: var(--admin-accent) !important;
+}
+
+.admin-dashboard .text-admin-dark {
+    color: var(--admin-dark) !important;
+}
+
+.admin-dashboard .text-admin-muted {
+    color: var(--admin-muted) !important;
+}
+
+/* =========================================================
+   5. TYPOGRAPHY
+========================================================= */
+
+.admin-dashboard h1,
+.admin-dashboard h2,
+.admin-dashboard h3,
+.admin-dashboard h4,
+.admin-dashboard h5,
+.admin-dashboard h6 {
+    color: var(--admin-primary);
+    font-family: "Inter", Arial, sans-serif;
+    font-weight: 700;
+}
+
+.admin-dashboard p {
+    color: var(--admin-text);
+}
+
+.admin-dashboard .text-muted {
+    color: var(--admin-muted) !important;
+}
+
+.admin-dashboard .font-weight-bold {
+    font-weight: 700 !important;
+}
+
+.admin-dashboard .small {
+    font-size: 0.8rem;
+}
+
+/* =========================================================
+   6. CARD THEME
+========================================================= */
+
+.admin-dashboard .card {
+    background-color: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-dashboard .card-header {
+    color: var(--admin-primary);
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .card-footer {
+    background-color: #FAFAF7;
+    border-top: 1px solid var(--admin-border);
+}
+
+/* =========================================================
+   7. BORDER COLORS
+========================================================= */
+
+.admin-dashboard .border-admin-primary {
+    border-color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .border-admin-secondary {
+    border-color: var(--admin-secondary) !important;
+}
+
+.admin-dashboard .border-admin-accent {
+    border-color: var(--admin-accent) !important;
+}
+
+.admin-dashboard .border-admin-light {
+    border-color: var(--admin-border) !important;
+}
+
+/* =========================================================
+   8. BUTTON THEME
+========================================================= */
+
+.admin-dashboard .btn-admin-primary {
+    color: #FFFFFF;
+    background-color: var(--admin-primary);
+    border: 1px solid var(--admin-primary);
+    border-radius: var(--admin-radius-sm);
+    font-weight: 700;
+    transition: var(--admin-transition);
+}
+
+.admin-dashboard .btn-admin-primary:hover {
+    color: #FFFFFF;
+    background-color: var(--admin-secondary);
+    border-color: var(--admin-secondary);
+}
+
+.admin-dashboard .btn-admin-secondary {
+    color: #FFFFFF;
+    background-color: var(--admin-secondary);
+    border: 1px solid var(--admin-secondary);
+    border-radius: var(--admin-radius-sm);
+    font-weight: 700;
+}
+
+.admin-dashboard .btn-admin-secondary:hover {
+    color: var(--admin-primary);
+    background-color: var(--admin-accent);
+    border-color: var(--admin-accent);
+}
+
+.admin-dashboard .btn-admin-light {
+    color: var(--admin-primary);
+    background-color: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+}
+
+.admin-dashboard .btn-admin-light:hover {
+    background-color: #EDF2E9;
+}
+
+/* =========================================================
+   9. STATUS COLORS
+========================================================= */
+
+.admin-dashboard .status-success {
+    color: var(--admin-success);
+}
+
+.admin-dashboard .status-warning {
+    color: var(--admin-warning);
+}
+
+.admin-dashboard .status-danger {
+    color: var(--admin-danger);
+}
+
+.admin-dashboard .status-info {
+    color: var(--admin-info);
+}
+
+/* =========================================================
+   10. BADGE THEME
+========================================================= */
+
+.admin-dashboard .badge-admin {
+    color: var(--admin-primary);
+    background-color: rgba(155, 193, 122, 0.35);
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .badge-user {
+    color: var(--admin-secondary);
+    background-color: #E5F0E5;
+}
+
+.admin-dashboard .badge-active {
+    color: #285A39;
+    background-color: #E1F0DF;
+}
+
+.admin-dashboard .badge-inactive {
+    color: #626A64;
+    background-color: #E9ECE9;
+}
+
+/* =========================================================
+   11. FORM THEME
+========================================================= */
+
+.admin-dashboard input,
+.admin-dashboard select,
+.admin-dashboard textarea {
+    font-family: inherit;
+}
+
+.admin-dashboard .form-control,
+.admin-dashboard .custom-select {
+    color: var(--admin-dark);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-sm);
+}
+
+.admin-dashboard .form-control:focus,
+.admin-dashboard .custom-select:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.12);
+}
+
+/* =========================================================
+   12. TABLE THEME
+========================================================= */
+
+.admin-dashboard .table thead th {
+    color: #FFFFFF;
+    background-color: var(--admin-primary);
+}
+
+.admin-dashboard .table tbody tr:hover {
+    background-color: #EDF2E9;
+}
+
+/* =========================================================
+   13. LINKS
+========================================================= */
+
+.admin-dashboard a {
+    color: var(--admin-secondary);
+    text-decoration: none;
+    transition: var(--admin-transition);
+}
+
+.admin-dashboard a:hover {
+    color: var(--admin-primary);
+    text-decoration: none;
+}
+
+/* =========================================================
+   14. ICON THEME
+========================================================= */
+
+.admin-dashboard .admin-icon {
+    color: var(--admin-secondary);
+}
+
+.admin-dashboard .admin-icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    color: var(--admin-primary);
+    background-color: rgba(155, 193, 122, 0.25);
+    border-radius: 50%;
+}
+
+/* =========================================================
+   15. SHADOW UTILITIES
+========================================================= */
+
+.admin-dashboard .shadow-admin {
+    box-shadow: var(--admin-shadow) !important;
+}
+
+.admin-dashboard .shadow-none {
+    box-shadow: none !important;
+}
+
+/* =========================================================
+   16. FINAL THEME OVERRIDES
+========================================================= */
+
+.admin-dashboard .text-primary {
+    color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .bg-primary {
+    background-color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .border-left-primary {
+    border-left: 4px solid var(--admin-primary) !important;
+}
+
+.admin-dashboard .border-left-success {
+    border-left: 4px solid var(--admin-secondary) !important;
+}
+
+.admin-dashboard .border-left-info {
+    border-left: 4px solid var(--admin-accent) !important;
+}
+
+.admin-dashboard .border-left-warning {
+    border-left: 4px solid var(--admin-warning) !important;
+}
+/* SmartWork Green Theme Overrides */
+
+#accordionSidebar .sidebar-brand,
+#accordionSidebar .sidebar-brand:hover {
+    color: #F4F1EA !important;
+}
+
+.btn-primary {
+    background-color: #2E5A44 !important;
+    border-color: #2E5A44 !important;
+}
+
+.btn-primary:hover {
+    background-color: #153126 !important;
+    border-color: #153126 !important;
+}
+
+.navbar-search .btn-primary {
+    background-color: #153126 !important;
+    border-color: #153126 !important;
+}
+/* =========================================================
+   END OF ADMIN THEME
+========================================================= */

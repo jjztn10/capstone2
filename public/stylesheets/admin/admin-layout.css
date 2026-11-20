@@ -1,0 +1,374 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN LAYOUT
+   Official SmartWork Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. ADMIN DASHBOARD BASE
+========================================================= */
+
+.admin-dashboard {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--admin-background);
+    color: var(--admin-dark);
+    font-family: "Inter", Arial, sans-serif;
+}
+
+/* Box sizing */
+
+.admin-dashboard *,
+.admin-dashboard *::before,
+.admin-dashboard *::after {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   2. PAGE BACKGROUND
+========================================================= */
+
+body.admin-body,
+body:has(.admin-dashboard) {
+    background-color: var(--admin-background);
+}
+
+.admin-dashboard .admin-page {
+    width: 100%;
+    min-height: 400px;
+    padding: 20px 0;
+    animation: adminPageFade 0.25s ease;
+}
+
+.admin-dashboard .admin-page.d-none {
+    display: none !important;
+}
+
+@keyframes adminPageFade {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   3. MAIN CONTENT WRAPPER
+========================================================= */
+
+.admin-dashboard .admin-container {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 30px;
+}
+
+.admin-dashboard .dashboard-content {
+    width: 100%;
+    padding: 24px 30px;
+    margin: 0 auto;
+}
+
+/* =========================================================
+   4. SECTION HEADINGS
+========================================================= */
+
+.admin-dashboard .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+.admin-dashboard .section-header h1,
+.admin-dashboard .section-header h2,
+.admin-dashboard .section-header h3 {
+    color: var(--admin-primary);
+    font-weight: 800;
+    margin: 0;
+}
+
+.admin-dashboard .section-header p {
+    color: var(--admin-muted);
+    font-size: 0.88rem;
+    margin: 5px 0 0;
+}
+
+/* =========================================================
+   5. CONTENT SECTIONS
+========================================================= */
+
+.admin-dashboard .admin-section {
+    width: 100%;
+    margin-bottom: 25px;
+}
+
+.admin-dashboard .dashboard-section {
+    width: 100%;
+    min-height: 400px;
+    padding: 20px 0;
+}
+
+.admin-dashboard .dashboard-section.d-none {
+    display: none !important;
+}
+
+/* =========================================================
+   6. BOOTSTRAP GRID SPACING
+========================================================= */
+
+.admin-dashboard .row {
+    margin-bottom: 0;
+}
+
+.admin-dashboard .row > [class*="col-"] {
+    margin-bottom: 18px;
+}
+
+/* =========================================================
+   7. CONTENT DIVIDERS
+========================================================= */
+
+.admin-dashboard .section-divider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--admin-border);
+    border: none;
+    margin: 22px 0;
+}
+
+/* =========================================================
+   8. GENERAL TYPOGRAPHY
+========================================================= */
+
+.admin-dashboard h1,
+.admin-dashboard h2,
+.admin-dashboard h3,
+.admin-dashboard h4,
+.admin-dashboard h5,
+.admin-dashboard h6 {
+    color: var(--admin-primary);
+    font-family: inherit;
+}
+
+.admin-dashboard p {
+    color: var(--admin-dark);
+    line-height: 1.6;
+}
+
+.admin-dashboard small {
+    color: var(--admin-muted);
+}
+
+.admin-dashboard a {
+    transition: color 0.2s ease;
+}
+
+/* =========================================================
+   9. CONTENT WIDTH UTILITIES
+========================================================= */
+
+.admin-dashboard .content-narrow {
+    width: 100%;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.admin-dashboard .content-wide {
+    width: 100%;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* =========================================================
+   10. SPACING UTILITIES
+========================================================= */
+
+.admin-dashboard .mb-admin {
+    margin-bottom: 24px;
+}
+
+.admin-dashboard .mt-admin {
+    margin-top: 24px;
+}
+
+.admin-dashboard .py-admin {
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* =========================================================
+   11. SCROLLBAR
+========================================================= */
+
+.admin-dashboard {
+    scrollbar-width: thin;
+    scrollbar-color: var(--admin-secondary) var(--admin-background);
+}
+
+.admin-dashboard::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.admin-dashboard::-webkit-scrollbar-track {
+    background: var(--admin-background);
+}
+
+.admin-dashboard::-webkit-scrollbar-thumb {
+    background: var(--admin-secondary);
+    border-radius: 10px;
+}
+
+.admin-dashboard::-webkit-scrollbar-thumb:hover {
+    background: var(--admin-primary);
+}
+
+/* =========================================================
+   12. RESPONSIVE LAYOUT
+========================================================= */
+
+@media (min-width: 1600px) {
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding-left: 40px;
+        padding-right: 40px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding: 18px 16px;
+    }
+
+    .admin-dashboard .admin-page,
+    .admin-dashboard .dashboard-section {
+        padding: 12px 0;
+    }
+
+    .admin-dashboard .section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-dashboard .row > [class*="col-"] {
+        margin-bottom: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding: 14px 12px;
+    }
+
+    .admin-dashboard .admin-page,
+    .admin-dashboard .dashboard-section {
+        min-height: 300px;
+    }
+}
+/* ==========================================
+   SMARTWORK ADMIN SIDEBAR LAYOUT
+========================================== */
+
+#wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+#accordionSidebar {
+    width: 14rem;
+    min-width: 14rem;
+    min-height: 100vh;
+    flex-shrink: 0;
+    background: #153126 !important;
+}
+
+#accordionSidebar .sidebar-brand {
+    height: 4.375rem;
+    text-decoration: none;
+}
+
+#accordionSidebar .sidebar-heading {
+    color: #9BC17A;
+}
+
+#accordionSidebar .nav-link {
+    color: #F4F1EA;
+}
+
+#accordionSidebar .nav-link i {
+    color: #9BC17A;
+}
+
+#accordionSidebar .nav-link:hover,
+#accordionSidebar .nav-item.active .nav-link {
+    color: #FFFFFF;
+    background: #2E5A44;
+}
+
+#content-wrapper {
+    width: calc(100% - 14rem);
+    min-width: 0;
+    min-height: 100vh;
+}
+
+#content {
+    flex: 1 0 auto;
+}
+
+@media (max-width: 767.98px) {
+    #accordionSidebar {
+        width: 6.5rem;
+        min-width: 6.5rem;
+    }
+
+    #content-wrapper {
+        width: calc(100% - 6.5rem);
+    }
+}
+#sidebarToggle {
+    width: 40px;
+    height: 40px;
+    background-color: #2E5A44 !important;
+}
+
+#sidebarToggle::after {
+    color: #F4F1EA !important;
+}
+/* =========================================================
+   END OF ADMIN LAYOUT
+========================================================= */

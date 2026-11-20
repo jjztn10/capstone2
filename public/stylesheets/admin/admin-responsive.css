@@ -1,0 +1,422 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN RESPONSIVE
+   Official SmartWork Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. GENERAL RESPONSIVENESS
+========================================================= */
+
+.admin-dashboard {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.admin-dashboard img,
+.admin-dashboard canvas,
+.admin-dashboard video {
+    max-width: 100%;
+}
+
+.admin-dashboard .container-fluid {
+    width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* =========================================================
+   2. LARGE SCREENS
+========================================================= */
+
+@media (min-width: 1400px) {
+    .admin-dashboard .container-fluid {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .admin-dashboard .row {
+        row-gap: 10px;
+    }
+
+    .admin-dashboard .card {
+        margin-bottom: 20px;
+    }
+}
+
+/* =========================================================
+   3. LAPTOPS
+========================================================= */
+
+@media (max-width: 1199px) {
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .admin-dashboard .card-body {
+        padding: 18px;
+    }
+
+    .admin-dashboard .section-header {
+        gap: 12px;
+    }
+
+    .admin-dashboard .table {
+        font-size: 0.85rem;
+    }
+}
+
+/* =========================================================
+   4. TABLETS
+========================================================= */
+
+@media (max-width: 991px) {
+
+    /* Header */
+
+    .admin-dashboard .admin-header {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .admin-dashboard .admin-header h1 {
+        font-size: 1.5rem;
+    }
+
+    /* Navigation */
+
+    .admin-dashboard .admin-tabs,
+    .admin-dashboard .admin-navigation {
+        flex-wrap: wrap;
+    }
+
+    /* Cards */
+
+    .admin-dashboard .card {
+        margin-bottom: 18px;
+    }
+
+    .admin-dashboard .stat-card {
+        min-height: 120px;
+    }
+
+    /* Charts */
+
+    .admin-dashboard .chart-container {
+        min-height: 250px;
+    }
+
+    /* Tables */
+
+    .admin-dashboard .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-dashboard table {
+        min-width: 650px;
+    }
+}
+
+/* =========================================================
+   5. MOBILE DEVICES
+========================================================= */
+
+@media (max-width: 767px) {
+
+    /* Main content */
+
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding: 15px 12px;
+    }
+
+    .admin-dashboard .container-fluid {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Header */
+
+    .admin-dashboard .admin-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-dashboard .admin-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .admin-dashboard .admin-header p {
+        font-size: 0.82rem;
+    }
+
+    .admin-dashboard .header-actions {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Section headings */
+
+    .admin-dashboard .section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-dashboard .section-header h2 {
+        font-size: 1.2rem;
+    }
+
+    /* Navigation */
+
+    .admin-dashboard .admin-tabs,
+    .admin-dashboard .admin-navigation {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .admin-dashboard .admin-tabs .nav-link,
+    .admin-dashboard .admin-navigation a {
+        padding: 9px 12px;
+        font-size: 0.78rem;
+    }
+
+    /* Statistic cards */
+
+    .admin-dashboard .row {
+        margin-left: -7px;
+        margin-right: -7px;
+    }
+
+    .admin-dashboard .row > [class*="col-"] {
+        padding-left: 7px;
+        padding-right: 7px;
+        margin-bottom: 14px;
+    }
+
+    .admin-dashboard .stat-card {
+        min-height: 110px;
+    }
+
+    .admin-dashboard .card-body {
+        padding: 14px;
+    }
+
+    .admin-dashboard .stat-card h3,
+    .admin-dashboard .stat-card .h5 {
+        font-size: 1.2rem;
+    }
+
+    /* Tables */
+
+    .admin-dashboard .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-dashboard table {
+        min-width: 600px;
+    }
+
+    .admin-dashboard .table th,
+    .admin-dashboard .table td {
+        padding: 10px 8px;
+        white-space: nowrap;
+    }
+
+    /* Charts */
+
+    .admin-dashboard .chart-container {
+        position: relative;
+        width: 100%;
+        min-height: 220px;
+    }
+
+    .admin-dashboard canvas {
+        max-width: 100%;
+    }
+
+    /* Forms */
+
+    .admin-dashboard .form-group {
+        margin-bottom: 15px;
+    }
+
+    .admin-dashboard .form-control,
+    .admin-dashboard .custom-select {
+        font-size: 0.9rem;
+    }
+
+    /* Buttons */
+
+    .admin-dashboard .btn {
+        font-size: 0.82rem;
+    }
+
+    /* Modals */
+
+    .admin-dashboard .modal-dialog {
+        margin: 10px;
+    }
+
+    .admin-dashboard .modal-body {
+        padding: 16px;
+    }
+}
+
+/* =========================================================
+   6. SMALL MOBILE DEVICES
+========================================================= */
+
+@media (max-width: 480px) {
+
+    /* Main content */
+
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding: 12px 10px;
+    }
+
+    /* Titles */
+
+    .admin-dashboard h1 {
+        font-size: 1.25rem;
+    }
+
+    .admin-dashboard h2 {
+        font-size: 1.1rem;
+    }
+
+    .admin-dashboard h3 {
+        font-size: 1rem;
+    }
+
+    /* Cards */
+
+    .admin-dashboard .card {
+        border-radius: 9px;
+    }
+
+    .admin-dashboard .card-body {
+        padding: 12px;
+    }
+
+    .admin-dashboard .stat-card {
+        min-height: 100px;
+    }
+
+    /* Navigation */
+
+    .admin-dashboard .admin-tabs,
+    .admin-dashboard .admin-navigation {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-dashboard .admin-tabs .nav-link,
+    .admin-dashboard .admin-navigation a {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Buttons */
+
+    .admin-dashboard .btn {
+        padding: 8px 11px;
+    }
+
+    .admin-dashboard .header-actions .btn {
+        flex: 1;
+    }
+
+    /* Tables */
+
+    .admin-dashboard table {
+        min-width: 550px;
+    }
+
+    /* Charts */
+
+    .admin-dashboard .chart-container {
+        min-height: 190px;
+    }
+
+    /* Modals */
+
+    .admin-dashboard .modal-dialog {
+        margin: 8px;
+    }
+
+    .admin-dashboard .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .admin-dashboard .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   7. EXTRA SMALL DEVICES
+========================================================= */
+
+@media (max-width: 360px) {
+    .admin-dashboard .admin-container,
+    .admin-dashboard .dashboard-content {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+
+    .admin-dashboard .stat-card h3,
+    .admin-dashboard .stat-card .h5 {
+        font-size: 1rem;
+    }
+
+    .admin-dashboard .admin-tabs .nav-link,
+    .admin-dashboard .admin-navigation a {
+        padding: 8px 6px;
+        font-size: 0.72rem;
+    }
+}
+
+/* =========================================================
+   8. LANDSCAPE MOBILE
+========================================================= */
+
+@media (max-height: 500px) and (orientation: landscape) {
+    .admin-dashboard .modal-dialog {
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
+
+    .admin-dashboard .modal-body {
+        max-height: 55vh;
+        overflow-y: auto;
+    }
+}
+
+/* =========================================================
+   END OF ADMIN RESPONSIVE
+========================================================= */

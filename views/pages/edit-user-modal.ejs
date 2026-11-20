@@ -1,0 +1,345 @@
+<!-- ==========================================
+     EDIT USER MODAL
+========================================== -->
+
+<div
+    class="modal fade"
+    id="editUserModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="editUserModalLabel"
+    aria-hidden="true">
+
+    <div
+        class="modal-dialog modal-lg"
+        role="document">
+
+        <div class="modal-content">
+
+            <!-- Header -->
+
+            <div class="modal-header bg-warning text-white">
+
+                <h5
+                    class="modal-title"
+                    id="editUserModalLabel">
+
+                    <i class="fas fa-user-edit mr-2"></i>
+
+                    Edit User
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="close text-white"
+                    data-dismiss="modal"
+                    aria-label="Close">
+
+                    <span aria-hidden="true">&times;</span>
+
+                </button>
+
+            </div>
+
+            <!-- Body -->
+
+            <div class="modal-body">
+
+                <form id="editUserForm">
+
+                    <!-- Hidden User ID -->
+
+                    <input
+                        type="hidden"
+                        id="editUserId"
+                        name="id">
+
+                    <div class="row">
+
+                        <!-- Full Name -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editFullName">
+
+                                Full Name
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="editFullName"
+                                name="fullName"
+                                required>
+
+                        </div>
+
+                        <!-- Username -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editUsername">
+
+                                Username
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="editUsername"
+                                name="username"
+                                required>
+
+                        </div>
+
+                        <!-- Email -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editEmail">
+
+                                Email Address
+
+                            </label>
+
+                            <input
+                                type="email"
+                                class="form-control"
+                                id="editEmail"
+                                name="email"
+                                required>
+
+                        </div>
+
+                        <!-- Contact Number -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editContactNumber">
+
+                                Contact Number
+
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="editContactNumber"
+                                name="contactNumber">
+
+                        </div>
+
+                        <!-- Password -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editPassword">
+
+                                New Password
+
+                            </label>
+
+                            <input
+                                type="password"
+                                class="form-control"
+                                id="editPassword"
+                                name="password">
+
+                            <small class="form-text text-muted">
+
+                                Leave blank to keep the current password.
+
+                            </small>
+
+                        </div>
+
+                        <!-- Confirm Password -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editConfirmPassword">
+
+                                Confirm New Password
+
+                            </label>
+
+                            <input
+                                type="password"
+                                class="form-control"
+                                id="editConfirmPassword"
+                                name="confirmPassword">
+
+                        </div>
+
+                        <!-- Role -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editRole">
+
+                                Role
+
+                            </label>
+
+                            <select
+                                class="form-control"
+                                id="editRole"
+                                name="role"
+                                required>
+
+                                <option value="Administrator">
+
+                                    Administrator
+
+                                </option>
+
+                                <option value="Manager">
+
+                                    Manager
+
+                                </option>
+
+                                <option value="Employee">
+
+                                    Employee
+
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- Department -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editDepartment">
+
+                                Department
+
+                            </label>
+
+                            <select
+                                class="form-control"
+                                id="editDepartment"
+                                name="department">
+
+                                <option value="Development">Development</option>
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Human Resources">Human Resources</option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- Status -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label for="editStatus">
+
+                                Status
+
+                            </label>
+
+                            <select
+                                class="form-control"
+                                id="editStatus"
+                                name="status">
+
+                                <option value="Active">
+
+                                    Active
+
+                                </option>
+
+                                <option value="Inactive">
+
+                                    Inactive
+
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- Current Profile -->
+
+                        <div class="col-md-6 mb-3">
+
+                            <label>
+
+                                Current Profile Image
+
+                            </label>
+
+                            <div class="mb-2">
+
+                                <img
+                                    id="editProfilePreview"
+                                    src="/images/default-profile.png"
+                                    alt="Profile Preview"
+                                    class="img-thumbnail"
+                                    style="width:120px;height:120px;object-fit:cover;">
+
+                            </div>
+
+                            <input
+                                type="file"
+                                class="form-control-file"
+                                id="editProfileImage"
+                                name="profileImage"
+                                accept="image/*">
+
+                            <small class="form-text text-muted">
+
+                                Leave empty to keep the current profile image.
+
+                            </small>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+            <!-- Footer -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal">
+
+                    <i class="fas fa-times mr-2"></i>
+
+                    Cancel
+
+                </button>
+
+                <button
+                    type="submit"
+                    form="editUserForm"
+                    id="btnUpdateUser"
+                    class="btn btn-warning">
+
+                    <i class="fas fa-save mr-2"></i>
+
+                    Update User
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,145 @@
+
+<%
+    // ==========================================
+    // SMARTWORK REUSABLE HEADER
+    // ADMIN AND USER
+    // ==========================================
+
+    const currentLayoutType =
+        typeof layoutType !== "undefined" ? layoutType : "main";
+
+    const isAdmin = currentLayoutType === "admin";
+
+    const headerUser =
+        typeof user !== "undefined" && user
+            ? user
+            : {
+                name: isAdmin ? "Administrator" : "User",
+                role: isAdmin ? "System Administrator" : "Member"
+            };
+
+    const currentHeaderTitle =
+        typeof headerTitle !== "undefined" && headerTitle
+            ? headerTitle
+            : isAdmin
+                ? "SmartWork Admin Dashboard"
+                : "SmartWork Dashboard";
+
+    const currentHeaderDescription =
+        typeof headerDescription !== "undefined" && headerDescription
+            ? headerDescription
+            : isAdmin
+                ? "Manage your platform and monitor productivity."
+                : "Stay organized and make things simple.";
+
+    const currentHeaderIcon =
+        typeof headerIcon !== "undefined" && headerIcon
+            ? headerIcon
+            : isAdmin ? "fa-user-shield" : "fa-user";
+
+    const showRefresh =
+        typeof showRefreshButton !== "undefined"
+            ? showRefreshButton
+            : isAdmin;
+%>
+
+<header class="admin-header <%= isAdmin ? 'admin-header-mode' : 'user-header-mode' %>">
+
+    <!-- LEFT: HEADER TITLE -->
+    <div class="admin-header-title">
+
+        <div class="admin-header-icon">
+            <i class="fas <%= currentHeaderIcon %>"></i>
+        </div>
+
+        <div class="admin-header-content">
+            <h1><%= currentHeaderTitle %></h1>
+            <p><%= currentHeaderDescription %></p>
+        </div>
+
+    </div>
+
+    <!-- RIGHT: PROFILE AND ACTIONS -->
+    <div class="admin-header-right">
+
+        <% if (showRefresh) { %>
+            <button
+                type="button"
+                id="refreshDashboardBtn"
+                class="btn btn-refresh">
+
+                <i class="fas fa-sync-alt"></i>
+                Refresh Dashboard
+
+            </button>
+        <% } %>
+
+        <!-- PROFILE DROPDOWN -->
+        <div class="admin-profile dropdown">
+
+            <a
+                href="#"
+                class="admin-profile-toggle dropdown-toggle"
+                id="smartWorkProfileDropdown"
+                role="button"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false">
+
+                <div class="profile-info">
+
+                    <h6><%= headerUser.name || "User" %></h6>
+
+                    <small>
+                        <%= headerUser.role || (isAdmin ? "System Administrator" : "Member") %>
+                    </small>
+
+                </div>
+
+                <div class="profile-avatar">
+
+                    <% if (headerUser.avatar) { %>
+
+                        <img
+                            src="<%= headerUser.avatar %>"
+                            alt="Profile">
+
+                    <% } else { %>
+
+                        <i class="fas fa-user"></i>
+
+                    <% } %>
+
+                </div>
+
+            </a>
+
+            <!-- DROPDOWN MENU -->
+            <div
+                class="dropdown-menu dropdown-menu-right shadow"
+                aria-labelledby="smartWorkProfileDropdown">
+
+                <a class="dropdown-item" href="/profile">
+                    <i class="fas fa-user fa-sm fa-fw mr-2"></i>
+                    My Profile
+                </a>
+
+                <a class="dropdown-item" href="/settings">
+                    <i class="fas fa-cog fa-sm fa-fw mr-2"></i>
+                    Settings
+                </a>
+
+                <div class="dropdown-divider"></div>
+
+                <a class="dropdown-item text-danger" href="/logout">
+                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2"></i>
+                    Logout
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>

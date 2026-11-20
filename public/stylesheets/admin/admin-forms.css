@@ -1,0 +1,375 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN FORMS
+   Official Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. FORM GROUPS
+========================================================= */
+
+.admin-dashboard .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.admin-dashboard .form-group label {
+    display: block;
+    color: var(--admin-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.admin-dashboard .form-group label.required::after {
+    content: " *";
+    color: #C66E65;
+}
+
+/* =========================================================
+   2. TEXT INPUTS
+========================================================= */
+
+.admin-dashboard .form-control {
+    background-color: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    color: var(--admin-dark);
+    font-size: 0.88rem;
+    min-height: 42px;
+    padding: 0.65rem 0.85rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-dashboard .form-control::placeholder {
+    color: #A1A69F;
+    opacity: 1;
+}
+
+.admin-dashboard .form-control:hover {
+    border-color: #B7C7AF;
+}
+
+.admin-dashboard .form-control:focus {
+    background-color: #FFFFFF;
+    border-color: var(--admin-secondary);
+    color: var(--admin-dark);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(155, 193, 122, 0.2);
+}
+
+/* Disabled input */
+
+.admin-dashboard .form-control:disabled,
+.admin-dashboard .form-control[readonly] {
+    background-color: #F0F0EA;
+    color: var(--admin-muted);
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   3. SELECT DROPDOWNS
+========================================================= */
+
+.admin-dashboard select.form-control {
+    cursor: pointer;
+}
+
+.admin-dashboard .custom-select {
+    background-color: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    color: var(--admin-dark);
+    font-size: 0.88rem;
+    min-height: 42px;
+}
+
+.admin-dashboard .custom-select:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(155, 193, 122, 0.2);
+}
+
+/* =========================================================
+   4. TEXTAREAS
+========================================================= */
+
+.admin-dashboard textarea.form-control {
+    min-height: 110px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   5. INPUT GROUPS
+========================================================= */
+
+.admin-dashboard .input-group-text {
+    background-color: #F4F1EA;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    color: var(--admin-secondary);
+    font-size: 0.85rem;
+}
+
+.admin-dashboard .input-group .form-control {
+    min-height: 42px;
+}
+
+.admin-dashboard .input-group > .form-control:not(:last-child),
+.admin-dashboard .input-group > .input-group-prepend > .input-group-text {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.admin-dashboard .input-group > .form-control:not(:first-child),
+.admin-dashboard .input-group > .input-group-append > .input-group-text {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* =========================================================
+   6. SEARCH INPUTS
+========================================================= */
+
+.admin-dashboard .search-box {
+    position: relative;
+    width: 100%;
+}
+
+.admin-dashboard .search-box input {
+    width: 100%;
+    padding-left: 2.5rem;
+}
+
+.admin-dashboard .search-box i {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    color: var(--admin-muted);
+    pointer-events: none;
+}
+
+.admin-dashboard .search-input {
+    background-color: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 9px;
+    color: var(--admin-dark);
+    padding: 0.65rem 0.9rem;
+}
+
+.admin-dashboard .search-input:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(155, 193, 122, 0.2);
+    outline: none;
+}
+
+/* =========================================================
+   7. CHECKBOXES AND RADIO BUTTONS
+========================================================= */
+
+.admin-dashboard .custom-control-label {
+    color: var(--admin-dark);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.admin-dashboard .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--admin-secondary);
+    border-color: var(--admin-secondary);
+}
+
+.admin-dashboard .custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 3px rgba(155, 193, 122, 0.2);
+}
+
+.admin-dashboard input[type="checkbox"],
+.admin-dashboard input[type="radio"] {
+    accent-color: var(--admin-secondary);
+}
+
+/* =========================================================
+   8. FORM TEXT AND HELPERS
+========================================================= */
+
+.admin-dashboard .form-text,
+.admin-dashboard .text-muted {
+    color: var(--admin-muted) !important;
+    font-size: 0.78rem;
+    margin-top: 0.35rem;
+}
+
+.admin-dashboard .help-text {
+    color: var(--admin-muted);
+    font-size: 0.78rem;
+    margin-top: 5px;
+}
+
+/* =========================================================
+   9. VALIDATION STATES
+========================================================= */
+
+.admin-dashboard .form-control.is-valid {
+    border-color: #6F9C65;
+}
+
+.admin-dashboard .form-control.is-valid:focus {
+    box-shadow: 0 0 0 3px rgba(111, 156, 101, 0.15);
+}
+
+.admin-dashboard .form-control.is-invalid {
+    border-color: #C66E65;
+}
+
+.admin-dashboard .form-control.is-invalid:focus {
+    box-shadow: 0 0 0 3px rgba(198, 110, 101, 0.15);
+}
+
+.admin-dashboard .valid-feedback {
+    color: #54834D;
+    font-size: 0.78rem;
+}
+
+.admin-dashboard .invalid-feedback {
+    color: #B45850;
+    font-size: 0.78rem;
+}
+
+/* =========================================================
+   10. FIELD ERRORS
+========================================================= */
+
+.admin-dashboard .field-error {
+    display: block;
+    color: #B45850;
+    font-size: 0.78rem;
+    margin-top: 5px;
+}
+
+.admin-dashboard .has-error .form-control {
+    border-color: #C66E65;
+}
+
+.admin-dashboard .has-error label {
+    color: #B45850;
+}
+
+/* =========================================================
+   11. FORM SECTIONS
+========================================================= */
+
+.admin-dashboard .form-section {
+    background-color: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    margin-bottom: 1.25rem;
+    padding: 1.25rem;
+}
+
+.admin-dashboard .form-section-title {
+    color: var(--admin-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+/* =========================================================
+   12. FORM ACTIONS
+========================================================= */
+
+.admin-dashboard .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 1.5rem;
+}
+
+.admin-dashboard .form-actions .btn {
+    min-width: 100px;
+}
+
+/* =========================================================
+   13. FILE INPUTS
+========================================================= */
+
+.admin-dashboard input[type="file"].form-control {
+    height: auto;
+    padding: 0.5rem;
+}
+
+.admin-dashboard input[type="file"]::file-selector-button {
+    background-color: var(--admin-primary);
+    border: none;
+    border-radius: 5px;
+    color: #FFFFFF;
+    margin-right: 10px;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+}
+
+/* =========================================================
+   14. FORM DIVIDERS
+========================================================= */
+
+.admin-dashboard .form-divider {
+    border: 0;
+    border-top: 1px solid var(--admin-border);
+    margin: 1.5rem 0;
+}
+
+/* =========================================================
+   15. RESPONSIVE FORMS
+========================================================= */
+
+@media (max-width: 768px) {
+    .admin-dashboard .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .admin-dashboard .form-section {
+        padding: 1rem;
+    }
+
+    .admin-dashboard .form-actions {
+        justify-content: stretch;
+    }
+
+    .admin-dashboard .form-actions .btn {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard .form-control {
+        font-size: 0.85rem;
+    }
+
+    .admin-dashboard .form-actions {
+        flex-direction: column;
+    }
+
+    .admin-dashboard .form-actions .btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   END OF ADMIN FORMS
+========================================================= */

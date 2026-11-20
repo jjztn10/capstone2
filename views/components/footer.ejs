@@ -1,0 +1,131 @@
+<!-- ==========================================
+     FOOTER
+========================================== -->
+
+<footer class="sticky-footer bg-white border-top shadow-sm">
+    <div class="container my-auto">
+        <div class="copyright text-center py-3">
+
+            <small class="text-muted">
+                &copy; <%= new Date().getFullYear() %>
+                <strong>SmartWork</strong> —
+                AI-Powered Adaptive Workload Management System
+            </small>
+
+        </div>
+    </div>
+</footer>
+
+<!-- ==========================================
+     GLOBAL MODAL
+========================================== -->
+
+<div
+    class="modal fade"
+    id="globalModal"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="globalModalTitle"
+    aria-hidden="true">
+
+    <div
+        class="modal-dialog modal-lg"
+        role="document">
+
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+
+                <h5
+                    class="modal-title"
+                    id="globalModalTitle">
+
+                    <i class="fas fa-info-circle mr-2"></i>
+                    SmartWork
+
+                </h5>
+
+                <button
+                    type="button"
+                    class="close text-white"
+                    data-dismiss="modal"
+                    aria-label="Close">
+
+                    <span aria-hidden="true">&times;</span>
+
+                </button>
+
+            </div>
+
+            <div
+                class="modal-body"
+                id="globalModalBody">
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    data-dismiss="modal">
+
+                    <i class="fas fa-times mr-2"></i>
+                    Close
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ==========================================
+     LOADING OVERLAY
+========================================== -->
+
+<div
+    id="loadingOverlay"
+    class="d-none position-fixed w-100 h-100"
+    style="
+        top:0;
+        left:0;
+        z-index:9999;
+        background:rgba(255,255,255,.75);">
+
+    <div class="d-flex justify-content-center align-items-center h-100">
+
+        <div
+            class="spinner-border text-primary"
+            role="status">
+
+            <span class="sr-only">
+                Loading...
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ==========================================
+     TOAST CONTAINER
+========================================== -->
+
+<div
+    id="toastWrapper"
+    class="position-fixed"
+    aria-live="polite"
+    aria-atomic="true"
+    style="
+        top:20px;
+        right:20px;
+        z-index:1080;">
+
+    <div id="toastContainer"></div>
+
+</div>

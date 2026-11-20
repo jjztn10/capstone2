@@ -1,0 +1,601 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   REUSABLE ADMIN AND USER HEADER
+   Official SmartWork Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. MAIN REUSABLE HEADER
+========================================================= */
+
+.admin-dashboard .admin-header,
+.admin-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    width: 100%;
+    min-height: 140px;
+    box-sizing: border-box;
+
+    padding: 25px 35px;
+    margin-bottom: 25px;
+
+    background: var(--admin-primary);
+    border-radius: 14px;
+    color: #FFFFFF;
+
+    box-shadow: 0 4px 14px rgba(21, 49, 38, 0.12);
+}
+
+/* =========================================================
+   2. HEADER TITLE - LEFT SIDE
+========================================================= */
+
+.admin-header-title {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-right: 25px;
+}
+
+.admin-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    color: var(--admin-accent);
+    font-size: 28px;
+}
+
+.admin-header-title h1,
+.admin-header-title h2,
+.admin-header h1,
+.admin-header h2 {
+    margin: 0 0 7px;
+
+    color: #FFFFFF;
+    font-size: 1.65rem;
+    font-weight: 800;
+}
+
+.admin-header-title p,
+.admin-header p {
+    margin: 0;
+
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.9rem;
+}
+
+/* =========================================================
+   3. HEADER RIGHT SIDE
+   PROFILE AND ACTIONS
+========================================================= */
+
+.admin-header-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    flex: 0 0 auto;
+    width: auto;
+
+    margin-left: auto;
+    gap: 20px;
+}
+
+/* =========================================================
+   4. ADMIN PROFILE DROPDOWN
+========================================================= */
+
+.admin-profile {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    flex: 0 0 auto;
+}
+
+.admin-profile-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+
+    text-decoration: none !important;
+    color: #FFFFFF !important;
+
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.admin-profile-toggle::after {
+    display: none !important;
+}
+
+/* Profile information */
+
+.admin-profile .profile-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+
+    text-align: right;
+}
+
+.admin-profile .profile-info h6 {
+    margin: 0;
+
+    color: #FFFFFF;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.admin-profile .profile-info small {
+    color: var(--admin-accent);
+    font-size: 0.78rem;
+}
+
+/* Profile avatar */
+
+.admin-profile .profile-avatar,
+.admin-dashboard .admin-avatar,
+.admin-dashboard .profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+
+    overflow: hidden;
+
+    background: var(--admin-accent);
+    border: 2px solid rgba(155, 193, 122, 0.5);
+    border-radius: 50%;
+
+    color: var(--admin-primary);
+    font-size: 1.2rem;
+}
+
+.admin-profile .profile-avatar img,
+.admin-dashboard .admin-avatar img,
+.admin-dashboard .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Profile hover */
+
+.admin-profile-toggle:hover .profile-info h6 {
+    color: var(--admin-accent);
+}
+
+/* =========================================================
+   5. PROFILE DROPDOWN MENU
+========================================================= */
+
+.admin-profile .dropdown-menu {
+    min-width: 190px;
+
+    margin-top: 12px;
+    padding: 8px;
+
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 10px;
+
+    box-shadow: 0 5px 18px rgba(0, 0, 0, 0.12);
+}
+
+.admin-profile .dropdown-item {
+    padding: 10px 12px;
+
+    border-radius: 6px;
+    color: var(--admin-text);
+
+    font-size: 0.88rem;
+    transition: background 0.2s ease;
+}
+
+.admin-profile .dropdown-item:hover {
+    background: var(--admin-background);
+}
+
+.admin-profile .dropdown-divider {
+    border-top-color: var(--admin-border);
+}
+
+/* =========================================================
+   6. HEADER ACTIONS
+========================================================= */
+
+.admin-dashboard .header-actions,
+.admin-dashboard .admin-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.admin-dashboard .admin-header .btn,
+.admin-dashboard .header-actions .btn,
+.admin-dashboard .admin-header-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 40px;
+    padding: 9px 16px;
+
+    border-radius: 8px;
+
+    font-size: 0.83rem;
+    font-weight: 700;
+
+    transition: all 0.2s ease;
+}
+
+/* Refresh button */
+
+.admin-dashboard .btn-refresh {
+    background: var(--admin-accent);
+    border: 1px solid var(--admin-accent);
+    color: var(--admin-primary);
+}
+
+.admin-dashboard .btn-refresh:hover {
+    background: #ADD08E;
+    border-color: #ADD08E;
+    color: var(--admin-primary);
+    transform: translateY(-2px);
+}
+
+/* =========================================================
+   7. PAGE TITLE
+========================================================= */
+
+.admin-dashboard .page-title,
+.admin-dashboard #pageTitle {
+    margin-bottom: 5px;
+
+    color: var(--admin-primary);
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.admin-dashboard .page-subtitle {
+    margin-bottom: 20px;
+
+    color: var(--admin-muted);
+    font-size: 0.88rem;
+}
+
+/* =========================================================
+   8. WELCOME SECTION
+========================================================= */
+
+.admin-dashboard .welcome-section {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    margin-bottom: 22px;
+}
+
+.admin-dashboard .welcome-section h1,
+.admin-dashboard .welcome-section h2 {
+    margin: 0;
+
+    color: var(--admin-primary);
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.admin-dashboard .welcome-section p {
+    margin: 0;
+
+    color: var(--admin-muted);
+    font-size: 0.9rem;
+}
+
+.admin-dashboard .welcome-name {
+    color: var(--admin-secondary);
+    font-weight: 800;
+}
+
+/* =========================================================
+   9. BREADCRUMB
+========================================================= */
+
+.admin-dashboard .breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    padding: 0;
+    margin-bottom: 18px;
+
+    background: transparent;
+    font-size: 0.8rem;
+}
+
+.admin-dashboard .breadcrumb-item a {
+    color: var(--admin-secondary);
+    text-decoration: none;
+}
+
+.admin-dashboard .breadcrumb-item a:hover {
+    color: var(--admin-primary);
+    text-decoration: underline;
+}
+
+.admin-dashboard .breadcrumb-item.active {
+    color: var(--admin-muted);
+}
+
+.admin-dashboard .breadcrumb-item + .breadcrumb-item::before {
+    color: #A3AAA1;
+}
+
+/* =========================================================
+   10. HEADER DIVIDER
+========================================================= */
+
+.admin-dashboard .header-divider {
+    width: 100%;
+    height: 1px;
+
+    margin: 15px 0;
+
+    background: var(--admin-border);
+}
+
+/* =========================================================
+   11. HEADER NOTIFICATIONS
+========================================================= */
+
+.admin-dashboard .header-notification {
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 50%;
+
+    color: var(--admin-primary);
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+.admin-dashboard .header-notification:hover {
+    background: #EAF0E5;
+}
+
+.admin-dashboard .notification-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+
+    background: #C66E65;
+    border: 2px solid #FFFFFF;
+    border-radius: 20px;
+
+    color: #FFFFFF;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+/* =========================================================
+   12. RESPONSIVE HEADER
+========================================================= */
+
+@media (max-width: 992px) {
+    .admin-dashboard .admin-header,
+    .admin-header {
+        padding: 22px;
+    }
+
+    .admin-header-title h1,
+    .admin-header-title h2 {
+        font-size: 1.4rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard .admin-header,
+    .admin-header {
+        flex-direction: column;
+        align-items: stretch;
+
+        min-height: auto;
+        gap: 18px;
+
+        padding: 22px;
+    }
+
+    .admin-header-title {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .admin-header-right {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .admin-dashboard .header-actions,
+    .admin-dashboard .admin-header-actions {
+        width: 100%;
+    }
+
+    .admin-dashboard .header-actions .btn,
+    .admin-dashboard .admin-header-actions .btn {
+        flex: 1;
+    }
+
+    .admin-dashboard .page-title,
+    .admin-dashboard #pageTitle {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard .admin-header,
+    .admin-header {
+        padding: 17px;
+        border-radius: 10px;
+    }
+
+    .admin-header-title h1,
+    .admin-header-title h2 {
+        font-size: 1.2rem;
+    }
+
+    .admin-header-title p {
+        font-size: 0.8rem;
+    }
+
+    .admin-profile {
+        gap: 8px;
+    }
+
+    .admin-profile .profile-info {
+        display: none;
+    }
+
+    .admin-profile .profile-avatar {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+    }
+
+    .admin-dashboard .admin-header-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-dashboard .admin-header-actions .btn {
+        width: 100%;
+    }
+}
+.admin-dashboard .admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 25px;
+}
+
+.admin-dashboard .admin-header-title {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-dashboard .admin-header-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.admin-dashboard .admin-profile-toggle {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.admin-dashboard .admin-profile .profile-info {
+    text-align: right;
+}
+
+/* ==========================================
+   FIX HEADER TEXT VISIBILITY
+========================================== */
+
+.admin-dashboard .admin-header .admin-header-title h1 {
+    color: #FFFFFF !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.admin-dashboard .admin-header .admin-header-title p {
+    color: #F4F1EA !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.admin-dashboard .admin-header .admin-profile .profile-info h6 {
+    color: #FFFFFF !important;
+    font-size: 15px;
+    font-weight: 700;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.admin-dashboard .admin-header .admin-profile .profile-info small {
+    color: #9BC17A !important;
+    font-size: 13px;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.admin-dashboard .admin-header .admin-profile-toggle {
+    color: #FFFFFF !important;
+    text-decoration: none !important;
+}
+
+.admin-dashboard .admin-header .admin-profile-toggle:hover {
+    color: #9BC17A !important;
+}
+
+/* =========================================================
+   END OF SMARTWORK HEADER CSS
+========================================================= */

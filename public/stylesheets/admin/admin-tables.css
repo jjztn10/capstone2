@@ -1,0 +1,456 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN TABLES
+   Official SmartWork Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. TABLE CARD
+========================================================= */
+
+.admin-dashboard .table-card,
+.admin-dashboard .data-table-card {
+    width: 100%;
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(21, 49, 38, 0.04);
+}
+
+.admin-dashboard .table-card .card-header,
+.admin-dashboard .data-table-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 18px 22px;
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .table-card .card-header h5,
+.admin-dashboard .data-table-card .card-header h5 {
+    margin: 0;
+    color: var(--admin-primary);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+/* =========================================================
+   2. TABLE WRAPPER
+========================================================= */
+
+.admin-dashboard .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-dashboard .table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 0 0 12px 12px;
+}
+
+/* =========================================================
+   3. GENERAL TABLE
+========================================================= */
+
+.admin-dashboard table {
+    width: 100%;
+    margin-bottom: 0;
+    color: var(--admin-dark);
+    border-collapse: collapse;
+    background: #FFFFFF;
+}
+
+.admin-dashboard .table {
+    color: var(--admin-dark);
+    font-size: 0.87rem;
+}
+
+.admin-dashboard .table th,
+.admin-dashboard .table td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    border-top: 1px solid var(--admin-border);
+}
+
+/* =========================================================
+   4. TABLE HEADER
+========================================================= */
+
+.admin-dashboard .table thead th,
+.admin-dashboard .table thead td {
+    color: #FFFFFF;
+    background: var(--admin-primary);
+    border-color: rgba(255, 255, 255, 0.12);
+    font-size: 0.73rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.admin-dashboard .table thead th:first-child {
+    border-top-left-radius: 4px;
+}
+
+.admin-dashboard .table thead th:last-child {
+    border-top-right-radius: 4px;
+}
+
+/* =========================================================
+   5. TABLE BODY
+========================================================= */
+
+.admin-dashboard .table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.admin-dashboard .table tbody td {
+    color: var(--admin-dark);
+    font-size: 0.84rem;
+}
+
+.admin-dashboard .table tbody tr:nth-child(even) {
+    background: #FAFAF7;
+}
+
+.admin-dashboard .table tbody tr:hover {
+    background: #EDF2E9;
+}
+
+/* =========================================================
+   6. TABLE TEXT
+========================================================= */
+
+.admin-dashboard .table .user-name,
+.admin-dashboard .table .item-name {
+    color: var(--admin-primary);
+    font-weight: 700;
+}
+
+.admin-dashboard .table .text-muted {
+    color: var(--admin-muted) !important;
+}
+
+.admin-dashboard .table .description {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   7. TABLE ACTION BUTTONS
+========================================================= */
+
+.admin-dashboard .table .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.admin-dashboard .table .btn {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .table .btn-edit {
+    color: #FFFFFF;
+    background: var(--admin-secondary);
+    border-color: var(--admin-secondary);
+}
+
+.admin-dashboard .table .btn-edit:hover {
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+.admin-dashboard .table .btn-delete {
+    color: #FFFFFF;
+    background: #C94C4C;
+    border-color: #C94C4C;
+}
+
+.admin-dashboard .table .btn-delete:hover {
+    background: #A93838;
+    border-color: #A93838;
+}
+
+.admin-dashboard .table .btn-view {
+    color: var(--admin-primary);
+    background: #EDF2E9;
+    border-color: #DCE6D5;
+}
+
+.admin-dashboard .table .btn-view:hover {
+    color: #FFFFFF;
+    background: var(--admin-secondary);
+    border-color: var(--admin-secondary);
+}
+
+/* =========================================================
+   8. STATUS BADGES
+========================================================= */
+
+.admin-dashboard .table .badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.admin-dashboard .table .badge-success,
+.admin-dashboard .table .status-active {
+    color: #285A39;
+    background: #E1F0DF;
+}
+
+.admin-dashboard .table .badge-warning,
+.admin-dashboard .table .status-pending {
+    color: #85651E;
+    background: #FFF1CE;
+}
+
+.admin-dashboard .table .badge-danger,
+.admin-dashboard .table .status-overdue {
+    color: #A93838;
+    background: #FBE2E0;
+}
+
+.admin-dashboard .table .badge-secondary,
+.admin-dashboard .table .status-inactive {
+    color: #555D58;
+    background: #E9ECE9;
+}
+
+.admin-dashboard .table .status-completed {
+    color: #285A39;
+    background: #E1F0DF;
+}
+
+/* =========================================================
+   9. TABLE SEARCH
+========================================================= */
+
+.admin-dashboard .table-search {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+}
+
+.admin-dashboard .table-search input {
+    width: 100%;
+    min-height: 40px;
+    padding: 9px 14px 9px 38px;
+    border: 1px solid var(--admin-border);
+    border-radius: 7px;
+    background: #FFFFFF;
+    color: var(--admin-dark);
+    font-size: 0.84rem;
+    outline: none;
+}
+
+.admin-dashboard .table-search i {
+    position: absolute;
+    top: 50%;
+    left: 13px;
+    color: var(--admin-muted);
+    transform: translateY(-50%);
+}
+
+.admin-dashboard .table-search input:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.1);
+}
+
+/* =========================================================
+   10. TABLE FILTERS
+========================================================= */
+
+.admin-dashboard .table-filters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-dashboard .table-filters select,
+.admin-dashboard .table-filters .form-control {
+    min-height: 38px;
+    border: 1px solid var(--admin-border);
+    border-radius: 7px;
+    color: var(--admin-dark);
+    background: #FFFFFF;
+    font-size: 0.83rem;
+}
+
+.admin-dashboard .table-filters select:focus,
+.admin-dashboard .table-filters .form-control:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.1);
+}
+
+/* =========================================================
+   11. EMPTY TABLE STATE
+========================================================= */
+
+.admin-dashboard .table-empty,
+.admin-dashboard .empty-table {
+    padding: 35px 20px;
+    color: var(--admin-muted);
+    text-align: center;
+}
+
+.admin-dashboard .table-empty i,
+.admin-dashboard .empty-table i {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--admin-accent);
+    font-size: 2rem;
+}
+
+.admin-dashboard .table-empty p,
+.admin-dashboard .empty-table p {
+    margin: 0;
+    font-size: 0.88rem;
+}
+
+/* =========================================================
+   12. TABLE PAGINATION
+========================================================= */
+
+.admin-dashboard .table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px 20px;
+    background: #FFFFFF;
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .pagination {
+    margin: 0;
+    gap: 4px;
+}
+
+.admin-dashboard .pagination .page-link {
+    border: 1px solid var(--admin-border);
+    border-radius: 6px;
+    color: var(--admin-secondary);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .pagination .page-link:hover {
+    color: #FFFFFF;
+    background: var(--admin-secondary);
+    border-color: var(--admin-secondary);
+}
+
+.admin-dashboard .pagination .page-item.active .page-link {
+    color: #FFFFFF;
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+/* =========================================================
+   13. TABLE FOOTER
+========================================================= */
+
+.admin-dashboard .table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 20px;
+    background: #FFFFFF;
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .table-footer small {
+    color: var(--admin-muted);
+    font-size: 0.78rem;
+}
+
+/* =========================================================
+   14. RESPONSIVE TABLES
+========================================================= */
+
+@media (max-width: 768px) {
+    .admin-dashboard .table-card .card-header,
+    .admin-dashboard .data-table-card .card-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .admin-dashboard .table-search {
+        max-width: 100%;
+    }
+
+    .admin-dashboard .table-filters {
+        width: 100%;
+    }
+
+    .admin-dashboard .table-filters select,
+    .admin-dashboard .table-filters .form-control {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .admin-dashboard .table th,
+    .admin-dashboard .table td {
+        padding: 10px;
+    }
+
+    .admin-dashboard .table-pagination,
+    .admin-dashboard .table-footer {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 13px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard .table {
+        font-size: 0.78rem;
+    }
+
+    .admin-dashboard .table .btn {
+        padding: 5px 7px;
+        font-size: 0.7rem;
+    }
+
+    .admin-dashboard .table .action-buttons {
+        gap: 4px;
+    }
+}
+
+/* =========================================================
+   END OF ADMIN TABLES
+========================================================= */

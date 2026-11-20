@@ -1,0 +1,43 @@
+<!-- ==========================================
+     SMARTWORK ADMIN DASHBOARD
+========================================== -->
+
+<div class="admin-dashboard">
+
+    <!-- DASHBOARD HEADER -->
+    <%- include("../components/header", {
+        layoutType: "admin",
+        headerTitle: "SmartWork Admin Dashboard",
+        showRefreshButton: false
+    }) %>
+
+    <!-- OVERVIEW -->
+    <section id="overviewSection" class="dashboard-section">
+        <%- include("overview") %>
+    </section>
+
+    <!-- USERS -->
+    <section id="usersSection" class="dashboard-section d-none">
+        <%- include("adminuser-page") %>
+    </section>
+
+    <!-- TASKS -->
+    <section id="tasksSection" class="dashboard-section d-none">
+        <%- include("admintasks-page") %>
+    </section>
+
+    <!-- MOOD -->
+    <section id="moodSection" class="dashboard-section d-none">
+        <%- include("adminmood-page") %>
+    </section>
+
+    <!-- SESSIONS -->
+    <section id="sessionsSection" class="dashboard-section d-none">
+        <%- include("adminsessions-page") %>
+    </section>
+
+    <!-- USER MODALS -->
+    <%- include("add-user-modal") %>
+    <%- include("edit-user-modal") %>
+
+</div>

@@ -1,0 +1,398 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN CARDS
+   Official Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. GENERAL CARDS
+========================================================= */
+
+.admin-dashboard .card {
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    color: var(--admin-text);
+    box-shadow: 0 3px 12px rgba(21, 49, 38, 0.06);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-dashboard .card:hover {
+    box-shadow: 0 7px 18px rgba(21, 49, 38, 0.11);
+}
+
+.admin-dashboard .card-body {
+    padding: 1.35rem;
+    color: var(--admin-text);
+}
+
+.admin-dashboard .card-header {
+    background: var(--admin-primary);
+    border-bottom: none;
+    color: #FFFFFF;
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .card-footer {
+    background: #F9F8F4;
+    border-top: 1px solid var(--admin-border);
+    color: var(--admin-muted);
+    padding: 0.85rem 1.25rem;
+}
+
+.admin-dashboard .card-title {
+    color: var(--admin-primary);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.admin-dashboard .card-subtitle {
+    color: var(--admin-muted);
+    font-size: 0.85rem;
+}
+
+.admin-dashboard .card-text {
+    color: var(--admin-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   2. STATISTIC CARDS
+========================================================= */
+
+.admin-dashboard .border-left-primary,
+.admin-dashboard .border-left-success,
+.admin-dashboard .border-left-info,
+.admin-dashboard .border-left-warning {
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--admin-border);
+    border-right: 1px solid var(--admin-border);
+    border-bottom: 1px solid var(--admin-border);
+    border-left-width: 5px !important;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-dashboard .border-left-primary {
+    border-left-color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .border-left-success {
+    border-left-color: var(--admin-secondary) !important;
+}
+
+.admin-dashboard .border-left-info {
+    border-left-color: #719C83 !important;
+}
+
+.admin-dashboard .border-left-warning {
+    border-left-color: var(--admin-accent) !important;
+}
+
+.admin-dashboard .border-left-primary:hover,
+.admin-dashboard .border-left-success:hover,
+.admin-dashboard .border-left-info:hover,
+.admin-dashboard .border-left-warning:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(21, 49, 38, 0.12);
+}
+
+/* Statistic labels */
+
+.admin-dashboard .border-left-primary .text-xs,
+.admin-dashboard .border-left-success .text-xs,
+.admin-dashboard .border-left-info .text-xs,
+.admin-dashboard .border-left-warning .text-xs {
+    color: var(--admin-muted) !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+
+/* Statistic numbers */
+
+.admin-dashboard .border-left-primary .h5,
+.admin-dashboard .border-left-success .h5,
+.admin-dashboard .border-left-info .h5,
+.admin-dashboard .border-left-warning .h5 {
+    color: var(--admin-primary) !important;
+    font-size: 1.55rem;
+    font-weight: 800;
+    margin-bottom: 0;
+}
+
+/* Statistic icons */
+
+.admin-dashboard .border-left-primary .text-gray-300,
+.admin-dashboard .border-left-success .text-gray-300,
+.admin-dashboard .border-left-info .text-gray-300,
+.admin-dashboard .border-left-warning .text-gray-300 {
+    color: var(--admin-accent) !important;
+    font-size: 2rem;
+}
+
+/* =========================================================
+   3. QUICK ACTIONS
+========================================================= */
+
+.admin-dashboard .quick-actions {
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+}
+
+.admin-dashboard .quick-actions .card-header {
+    background: var(--admin-primary);
+    color: #FFFFFF;
+}
+
+.admin-dashboard .quick-actions .btn,
+.admin-dashboard .quick-actions button {
+    border-radius: 9px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.admin-dashboard .quick-actions .btn:hover,
+.admin-dashboard .quick-actions button:hover {
+    transform: translateY(-2px);
+}
+
+.admin-dashboard .quick-actions i {
+    margin-right: 6px;
+}
+
+/* =========================================================
+   4. RECENT ACTIVITY
+========================================================= */
+
+.admin-dashboard .activity-card,
+.admin-dashboard .recent-activity {
+    background: #FFFFFF;
+    border-radius: 14px;
+}
+
+.admin-dashboard .activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .activity-item:last-child {
+    border-bottom: none;
+}
+
+.admin-dashboard .activity-item p {
+    color: var(--admin-dark);
+    margin-bottom: 0.2rem;
+}
+
+.admin-dashboard .activity-item small {
+    color: var(--admin-muted);
+}
+
+.admin-dashboard .activity-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 50%;
+    background: rgba(155, 193, 122, 0.2);
+    color: var(--admin-secondary);
+}
+
+/* =========================================================
+   5. SYSTEM STATUS
+========================================================= */
+
+.admin-dashboard .system-status,
+.admin-dashboard .status-card {
+    background: #FFFFFF;
+    border-radius: 14px;
+}
+
+.admin-dashboard .status-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--admin-border);
+    color: var(--admin-dark);
+}
+
+.admin-dashboard .status-item:last-child {
+    border-bottom: none;
+}
+
+.admin-dashboard .status-indicator {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 7px;
+}
+
+.admin-dashboard .status-indicator.online {
+    background: #5B9B6B;
+}
+
+.admin-dashboard .status-indicator.offline {
+    background: #D66C65;
+}
+
+.admin-dashboard .status-indicator.warning {
+    background: #D2A64D;
+}
+
+/* =========================================================
+   6. CHART CARDS
+========================================================= */
+
+.admin-dashboard .chart-card {
+    background: #FFFFFF;
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+}
+
+.admin-dashboard .chart-card .card-header {
+    background: var(--admin-primary);
+    color: #FFFFFF;
+}
+
+.admin-dashboard .chart-card .card-body {
+    position: relative;
+    min-height: 280px;
+}
+
+.admin-dashboard .chart-card .card-header h6 {
+    color: #FFFFFF;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* =========================================================
+   7. EMPTY STATE
+========================================================= */
+
+.admin-dashboard .empty-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--admin-muted);
+}
+
+.admin-dashboard .empty-state i {
+    display: block;
+    font-size: 2.5rem;
+    color: var(--admin-accent);
+    margin-bottom: 1rem;
+}
+
+.admin-dashboard .empty-state h5 {
+    color: var(--admin-primary);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .empty-state p {
+    color: var(--admin-muted);
+    font-size: 0.85rem;
+}
+
+/* =========================================================
+   8. CARD LINKS
+========================================================= */
+
+.admin-dashboard .card a {
+    color: var(--admin-secondary);
+    text-decoration: none;
+}
+
+.admin-dashboard .card a:hover {
+    color: var(--admin-primary);
+    text-decoration: underline;
+}
+
+/* =========================================================
+   9. TEXT COLORS
+========================================================= */
+
+.admin-dashboard .text-primary {
+    color: var(--admin-primary) !important;
+}
+
+.admin-dashboard .text-success {
+    color: var(--admin-secondary) !important;
+}
+
+.admin-dashboard .text-info {
+    color: #719C83 !important;
+}
+
+.admin-dashboard .text-warning {
+    color: #829E57 !important;
+}
+
+.admin-dashboard .text-muted,
+.admin-dashboard .text-gray-500 {
+    color: var(--admin-muted) !important;
+}
+
+/* =========================================================
+   10. LIST GROUPS
+========================================================= */
+
+.admin-dashboard .card .list-group-item {
+    background: transparent;
+    border-color: var(--admin-border);
+    color: var(--admin-dark);
+}
+
+/* =========================================================
+   11. RESPONSIVE CARDS
+========================================================= */
+
+@media (max-width: 768px) {
+    .admin-dashboard .card-body {
+        padding: 1rem;
+    }
+
+    .admin-dashboard .card-header {
+        padding: 0.85rem 1rem;
+    }
+
+    .admin-dashboard .border-left-primary .h5,
+    .admin-dashboard .border-left-success .h5,
+    .admin-dashboard .border-left-info .h5,
+    .admin-dashboard .border-left-warning .h5 {
+        font-size: 1.3rem;
+    }
+}
+
+/* =========================================================
+   END OF ADMIN CARDS
+========================================================= */

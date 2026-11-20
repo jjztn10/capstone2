@@ -1,0 +1,159 @@
+
+<!-- ==========================================
+     SMARTWORK ADMIN TOPBAR
+========================================== -->
+
+<nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+    <!-- Sidebar Toggle -->
+    <button
+        id="sidebarToggleTop"
+        class="btn btn-link d-md-none rounded-circle mr-3"
+        type="button"
+        aria-label="Toggle sidebar">
+
+        <i class="fa fa-bars"></i>
+    </button>
+
+    <!-- Search -->
+    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+
+        <div class="input-group">
+
+            <input
+                type="text"
+                class="form-control bg-light border-0 small"
+                placeholder="Search..."
+                aria-label="Search">
+
+            <div class="input-group-append">
+                <button class="btn btn-primary" type="button">
+                    <i class="fas fa-search fa-sm"></i>
+                </button>
+            </div>
+
+        </div>
+    </form>
+
+    <!-- Topbar Navbar -->
+    <ul class="navbar-nav ml-auto">
+
+        <!-- Mobile Search -->
+        <li class="nav-item dropdown no-arrow d-sm-none">
+
+            <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="searchDropdown"
+                role="button"
+                data-toggle="dropdown">
+
+                <i class="fas fa-search fa-fw"></i>
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in">
+
+                <form class="form-inline mr-auto w-100 navbar-search">
+
+                    <div class="input-group">
+
+                        <input
+                            type="text"
+                            class="form-control bg-light border-0 small"
+                            placeholder="Search...">
+
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fas fa-search fa-sm"></i>
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </li>
+
+        <!-- Notifications -->
+        <li class="nav-item dropdown no-arrow mx-1">
+
+            <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="alertsDropdown"
+                role="button"
+                data-toggle="dropdown">
+
+                <i class="fas fa-bell fa-fw"></i>
+
+                <% if (typeof notifications !== "undefined" && notifications > 0) { %>
+                    <span class="badge badge-danger badge-counter">
+                        <%= notifications %>
+                    </span>
+                <% } %>
+
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+
+                <h6 class="dropdown-header">
+                    Notifications
+                </h6>
+
+                <div class="dropdown-item text-center text-muted">
+                    No new notifications
+                </div>
+
+            </div>
+        </li>
+
+        <!-- Divider -->
+        <div class="topbar-divider d-none d-sm-block"></div>
+
+        <!-- User Profile -->
+        <li class="nav-item dropdown no-arrow">
+
+            <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="userDropdown"
+                role="button"
+                data-toggle="dropdown">
+
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
+                    <%= (typeof user !== "undefined" && user && user.name) ? user.name : "Administrator" %>
+                </span>
+
+                <!-- Profile Icon (No Image Required) -->
+                <div class="profile-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
+
+            </a>
+
+            <!-- Profile Dropdown -->
+            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+
+                <a class="dropdown-item" href="/profile">
+                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Profile
+                </a>
+
+                <a class="dropdown-item" href="/settings">
+                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Settings
+                </a>
+
+                <div class="dropdown-divider"></div>
+
+                <a class="dropdown-item" href="/logout">
+                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                    Logout
+                </a>
+
+            </div>
+
+        </li>
+
+    </ul>
+
+</nav>

@@ -1,0 +1,320 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN MODALS
+   Official SmartWork Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. MODAL BACKDROP
+========================================================= */
+
+.admin-dashboard ~ .modal,
+.admin-dashboard .modal {
+    background: transparent;
+}
+
+.modal-backdrop {
+    background-color: rgba(21, 49, 38, 0.58);
+}
+
+.modal-backdrop.show {
+    opacity: 1;
+}
+
+/* =========================================================
+   2. MODAL DIALOG
+========================================================= */
+
+.admin-dashboard .modal-dialog {
+    max-width: 600px;
+    margin: 1.75rem auto;
+}
+
+.admin-dashboard .modal-dialog.modal-lg {
+    max-width: 850px;
+}
+
+.admin-dashboard .modal-dialog.modal-sm {
+    max-width: 400px;
+}
+
+/* =========================================================
+   3. MODAL CONTENT
+========================================================= */
+
+.admin-dashboard .modal-content {
+    overflow: hidden;
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    box-shadow: 0 15px 45px rgba(21, 49, 38, 0.18);
+}
+
+/* =========================================================
+   4. MODAL HEADER
+========================================================= */
+
+.admin-dashboard .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: var(--admin-primary);
+    border-bottom: 0;
+}
+
+.admin-dashboard .modal-header .modal-title {
+    color: #FFFFFF;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.admin-dashboard .modal-header .close {
+    color: #FFFFFF;
+    opacity: 0.85;
+    text-shadow: none;
+    font-size: 1.6rem;
+    transition: 0.2s ease;
+}
+
+.admin-dashboard .modal-header .close:hover {
+    color: var(--admin-accent);
+    opacity: 1;
+}
+
+/* =========================================================
+   5. MODAL BODY
+========================================================= */
+
+.admin-dashboard .modal-body {
+    padding: 24px;
+    background: var(--admin-card);
+    color: var(--admin-dark);
+}
+
+.admin-dashboard .modal-body p {
+    color: var(--admin-muted);
+    line-height: 1.6;
+}
+
+.admin-dashboard .modal-body .form-group {
+    margin-bottom: 18px;
+}
+
+/* =========================================================
+   6. MODAL FOOTER
+========================================================= */
+
+.admin-dashboard .modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    background: #FAFAF7;
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .modal-footer .btn {
+    min-width: 100px;
+    border-radius: 7px;
+    font-weight: 600;
+}
+
+/* =========================================================
+   7. PRIMARY MODAL BUTTON
+========================================================= */
+
+.admin-dashboard .modal .btn-primary {
+    color: #FFFFFF;
+    background: var(--admin-primary);
+    border-color: var(--admin-primary);
+}
+
+.admin-dashboard .modal .btn-primary:hover {
+    background: var(--admin-secondary);
+    border-color: var(--admin-secondary);
+}
+
+/* =========================================================
+   8. SECONDARY MODAL BUTTON
+========================================================= */
+
+.admin-dashboard .modal .btn-secondary {
+    color: var(--admin-dark);
+    background: #EAECE7;
+    border-color: #EAECE7;
+}
+
+.admin-dashboard .modal .btn-secondary:hover {
+    background: #DDE2D9;
+    border-color: #DDE2D9;
+}
+
+/* =========================================================
+   9. DANGER BUTTON
+========================================================= */
+
+.admin-dashboard .modal .btn-danger {
+    color: #FFFFFF;
+    background: #C94C4C;
+    border-color: #C94C4C;
+}
+
+.admin-dashboard .modal .btn-danger:hover {
+    background: #A93838;
+    border-color: #A93838;
+}
+
+/* =========================================================
+   10. MODAL FORM ELEMENTS
+========================================================= */
+
+.admin-dashboard .modal .form-control,
+.admin-dashboard .modal .custom-select {
+    min-height: 42px;
+    border: 1px solid var(--admin-border);
+    border-radius: 7px;
+    color: var(--admin-dark);
+    background-color: #FFFFFF;
+    box-shadow: none;
+}
+
+.admin-dashboard .modal .form-control:focus,
+.admin-dashboard .modal .custom-select:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.12);
+}
+
+.admin-dashboard .modal label {
+    display: block;
+    margin-bottom: 7px;
+    color: var(--admin-primary);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .modal .required {
+    color: #C94C4C;
+}
+
+/* =========================================================
+   11. MODAL CLOSE BUTTON
+========================================================= */
+
+.admin-dashboard .modal .close:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+/* =========================================================
+   12. CONFIRMATION MODALS
+========================================================= */
+
+.admin-dashboard .confirmation-modal {
+    text-align: center;
+}
+
+.admin-dashboard .confirmation-modal .modal-body {
+    padding: 30px 24px;
+}
+
+.admin-dashboard .confirmation-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 65px;
+    height: 65px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: rgba(155, 193, 122, 0.2);
+    color: var(--admin-secondary);
+    font-size: 1.8rem;
+}
+
+.admin-dashboard .confirmation-icon.danger {
+    background: rgba(201, 76, 76, 0.12);
+    color: #C94C4C;
+}
+
+.admin-dashboard .confirmation-modal h5 {
+    color: var(--admin-primary);
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+/* =========================================================
+   13. MODAL DIVIDERS
+========================================================= */
+
+.admin-dashboard .modal hr {
+    border-top: 1px solid var(--admin-border);
+    margin: 18px 0;
+}
+
+/* =========================================================
+   14. MODAL ANIMATION
+========================================================= */
+
+.admin-dashboard .modal.fade .modal-dialog {
+    transform: translateY(-15px);
+    transition: transform 0.25s ease-out;
+}
+
+.admin-dashboard .modal.show .modal-dialog {
+    transform: translateY(0);
+}
+
+/* =========================================================
+   15. RESPONSIVE MODALS
+========================================================= */
+
+@media (max-width: 768px) {
+    .admin-dashboard .modal-dialog,
+    .admin-dashboard .modal-dialog.modal-lg {
+        width: auto;
+        max-width: none;
+        margin: 12px;
+    }
+
+    .admin-dashboard .modal-header {
+        padding: 16px 18px;
+    }
+
+    .admin-dashboard .modal-body {
+        padding: 18px;
+    }
+
+    .admin-dashboard .modal-footer {
+        padding: 14px 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-dashboard .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+    }
+
+    .admin-dashboard .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   END OF ADMIN MODALS
+========================================================= */

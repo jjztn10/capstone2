@@ -1,0 +1,526 @@
+<!-- ==========================================
+     LEADERBOARD
+========================================== -->
+
+<section
+    id="leaderboard"
+    class="admin-section">
+
+    <!-- ==========================
+         PAGE HEADER
+    =========================== -->
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+
+        <div>
+
+            <h2 class="h3 mb-1 text-gray-800">
+
+                <i class="fas fa-trophy mr-2"></i>
+
+                Leaderboard
+
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                View employee rankings, achievements, and productivity performance.
+
+            </p>
+
+        </div>
+
+        <button
+            id="btnRefreshLeaderboard"
+            class="btn btn-primary shadow">
+
+            <i class="fas fa-sync-alt mr-2"></i>
+
+            Refresh
+
+        </button>
+
+    </div>
+
+    <!-- ==========================
+         SUMMARY CARDS
+    =========================== -->
+
+    <div class="row">
+
+        <div class="col-xl-4 col-md-4 mb-4">
+
+            <div class="card border-left-warning shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+
+                                Top Performer
+
+                            </div>
+
+                            <div class="h5 font-weight-bold text-gray-800">
+
+                                <%= leaderboard && leaderboard.length ? leaderboard[0].name : "-" %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-crown fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-4 col-md-4 mb-4">
+
+            <div class="card border-left-success shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+
+                                Average Score
+
+                            </div>
+
+                            <div class="h5 font-weight-bold text-gray-800">
+
+                                <%= leaderboardStats ? leaderboardStats.averageScore : 0 %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-4 col-md-4 mb-4">
+
+            <div class="card border-left-primary shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+
+                                Total Participants
+
+                            </div>
+
+                            <div class="h5 font-weight-bold text-gray-800">
+
+                                <%= leaderboard ? leaderboard.length : 0 %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================
+         PODIUM
+    =========================== -->
+
+    <div class="card shadow mb-4">
+
+        <div class="card-header py-3">
+
+            <h6 class="m-0 font-weight-bold text-primary">
+
+                Top 3 Performers
+
+            </h6>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row text-center">
+
+                <!-- 2nd Place -->
+
+                <div class="col-md-4 mb-3">
+
+                    <div class="border rounded p-4">
+
+                        <i class="fas fa-medal fa-3x text-secondary mb-3"></i>
+
+                        <h5>
+
+                            <%= leaderboard && leaderboard[1] ? leaderboard[1].name : "-" %>
+
+                        </h5>
+
+                        <span class="badge badge-secondary">
+
+                            2nd Place
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- 1st Place -->
+
+                <div class="col-md-4 mb-3">
+
+                    <div class="border rounded p-4 bg-light">
+
+                        <i class="fas fa-crown fa-4x text-warning mb-3"></i>
+
+                        <h4>
+
+                            <%= leaderboard && leaderboard[0] ? leaderboard[0].name : "-" %>
+
+                        </h4>
+
+                        <span class="badge badge-warning">
+
+                            Champion
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <!-- 3rd Place -->
+
+                <div class="col-md-4 mb-3">
+
+                    <div class="border rounded p-4">
+
+                        <i class="fas fa-award fa-3x text-warning mb-3"></i>
+
+                        <h5>
+
+                            <%= leaderboard && leaderboard[2] ? leaderboard[2].name : "-" %>
+
+                        </h5>
+
+                        <span class="badge badge-dark">
+
+                            3rd Place
+
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================
+         FILTERS
+    =========================== -->
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-6 mb-3">
+
+                    <input
+                        type="text"
+                        id="searchLeaderboard"
+                        class="form-control"
+                        placeholder="Search employee...">
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+
+                    <select
+                        id="leaderboardFilter"
+                        class="form-control">
+
+                        <option value="">All Departments</option>
+                        <option>Development</option>
+                        <option>Design</option>
+                        <option>Marketing</option>
+                        <option>Human Resources</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-3 mb-3">
+
+                    <button
+                        id="btnSearchLeaderboard"
+                        class="btn btn-primary btn-block">
+
+                        <i class="fas fa-search mr-2"></i>
+
+                        Search
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================
+         RANKINGS TABLE
+    =========================== -->
+
+    <div class="card shadow">
+
+        <div class="card-header py-3">
+
+            <h6 class="m-0 font-weight-bold text-primary">
+
+                Employee Rankings
+
+            </h6>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-bordered table-hover"
+                    id="leaderboardTable">
+
+                    <thead class="thead-light">
+
+                        <tr>
+
+                            <th width="80">Rank</th>
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Tasks Completed</th>
+                            <th>Performance</th>
+                            <th>Achievement</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        <% if (leaderboard && leaderboard.length > 0) { %>
+
+                            <% leaderboard.forEach((employee, index) => { %>
+
+                                <tr>
+
+                                    <td>
+
+                                        <% if (index === 0) { %>
+
+                                            🥇
+
+                                        <% } else if (index === 1) { %>
+
+                                            🥈
+
+                                        <% } else if (index === 2) { %>
+
+                                            🥉
+
+                                        <% } else { %>
+
+                                            <%= index + 1 %>
+
+                                        <% } %>
+
+                                    </td>
+
+                                    <td>
+
+                                        <strong>
+
+                                            <%= employee.name %>
+
+                                        </strong>
+
+                                    </td>
+
+                                    <td>
+
+                                        <%= employee.department || "-" %>
+
+                                    </td>
+
+                                    <td>
+
+                                        <%= employee.tasksCompleted || 0 %>
+
+                                    </td>
+
+                                    <td>
+
+                                        <span class="badge badge-success">
+
+                                            <%= employee.score || 0 %>%
+
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        <% if ((employee.score || 0) >= 95) { %>
+
+                                            <span class="badge badge-warning">
+
+                                                🏆 Champion
+
+                                            </span>
+
+                                        <% } else if ((employee.score || 0) >= 90) { %>
+
+                                            <span class="badge badge-primary">
+
+                                                ⭐ Elite
+
+                                            </span>
+
+                                        <% } else if ((employee.score || 0) >= 80) { %>
+
+                                            <span class="badge badge-success">
+
+                                                🎯 Achiever
+
+                                            </span>
+
+                                        <% } else { %>
+
+                                            <span class="badge badge-secondary">
+
+                                                Participant
+
+                                            </span>
+
+                                        <% } %>
+
+                                    </td>
+
+                                </tr>
+
+                            <% }) %>
+
+                        <% } else { %>
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="text-center py-5 text-muted">
+
+                                    <i class="fas fa-trophy fa-3x mb-3 d-block"></i>
+
+                                    No leaderboard data available.
+
+                                </td>
+
+                            </tr>
+
+                        <% } %>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        <div class="card-footer bg-white">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+                <small class="text-muted">
+
+                    Showing
+
+                    <strong>
+
+                        <%= leaderboard ? leaderboard.length : 0 %>
+
+                    </strong>
+
+                    participant(s)
+
+                </small>
+
+                <nav>
+
+                    <ul
+                        class="pagination pagination-sm mb-0"
+                        id="leaderboardPagination">
+
+                        <!-- Pagination generated by JavaScript -->
+
+                    </ul>
+
+                </nav>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>

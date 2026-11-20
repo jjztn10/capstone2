@@ -1,0 +1,456 @@
+
+<!-- ==========================================
+     MOOD ANALYTICS
+========================================== -->
+<%
+const moodStatistics =
+    (typeof moodStats !== "undefined" && moodStats)
+        ? moodStats
+        : {
+            happy: 0,
+            neutral: 0,
+            stressed: 0,
+            burnout: 0
+        };
+
+const logs =
+    (typeof moodLogs !== "undefined" && Array.isArray(moodLogs))
+        ? moodLogs
+        : [];
+%>
+<section
+    id="mood"
+    class="admin-section">
+
+    <!-- ==========================
+         PAGE HEADER
+    =========================== -->
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+
+        <div>
+
+            <h2 class="h3 mb-1 text-gray-800">
+
+                <i class="fas fa-smile mr-2"></i>
+
+                Mood Analytics
+
+            </h2>
+
+            <p class="text-muted mb-0">
+
+                Monitor employee well-being and workplace sentiment.
+
+            </p>
+
+        </div>
+
+        <button
+            id="btnRefreshMood"
+            class="btn btn-primary shadow">
+
+            <i class="fas fa-sync-alt mr-2"></i>
+
+            Refresh
+
+        </button>
+
+    </div>
+
+    <!-- ==========================
+         SUMMARY CARDS
+    =========================== -->
+
+    <div class="row">
+
+        <div class="col-xl-3 col-md-6 mb-4">
+
+            <div class="card border-left-success shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+
+                                Happy
+
+                            </div>
+
+                            <div class="h4 font-weight-bold text-gray-800">
+
+                                <%= stats ? stats.happy : 0 %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-laugh fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+
+            <div class="card border-left-primary shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+
+                                Neutral
+
+                            </div>
+
+                            <div class="h4 font-weight-bold text-gray-800">
+
+                                <%= stats ? stats.neutral : 0 %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-meh fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+
+            <div class="card border-left-warning shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+
+                                Stressed
+
+                            </div>
+
+                            <div class="h4 font-weight-bold text-gray-800">
+
+                                <%= stats ? stats.stressed : 0 %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-frown fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+
+            <div class="card border-left-danger shadow h-100 py-2">
+
+                <div class="card-body">
+
+                    <div class="row no-gutters align-items-center">
+
+                        <div class="col mr-2">
+
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+
+                                Burnout Risk
+
+                            </div>
+
+                            <div class="h4 font-weight-bold text-gray-800">
+
+                                <%= stats ? stats.burnout : 0 %>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-auto">
+
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================
+         MOOD TREND
+    =========================== -->
+
+    <div class="row">
+
+        <div class="col-lg-8 mb-4">
+
+            <div class="card shadow">
+
+                <div class="card-header py-3">
+
+                    <h6 class="m-0 font-weight-bold text-primary">
+
+                        Mood Trend
+
+                    </h6>
+
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="moodTrendChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4 mb-4">
+
+            <div class="card shadow">
+
+                <div class="card-header py-3">
+
+                    <h6 class="m-0 font-weight-bold text-primary">
+
+                        Mood Distribution
+
+                    </h6>
+
+                </div>
+
+                <div class="card-body">
+
+                    <canvas id="moodPieChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================
+         RECENT MOOD LOGS
+    =========================== -->
+
+    <div class="row">
+
+        <div class="col-lg-8 mb-4">
+
+            <div class="card shadow">
+
+                <div class="card-header py-3">
+
+                    <h6 class="m-0 font-weight-bold text-primary">
+
+                        Recent Mood Logs
+
+                    </h6>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="table-responsive">
+
+                        <table class="table table-bordered table-hover">
+
+                            <thead class="thead-light">
+
+                                <tr>
+
+                                    <th>Date</th>
+
+                                    <th>Employee</th>
+
+                                    <th>Mood</th>
+
+                                    <th>Score</th>
+
+                                    <th>Remarks</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                <% if (logs && logs.length > 0) { %>
+
+                                    <% logs.forEach(log => { %>
+
+                                        <tr>
+
+                                            <td><%= log.date %></td>
+
+                                            <td><%= log.employee %></td>
+
+                                            <td>
+
+                                                <% if (logs === "Happy") { %>
+
+                                                    <span class="badge badge-success">Happy</span>
+
+                                                <% } else if (log.mood === "Neutral") { %>
+
+                                                    <span class="badge badge-primary">Neutral</span>
+
+                                                <% } else if (log.mood === "Stressed") { %>
+
+                                                    <span class="badge badge-warning">Stressed</span>
+
+                                                <% } else { %>
+
+                                                    <span class="badge badge-danger">Burnout Risk</span>
+
+                                                <% } %>
+
+                                            </td>
+
+                                            <td><%= log.score %></td>
+
+                                            <td><%= log.remarks || "-" %></td>
+
+                                        </tr>
+
+                                    <% }) %>
+
+                                <% } else { %>
+
+                                    <tr>
+
+                                        <td colspan="5" class="text-center text-muted py-4">
+
+                                            <i class="fas fa-smile fa-2x d-block mb-3"></i>
+
+                                            No mood records available.
+
+                                        </td>
+
+                                    </tr>
+
+                                <% } %>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==========================
+             INSIGHTS
+        =========================== -->
+
+        <div class="col-lg-4 mb-4">
+
+            <div class="card shadow">
+
+                <div class="card-header py-3">
+
+                    <h6 class="m-0 font-weight-bold text-primary">
+
+                        AI Insights
+
+                    </h6>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="alert alert-success">
+
+                        <strong>Positive Trend</strong>
+
+                        <p class="mb-0">
+
+                            Overall employee morale is improving this week.
+
+                        </p>
+
+                    </div>
+
+                    <div class="alert alert-warning">
+
+                        <strong>Attention Needed</strong>
+
+                        <p class="mb-0">
+
+                            Monitor employees with repeated stressed moods.
+
+                        </p>
+
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+
+                        <strong>Recommendation</strong>
+
+                        <p class="mb-0">
+
+                            Schedule wellness activities and check-ins for teams
+                            with declining mood scores.
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>

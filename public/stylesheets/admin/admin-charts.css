@@ -1,0 +1,307 @@
+
+/* =========================================================
+   SMARTWORK ADMIN DASHBOARD
+   ADMIN CHARTS
+   Official Color Theme
+========================================================= */
+
+:root {
+    --admin-primary: #153126;
+    --admin-secondary: #2E5A44;
+    --admin-accent: #9BC17A;
+    --admin-background: #F4F1EA;
+    --admin-dark: #2A2D2F;
+
+    --admin-card: #FFFFFF;
+    --admin-text: #2A2D2F;
+    --admin-muted: #747B75;
+    --admin-border: #E5E4DC;
+}
+
+/* =========================================================
+   1. CHART CONTAINERS
+========================================================= */
+
+.admin-dashboard .chart-container {
+    position: relative;
+    width: 100%;
+    min-height: 280px;
+    padding: 10px 5px;
+}
+
+.admin-dashboard .chart-card {
+    background: var(--admin-card);
+    border: 1px solid var(--admin-border);
+    border-radius: 14px;
+    box-shadow: 0 3px 12px rgba(21, 49, 38, 0.06);
+    overflow: hidden;
+}
+
+.admin-dashboard .chart-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--admin-primary);
+    color: #FFFFFF;
+    padding: 1rem 1.25rem;
+    border: none;
+}
+
+.admin-dashboard .chart-card .card-header h6 {
+    color: #FFFFFF;
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.admin-dashboard .chart-card .card-body {
+    position: relative;
+    min-height: 300px;
+    padding: 1.25rem;
+    background: #FFFFFF;
+}
+
+/* =========================================================
+   2. CANVAS SIZING
+========================================================= */
+
+.admin-dashboard canvas {
+    max-width: 100%;
+}
+
+.admin-dashboard #productivityChart,
+.admin-dashboard #taskCompletionChart,
+.admin-dashboard #moodChart,
+.admin-dashboard #moodAnalyticsChart {
+    width: 100% !important;
+    max-width: 100%;
+}
+
+/* =========================================================
+   3. CHART HEADINGS
+========================================================= */
+
+.admin-dashboard .chart-title {
+    color: var(--admin-primary);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.admin-dashboard .chart-subtitle {
+    color: var(--admin-muted);
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* =========================================================
+   4. CHART FILTERS
+========================================================= */
+
+.admin-dashboard .chart-filter,
+.admin-dashboard .chart-card select {
+    background: #FFFFFF;
+    color: var(--admin-dark);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    outline: none;
+}
+
+.admin-dashboard .chart-filter:focus,
+.admin-dashboard .chart-card select:focus {
+    border-color: var(--admin-secondary);
+    box-shadow: 0 0 0 3px rgba(46, 90, 68, 0.12);
+}
+
+/* =========================================================
+   5. CHART LEGENDS
+========================================================= */
+
+.admin-dashboard .chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.admin-dashboard .chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--admin-muted);
+    font-size: 0.8rem;
+}
+
+.admin-dashboard .legend-color {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+}
+
+/* =========================================================
+   6. PRODUCTIVITY CHART
+========================================================= */
+
+.admin-dashboard .productivity-chart {
+    background: #FFFFFF;
+    border-radius: 12px;
+}
+
+.admin-dashboard .productivity-chart .chart-title {
+    color: var(--admin-primary);
+}
+
+/* =========================================================
+   7. TASK COMPLETION CHART
+========================================================= */
+
+.admin-dashboard .task-completion-chart {
+    background: #FFFFFF;
+    border-radius: 12px;
+}
+
+/* =========================================================
+   8. MOOD ANALYTICS CHART
+========================================================= */
+
+.admin-dashboard .mood-chart {
+    background: #FFFFFF;
+    border-radius: 12px;
+}
+
+.admin-dashboard .mood-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+/* Mood legend colors */
+
+.admin-dashboard .mood-happy {
+    background: #9BC17A;
+}
+
+.admin-dashboard .mood-neutral {
+    background: #2E5A44;
+}
+
+.admin-dashboard .mood-stressed {
+    background: #D9B66F;
+}
+
+.admin-dashboard .mood-burnout {
+    background: #C87970;
+}
+
+/* =========================================================
+   9. CHART INFORMATION
+========================================================= */
+
+.admin-dashboard .chart-stat {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-dashboard .chart-stat:last-child {
+    border-bottom: none;
+}
+
+.admin-dashboard .chart-stat-label {
+    color: var(--admin-muted);
+    font-size: 0.85rem;
+}
+
+.admin-dashboard .chart-stat-value {
+    color: var(--admin-primary);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* =========================================================
+   10. CHART EMPTY STATE
+========================================================= */
+
+.admin-dashboard .chart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    text-align: center;
+    color: var(--admin-muted);
+}
+
+.admin-dashboard .chart-empty i {
+    color: var(--admin-accent);
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+}
+
+.admin-dashboard .chart-empty h6 {
+    color: var(--admin-primary);
+    font-weight: 700;
+}
+
+.admin-dashboard .chart-empty p {
+    font-size: 0.85rem;
+}
+
+/* =========================================================
+   11. RESPONSIVE CHARTS
+========================================================= */
+
+@media (max-width: 992px) {
+    .admin-dashboard .chart-card .card-body {
+        min-height: 260px;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .admin-dashboard .chart-container {
+        min-height: 220px;
+    }
+
+    .admin-dashboard .chart-card .card-body {
+        min-height: 230px;
+        padding: 0.85rem;
+    }
+
+    .admin-dashboard .chart-card .card-header {
+        padding: 0.85rem 1rem;
+    }
+
+    .admin-dashboard .chart-legend {
+        gap: 10px;
+    }
+}
+.admin-dashboard .chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    min-height: 300px;
+}
+
+.admin-dashboard .chart-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard .chart-container {
+        height: 250px;
+        min-height: 250px;
+    }
+}
+
+/* =========================================================
+   END OF ADMIN CHARTS
+========================================================= */
