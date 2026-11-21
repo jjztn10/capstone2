@@ -372,3 +372,156 @@ body:has(.admin-dashboard) {
 /* =========================================================
    END OF ADMIN LAYOUT
 ========================================================= */
+/* =========================================================
+   SMARTWORK MODAL
+========================================================= */
+
+.modal-content{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 25px 60px rgba(0,0,0,.20);
+    background:#fff;
+}
+
+/* Header */
+
+.modal-header{
+
+    background:linear-gradient(
+        135deg,
+        var(--admin-primary),
+        var(--admin-secondary)
+    ) !important;
+
+    border-bottom:none;
+
+    padding:18px 24px;
+
+}
+
+.modal-title{
+
+    color:#fff;
+    font-size:1.25rem;
+    font-weight:700;
+
+}
+
+.modal-header .close,
+.modal-header .btn-close{
+
+    color:#fff !important;
+    opacity:.9;
+    text-shadow:none;
+
+}
+
+.modal-header .close:hover,
+.modal-header .btn-close:hover{
+
+    opacity:1;
+
+}
+
+/* Body */
+
+.modal-body{
+
+    padding:28px 24px;
+    background:var(--admin-card);
+
+}
+
+.modal-body label{
+
+    color:var(--admin-primary);
+    font-weight:600;
+    margin-bottom:8px;
+
+}
+
+.modal-body .text-danger{
+
+    color:#dc3545 !important;
+
+}
+
+/* Inputs */
+
+.modal-body .form-control,
+.modal-body .form-select{
+
+    height:48px;
+    border:1px solid var(--admin-border);
+    border-radius:12px;
+    background:#fff;
+    color:var(--admin-text);
+
+}
+
+.modal-body .form-control:focus,
+.modal-body .form-select:focus{
+
+    border-color:var(--admin-secondary);
+
+    box-shadow:
+        0 0 0 .2rem rgba(46,90,68,.18);
+
+}
+
+/* Help text */
+
+.modal-body small{
+
+    color:var(--admin-muted);
+
+}
+
+/* Footer */
+
+.modal-footer{
+
+    border-top:1px solid var(--admin-border);
+    background:#faf9f6;
+    padding:18px 24px;
+
+}
+
+/* Buttons */
+
+.modal-footer .btn-secondary{
+
+    background:#8b9299;
+    border:none;
+    border-radius:10px;
+    min-width:90px;
+
+}
+
+.modal-footer .btn-secondary:hover{
+
+    background:#6d757d;
+
+}
+
+.modal-footer .btn-success{
+
+    background:var(--admin-primary);
+    border:none;
+    border-radius:10px;
+    min-width:140px;
+
+}
+
+.modal-footer .btn-success:hover{
+
+    background:var(--admin-secondary);
+
+}
+
+.modal-footer .btn-success:focus{
+
+    box-shadow:0 0 0 .2rem rgba(46,90,68,.25);
+
+}

@@ -1,17 +1,30 @@
-"use strict";
+const express = require("express");
+const crypto = require("crypto");
+const { Query } = require("../database/db-helper");
 
-const Leaderboard = {
+const router = express.Router();
 
-    init() {
-        this.loadLeaderboard();
-    },
+router.get("/", async (req, res) => {
 
-    loadLeaderboard() {
-        console.log("Loading leaderboard...");
-    }
+    const leaderboard = await getLeaderboard();
 
-};
+    const leaderboardStats = {
+        averageScore:
+            leaderboard.length > 0
+                ? (
+                    leaderboard.reduce(
+                        (sum, r) => sum + Number(r.score || 0),
+                        0
+                    ) / leaderboard.length
+                ).toFixed(1)
+                : 0
+    };
 
-document.addEventListener("DOMContentLoaded", () => {
-    Leaderboard.init();
+    res.render("pages/admindashboard-page", {
+        leaderboard,
+        leaderboardStats
+    });
+
 });
+
+module.exports = router;

@@ -260,37 +260,127 @@
       pag.innerHTML = html;
     }
 
-    async function load() {
-      const days = $("sessionRange") ? $("sessionRange").value : "30";
-      const qs =
-        "?days=" +
-        encodeURIComponent(days) +
-        "&now=" +
-        encodeURIComponent(nowLocal());
-      const [m, d] = await Promise.all([request("/meta"), request(qs)]);
+     async function load(showSuccess = false) {
 
-      // catches a leftover old api.get("/sessions") in admindashboard.js
-      if (Array.isArray(d) || !d.stats) {
-        throw new Error(
-          "The sessions API is returning the old format. Delete the old api.get('/sessions') block in routes/admindashboard.js and restart the server.",
-        );
-      }
+    const btn = $("btnRefreshSessions");
 
-      meta = m;
-      sessions = d.sessions;
-      ready = true;
+if (btn) {
+    btn.disabled = true;
 
-      $("sessActive").textContent = d.stats.active;
-      $("sessCompleted").textContent = d.stats.completed;
-      $("sessAvg").textContent = d.stats.averageHours;
-      $("sessProductivity").textContent = d.stats.productivity;
+    btn.classList.remove(
+        "btn-primary",
+        "btn-secondary",
+        "btn-danger",
+        "btn-warning",
+        "btn-info",
+        "btn-light",
+        "btn-dark"
+    );
 
-      fillUsers();
-      render();
+    btn.classList.add("btn-success");
+
+    btn.style.backgroundColor = GREEN;
+    btn.style.borderColor = GREEN;
+    btn.style.color = "#fff";
+
+    btn.innerHTML =
+        '<i class="fas fa-spinner fa-spin mr-1"></i> Refreshing...';
+}
+
+    if (showSuccess && window.Swal) {
+        Swal.fire({
+            title: "Refreshing Sessions",
+            text: "Loading latest work session data...",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
     }
 
-    const changed = () =>
-      document.dispatchEvent(new CustomEvent("sessions:changed"));
+    try {
+
+        const days = $("sessionRange")
+            ? $("sessionRange").value
+            : "30";
+
+        const qs =
+            "?days=" +
+            encodeURIComponent(days) +
+            "&now=" +
+            encodeURIComponent(nowLocal());
+
+        const [m, d] = await Promise.all([
+            request("/meta"),
+            request(qs),
+        ]);
+
+        if (Array.isArray(d) || !d.stats) {
+            throw new Error(
+                "The sessions API is returning the old format."
+            );
+        }
+
+        meta = m;
+        sessions = d.sessions;
+        ready = true;
+
+        $("sessActive").textContent = d.stats.active;
+        $("sessCompleted").textContent = d.stats.completed;
+        $("sessAvg").textContent = d.stats.averageHours;
+        $("sessProductivity").textContent = d.stats.productivity;
+
+        fillUsers();
+        render();
+
+        if (showSuccess && window.Swal) {
+
+            Swal.close();
+
+            Swal.fire({
+                icon: "success",
+                title: "Sessions Updated",
+                text: "Latest work session data has been loaded.",
+                timer: 1500,
+                showConfirmButton: false,
+            });
+
+        }
+
+    } catch (err) {
+
+        console.error(err);
+
+        if (window.Swal) {
+
+            Swal.close();
+
+            Swal.fire({
+                icon: "error",
+                title: "Unable to load sessions",
+                text: err.message,
+                confirmButtonColor: GREEN,
+            });
+
+        } else {
+
+            alert(err.message);
+
+        }
+
+    } finally {
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML =
+                '<i class="fas fa-sync-alt"></i> Refresh';
+        }
+
+    }
+
+}
 
     /* ---------- modal ---------- */
     async function openSessionModal(s) {
@@ -412,11 +502,13 @@
     document.addEventListener("click", async (e) => {
       if (e.target.closest("#btnAddSession")) return openSessionModal(null);
 
-      if (e.target.closest("#btnRefreshSessions")) {
-        return load().catch((err) =>
-          notify("error", "Could not load sessions", esc(err.message)),
-        );
-      }
+      const refreshBtn = e.target.closest("#btnRefreshSessions");
+
+if (refreshBtn) {
+    e.preventDefault();
+    load(true);
+    return;
+}
 
       if (e.target.closest("#btnSearchSession")) {
         page = 1;

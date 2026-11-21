@@ -1,1 +1,197 @@
-<script src="/js/admin/leaderboard.js"></script>
+<script>
+(() => {
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+    const PAGE_SIZE = 10;
+
+    let page = 1;
+
+    function init() {
+
+        const table = $("leaderboardTable");
+        if (!table) return;
+
+        const tbody = table.querySelector("tbody");
+
+        if (!tbody) return;
+
+        const allRows = [...tbody.querySelectorAll("tr")].filter(
+            row => !row.querySelector("td[colspan]")
+        );
+
+        function filteredRows() {
+
+            const keyword = ($("searchLeaderboard")?.value || "")
+                .trim()
+                .toLowerCase();
+
+            const department = ($("leaderboardFilter")?.value || "")
+                .trim()
+                .toLowerCase();
+
+            return allRows.filter(row => {
+
+                const text = row.textContent.toLowerCase();
+
+                if (keyword && !text.includes(keyword))
+                    return false;
+
+                if (department && !text.includes(department))
+                    return false;
+
+                return true;
+            });
+        }
+
+        function render() {
+
+            const rows = filteredRows();
+
+            const totalPages = Math.max(
+                1,
+                Math.ceil(rows.length / PAGE_SIZE)
+            );
+
+            if (page > totalPages)
+                page = totalPages;
+
+            allRows.forEach(row => row.style.display = "none");
+
+            rows
+                .slice(
+                    (page - 1) * PAGE_SIZE,
+                    page * PAGE_SIZE
+                )
+                .forEach(row => row.style.display = "");
+
+            const pagination = $("leaderboardPagination");
+
+            if (!pagination) return;
+
+            let html = "";
+
+            html += `
+                <li class="page-item ${page === 1 ? "disabled" : ""}">
+                    <a href="#" class="page-link" data-page="${page - 1}">
+                        &laquo;
+                    </a>
+                </li>`;
+
+            for (let i = 1; i <= totalPages; i++) {
+
+                html += `
+                    <li class="page-item ${i === page ? "active" : ""}">
+                        <a href="#" class="page-link" data-page="${i}">
+                            ${i}
+                        </a>
+                    </li>`;
+            }
+
+            html += `
+                <li class="page-item ${page === totalPages ? "disabled" : ""}">
+                    <a href="#" class="page-link" data-page="${page + 1}">
+                        &raquo;
+                    </a>
+                </li>`;
+
+            pagination.innerHTML = html;
+        }
+
+        document.addEventListener("click", function (e) {
+
+            const refresh = e.target.closest("#btnRefreshLeaderboard");
+
+            if (refresh) {
+
+                e.preventDefault();
+
+                refresh.disabled = true;
+                refresh.innerHTML =
+                    '<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing...';
+
+                if (window.Swal) {
+
+                    Swal.fire({
+                        title: "Refreshing Leaderboard",
+                        text: "Loading latest rankings...",
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showConfirmButton: false,
+                        didOpen: () => Swal.showLoading()
+                    });
+
+                }
+
+                setTimeout(() => location.reload(), 800);
+
+                return;
+            }
+
+            if (e.target.closest("#btnSearchLeaderboard")) {
+
+                page = 1;
+                render();
+                return;
+            }
+
+            const pageBtn = e.target.closest(
+                "#leaderboardPagination [data-page]"
+            );
+
+            if (pageBtn) {
+
+                e.preventDefault();
+
+                const p = Number(pageBtn.dataset.page);
+
+                if (p > 0) {
+
+                    page = p;
+                    render();
+
+                }
+            }
+        });
+
+        document.addEventListener("input", function (e) {
+
+            if (e.target.id === "searchLeaderboard") {
+
+                page = 1;
+                render();
+
+            }
+
+        });
+
+        document.addEventListener("change", function (e) {
+
+            if (e.target.id === "leaderboardFilter") {
+
+                page = 1;
+                render();
+
+            }
+
+        });
+
+        render();
+    }
+
+    window.AdminLeaderboard = {
+
+        load() {
+
+            init();
+
+            return Promise.resolve();
+
+        }
+
+    };
+
+    document.addEventListener("DOMContentLoaded", init);
+
+})();
+</script>

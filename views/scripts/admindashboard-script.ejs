@@ -12,6 +12,7 @@
       tasks: "tasksSection",
       mood: "moodSection",
       sessions: "sessionsSection",
+      leaderboard: "leaderboardSection",
     };
 
     const LABELS = {
@@ -20,7 +21,7 @@
       "task management": "tasks",
       "mood analytics": "mood",
       "work sessions": "sessions",
-      leaderboard: "overview",
+      "leaderboard": "leaderboard",
     };
 
     const GREEN = "#2d5a3d";
@@ -222,59 +223,154 @@
     );
 
     const loaders = {
-      overview: loadOverview,
-      users: loadUsers,
-      tasks: loadTasks,
-      mood: loadMood,
-      sessions: loadSessions,
-    };
+    overview: loadOverview,
+
+    users: loadUsers,
+
+    tasks: loadTasks,
+
+    mood: loadMood,
+
+    sessions: loadSessions,
+
+    leaderboard: () => {
+        if (window.AdminLeaderboard &&
+            typeof window.AdminLeaderboard.load === "function") {
+            return window.AdminLeaderboard.load();
+        }
+        return Promise.resolve();
+    }
+};
 
     /* ---------- navigation ---------- */
     async function showSection(name, force) {
-      if (!SECTIONS[name]) name = "overview";
 
-      Object.entries(SECTIONS).forEach(([key, id]) => {
-        const el = $(id);
-        if (el) el.classList.toggle("d-none", key !== name);
-      });
-
-      if (force || !loaded[name]) {
-        try {
-          await loaders[name]();
-          loaded[name] = true;
-        } catch (err) {
-          console.error(err);
-          notify("error", "Could not load data", esc(err.message));
-        }
-      }
-
-      history.replaceState(null, "", "#" + name);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!SECTIONS[name]) {
+        name = "overview";
     }
 
-    /* ---------- sidebar clicks ---------- */
-    document.addEventListener("click", (e) => {
-      const link = e.target.closest(
-        ".sidebar a, .sidebar button, nav a, aside a, [data-section]",
-      );
-      if (!link) return;
-      const label = (link.dataset.section || link.textContent || "")
-        .trim()
-        .replace(/\s+/g, " ")
-        .toLowerCase();
-      const target = SECTIONS[label] ? label : LABELS[label];
-      if (target) {
-        e.preventDefault();
-        showSection(target);
-      }
+    Object.entries(SECTIONS).forEach(([key, id]) => {
+
+        const el = $(id);
+
+        if (el) {
+            el.classList.toggle("d-none", key !== name);
+        }
+
     });
 
-    /* ---------- init ---------- */
-    document.addEventListener("DOMContentLoaded", () => {
-      $("btnRefreshDashboard")?.addEventListener("click", () =>
-        showSection(Object.keys(SECTIONS).find(isVisible) || "overview", true),
-      );
+    if (force || !loaded[name]) {
 
+        try {
+
+            const loader = loaders[name];
+
+            if (typeof loader === "function") {
+                await loader();
+            }
+
+            loaded[name] = true;
+
+        } catch (err) {
+
+            console.error(err);
+
+            notify(
+                "error",
+                "Could not load data",
+                esc(err.message)
+            );
+
+        }
+
+    }
+
+    history.replaceState(null, "", "#" + name);
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+    });
+
+}
+
+    /* ---------- sidebar clicks ---------- */
+    document.addEventListener("click", async (e) => {
+
+    const link = e.target.closest("#accordionSidebar .nav-link");
+
+    if (!link) return;
+
+    e.preventDefault();
+
+    // Move the white active card
+    document.querySelectorAll("#accordionSidebar .nav-link").forEach(item => {
+        item.classList.remove("active");
+    });
+
+    link.classList.add("active");
+
+    // Load the correct section
+    const target = link.dataset.target;
+
+    if (target) {
+
+        const name = Object.keys(SECTIONS).find(
+            key => SECTIONS[key] === target
+        );
+
+        if (name) {
+
+            await showSection(name);
+
+        }
+
+    }
+
+});
+
+    /* ---------- init ---------- */
+    $("btnRefreshDashboard")?.addEventListener("click", async () => {
+
+    const currentSection = Object.keys(SECTIONS).find(isVisible) || "overview";
+
+    Swal.fire({
+        title: "Refreshing Dashboard...",
+        text: "Please wait...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    try {
+
+        await showSection(currentSection, true);
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "success",
+            title: "Dashboard Refreshed",
+            timer: 1200,
+            showConfirmButton: false
+        });
+
+    } catch (err) {
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "error",
+            title: "Refresh Failed",
+            text: err.message
+        });
+
+    }
+
+});
       // opens the modal over whatever section is showing
       $("quickAddUser")?.addEventListener("click", () => {
         const el = $("addUserModal");
@@ -293,6 +389,18 @@
 
       const start = location.hash.replace("#", "");
       showSection(SECTIONS[start] ? start : "overview", true);
-    });
+      const currentLink = document.querySelector(
+    '#accordionSidebar .nav-link[data-target="' +
+    SECTIONS[SECTIONS[start] ? start : "overview"] +
+    '"]'
+);
+
+if (currentLink) {
+
+    currentLink.classList.add("active");
+
+}
+    
+
   })();
 </script>
