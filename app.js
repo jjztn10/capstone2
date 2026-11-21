@@ -1,69 +1,84 @@
-
-const express = require("express");
+// ==========================================
+// LOAD ENVIRONMENT VARIABLES FIRST
+// ==========================================
 const path = require("path");
+
+require("dotenv").config({
+    path: path.resolve(__dirname, ".env"),
+});
+
+// ==========================================
+// IMPORTS
+// ==========================================
+const express = require("express");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
-const session = require("express-session");
 const expressLayouts = require("express-ejs-layouts");
-const {testConnection} = require("./database/config/db")
-const {initSession} = require("./middleware/session")
 
+const { testConnection } = require("./database/config/db");
+const { initSession } = require("./middleware/session");
+
+// ==========================================
+// APP INITIALIZATION
+// ==========================================
 const app = express();
 
-/* ==========================================
-   VIEW ENGINE
-========================================== */
-
+// ==========================================
+// VIEW ENGINE
+// ==========================================
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
-/* ==========================================
-   LAYOUTS
-========================================== */
-
+// ==========================================
+// LAYOUTS
+// ==========================================
 app.use(expressLayouts);
 app.set("layout", "layout/main-layout");
 app.set("layout extractScripts", false);
 app.set("layout extractStyles", false);
 
-/* ==========================================
-   MIDDLEWARE
-========================================== */
-
+// ==========================================
+// GENERAL MIDDLEWARE
+// ==========================================
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(
-    session({
-        secret: process.env.SESSION_SECRET || "smartwork-secret-key",
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24
-        }
-    })
-);
+// ==========================================
+// SESSION MIDDLEWARE
+// Use middleware/session.js as the only
+// session configuration source.
+// ==========================================
+initSession(app);
 
-/* ==========================================
-   STATIC FILES
-========================================== */
-testConnection().catch((err) =>
-  console.error("❌ Database connection failed:", err.message)
-);
+// ==========================================
+// STATIC FILES
+// ==========================================
 app.use(express.static(path.join(__dirname, "public")));
 
-/* ==========================================
-   ROUTES
-========================================== */
+console.log("ENV FILE:", path.resolve(__dirname, ".env"));
+console.log("SESSION_SECRET loaded:", Boolean(process.env.SESSION_SECRET));
+console.log("MONGODB_URL loaded:", Boolean(process.env.MONGODB_URL));
+// ==========================================
+// DATABASE CONNECTION TEST
+// ==========================================
+testConnection()
+    .then(() => {
+        console.log("✅ MySQL connection established.");
+    })
+    .catch((err) => {
+        console.error("❌ Database connection failed:", err.message);
+    });
 
+// ==========================================
+// ROUTES
+// ==========================================
 const indexRouter = require("./routes/index");
 const adminDashboardRouter = require("./routes/admindashboard");
+const adminLeaderboardRouter = require("./routes/adminleaderboard");
 
+// Validate routers
 if (typeof indexRouter !== "function") {
     throw new Error("routes/index.js must export an Express router.");
 }
@@ -72,13 +87,18 @@ if (typeof adminDashboardRouter !== "function") {
     throw new Error("routes/admindashboard.js must export an Express router.");
 }
 
+if (typeof adminLeaderboardRouter !== "function") {
+    throw new Error("routes/adminleaderboard.js must export an Express router.");
+}
+
+// Mount routes
 app.use("/", indexRouter);
 app.use("/admindashboard", adminDashboardRouter);
+app.use("/adminleaderboard", adminLeaderboardRouter);
 
-/* ==========================================
-   404 PAGE
-========================================== */
-
+// ==========================================
+// 404 HANDLER
+// ==========================================
 app.use((req, res) => {
     res.status(404).render("error", {
         layout: false,
@@ -88,12 +108,11 @@ app.use((req, res) => {
     });
 });
 
-/* ==========================================
-   ERROR HANDLER
-========================================== */
-
+// ==========================================
+// GLOBAL ERROR HANDLER
+// ==========================================
 app.use((err, req, res, next) => {
-    console.error(err);
+    console.error("Application error:", err);
 
     res.status(err.status || 500).render("error", {
         layout: false,
@@ -103,8 +122,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-/* ==========================================
-   EXPORT
-========================================== */
-
+// ==========================================
+// EXPORT APP
+// ==========================================
 module.exports = app;

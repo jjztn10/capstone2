@@ -1,48 +1,112 @@
-require("dotenv").config();
-const mysql = require("mysql2");
+// database/config/db.js
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+const path = require("path");
+require("dotenv").config({
+    path: path.resolve(__dirname, "../../.env"),
 });
 
-// Promise-based API so you can use async/await
+const mysql = require("mysql2");
+
+console.log("===== DATABASE ENV CHECK =====");
+console.log("DB_HOST:", process.env.DB_HOST || "MISSING");
+console.log("DB_USER:", process.env.DB_USER || "MISSING");
+console.log("DB_NAME:", process.env.DB_NAME || "MISSING");
+console.log("DB_PORT:", process.env.DB_PORT || "MISSING");
+console.log("DB_PASSWORD:", process.env.DB_PASSWORD ? "LOADED" : "MISSING");
+console.log("============================");
+
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: Number(process.env.DB_PORT) || 3306,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+});
+
 const promisePool = pool.promise();
 
-//@ universal query: SELECT, INSERT, UPDATE, DELETE
-const Query = async (sql, params = [], prefixes) => {
-  try {
-    const [result] = await promisePool.query(sql, params);
-    const type = sql.trim().toUpperCase();
-
-    if (type.startsWith("INSERT")) {
-      return { ...result, insertId: result.insertId };
-    }
-    if (prefixes && type.startsWith("SELECT")) {
-      return DataModeling(result, prefixes);
-    }
-    return result;
-  } catch (error) {
-    console.error("Error executing query:", error);
-    throw error;
-  }
-};
-
-// Call once at startup to catch bad credentials early
+// Test database connection
 const testConnection = async () => {
-  const conn = await promisePool.getConnection();
-  try {
-    await conn.ping();
-    console.log("✅ Database connected");
-  } finally {
-    conn.release();
-  }
+    let conn;
+
+    try {
+        conn = await promisePool.getConnection();
+        await conn.ping();
+
+        console.log("✅ Database connected successfully");
+    } catch (error) {
+        console.error("❌ Database connection failed:", error.message);
+        throw error;
+    } finally {
+        if (conn) conn.release();
+    }
 };
 
-module.exports = { pool: promisePool, Query, testConnection };
+// Universal query function
+const Query = async (sql, params = [], prefixes) => {
+    try {
+        const [result] = await promisePool.query(sql, params);
+
+        if (sql.trim().toUpperCase().startsWith("INSERT")) {
+            return {
+                ...result,
+                insertId: result.insertId,
+            };
+        }
+
+        if (
+            prefixes &&
+            sql.trim().toUpperCase().startsWith("SELECT")
+        ) {
+            return DataModeling(result, prefixes);
+        }
+
+        return result;
+    } catch (error) {
+        console.error("Error executing query:", error.message);
+        throw error;
+    }
+};
+
+// Transaction function
+const Transaction = async (queries) => {
+    let connection;
+
+    try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        for (const query of queries) {
+            await connection.execute(query.sql, query.values || []);
+        }
+
+        await connection.commit();
+        return true;
+    } catch (error) {
+        console.error("Transaction failed:", error.message);
+
+        if (connection) {
+            try {
+                await connection.rollback();
+            } catch (rollbackError) {
+                console.error("Rollback failed:", rollbackError.message);
+            }
+        }
+
+        throw error;
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+module.exports = {
+    pool: promisePool,
+    Query,
+    Transaction,
+    testConnection,
+};

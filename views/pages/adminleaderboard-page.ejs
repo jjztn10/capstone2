@@ -1,526 +1,705 @@
-<!-- ==========================================
-     LEADERBOARD
-========================================== -->
+<div id="adminLeaderboard" class="sw-leaderboard">
+  <!-- HEADER -->
+  <div class="leaderboard-header">
+    <div>
+      <h2><i class="fas fa-trophy"></i> Leaderboard</h2>
+      <p>Track user productivity, achievements, and rankings.</p>
+    </div>
 
-<section
-    id="leaderboardSection"
-    class="admin-section d-none">
+    <button id="leaderboardRefresh" class="btn leaderboard-refresh">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+  </div>
 
-    <!-- ==========================
-         PAGE HEADER
-    =========================== -->
+  <!-- SUMMARY CARDS -->
+  <div class="leaderboard-stats">
+    <div class="leaderboard-stat-card">
+      <div class="stat-icon users-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div>
+        <span class="stat-label">TOTAL PARTICIPANTS</span>
+        <h3 id="lbTotalUsers">0</h3>
+      </div>
+    </div>
 
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div class="leaderboard-stat-card">
+      <div class="stat-icon score-icon">
+        <i class="fas fa-star"></i>
+      </div>
+      <div>
+        <span class="stat-label">AVERAGE SCORE</span>
+        <h3 id="lbAverageScore">0</h3>
+      </div>
+    </div>
 
-        <div>
+    <div class="leaderboard-stat-card">
+      <div class="stat-icon winner-icon">
+        <i class="fas fa-crown"></i>
+      </div>
+      <div>
+        <span class="stat-label">TOP PERFORMER</span>
+        <h3 id="lbTopPerformer">---</h3>
+      </div>
+    </div>
 
-            <h2 class="h3 mb-1 text-gray-800">
+    <div class="leaderboard-stat-card">
+      <div class="stat-icon points-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div>
+        <span class="stat-label">HIGHEST SCORE</span>
+        <h3 id="lbHighestScore">0</h3>
+      </div>
+    </div>
+  </div>
 
-                <i class="fas fa-trophy mr-2"></i>
+  <!-- TOP 3 PODIUM -->
+  <div class="leaderboard-podium-section">
+    <div class="podium-title">
+      <h3><i class="fas fa-award"></i> Top Performers</h3>
+      <p>Celebrating the most productive users</p>
+    </div>
 
-                Leaderboard
-
-            </h2>
-
-            <p class="text-muted mb-0">
-
-                View employee rankings, achievements, and productivity performance.
-
-            </p>
-
+    <div id="leaderboardPodium" class="leaderboard-podium">
+      <!-- SECOND PLACE -->
+      <div class="podium-card podium-second">
+        <div class="podium-avatar">
+          <i class="fas fa-user"></i>
         </div>
+        <span class="podium-rank">2ND PLACE</span>
+        <h4 id="lbSecondName">---</h4>
+        <span class="podium-score" id="lbSecondScore">0 points</span>
+        <div class="podium-block podium-block-second">
+          <i class="fas fa-medal"></i>
+          <span>2</span>
+        </div>
+      </div>
 
-        <button
-            id="btnRefreshLeaderboard"
-            class="btn btn-primary shadow">
+      <!-- FIRST PLACE -->
+      <div class="podium-card podium-first">
+        <div class="podium-avatar">
+          <i class="fas fa-crown"></i>
+        </div>
+        <span class="podium-rank">1ST PLACE</span>
+        <h4 id="lbFirstName">---</h4>
+        <span class="podium-score" id="lbFirstScore">0 points</span>
+        <div class="podium-block podium-block-first">
+          <i class="fas fa-trophy"></i>
+          <span>1</span>
+        </div>
+      </div>
 
-            <i class="fas fa-sync-alt mr-2"></i>
+      <!-- THIRD PLACE -->
+      <div class="podium-card podium-third">
+        <div class="podium-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <span class="podium-rank">3RD PLACE</span>
+        <h4 id="lbThirdName">---</h4>
+        <span class="podium-score" id="lbThirdScore">0 points</span>
+        <div class="podium-block podium-block-third">
+          <i class="fas fa-medal"></i>
+          <span>3</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-            Refresh
+  <!-- RANKINGS -->
+  <div class="leaderboard-table-card">
+    <div class="leaderboard-table-header">
+      <div>
+        <h3><i class="fas fa-list-ol"></i> User Rankings</h3>
+        <p>Complete productivity ranking of registered users</p>
+      </div>
+    </div>
 
+    <!-- SEARCH -->
+    <div class="leaderboard-search-row">
+      <div class="leaderboard-search-box">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          id="leaderboardSearch"
+          placeholder="Search by name or email..."
+        />
+        <button type="button" id="leaderboardClearSearch">
+          <i class="fas fa-times"></i>
         </button>
+      </div>
 
+      <span id="leaderboardResultCount" class="leaderboard-result-count">
+        0 users
+      </span>
     </div>
 
-    <!-- ==========================
-         SUMMARY CARDS
-    =========================== -->
+    <!-- TABLE -->
+    <div class="leaderboard-table-wrapper">
+      <table class="table leaderboard-table">
+        <thead>
+          <tr>
+            <th>RANK</th>
+            <th>USER</th>
+            <th>SCORE</th>
+            <th>TOTAL POINTS</th>
+            <th>WEEKLY POINTS</th>
+            <th>COMPLETED TASKS</th>
+            <th>STREAK</th>
+          </tr>
+        </thead>
 
-    <div class="row">
-
-        <div class="col-xl-4 col-md-4 mb-4">
-
-            <div class="card border-left-warning shadow h-100 py-2">
-
-                <div class="card-body">
-
-                    <div class="row no-gutters align-items-center">
-
-                        <div class="col mr-2">
-
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-
-                                Top Performer
-
-                            </div>
-
-                            <div class="h5 font-weight-bold text-gray-800">
-
-                                <%= leaderboard && leaderboard.length ? leaderboard[0].name : "-" %>
-
-                            </div>
-
-                        </div>
-
-                        <div class="col-auto">
-
-                            <i class="fas fa-crown fa-2x text-gray-300"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-xl-4 col-md-4 mb-4">
-
-            <div class="card border-left-success shadow h-100 py-2">
-
-                <div class="card-body">
-
-                    <div class="row no-gutters align-items-center">
-
-                        <div class="col mr-2">
-
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-
-                                Average Score
-
-                            </div>
-
-                            <div class="h5 font-weight-bold text-gray-800">
-
-                                <%= leaderboardStats ? leaderboardStats.averageScore : 0 %>
-
-                            </div>
-
-                        </div>
-
-                        <div class="col-auto">
-
-                            <i class="fas fa-chart-line fa-2x text-gray-300"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="col-xl-4 col-md-4 mb-4">
-
-            <div class="card border-left-primary shadow h-100 py-2">
-
-                <div class="card-body">
-
-                    <div class="row no-gutters align-items-center">
-
-                        <div class="col mr-2">
-
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-
-                                Total Participants
-
-                            </div>
-
-                            <div class="h5 font-weight-bold text-gray-800">
-
-                                <%= leaderboard ? leaderboard.length : 0 %>
-
-                            </div>
-
-                        </div>
-
-                        <div class="col-auto">
-
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
+        <tbody id="leaderboardTableBody">
+          <tr>
+            <td colspan="7" class="text-center py-4">Loading leaderboard...</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- ==========================
-         PODIUM
-    =========================== -->
-
-    <div class="card shadow mb-4">
-
-        <div class="card-header py-3">
-
-            <h6 class="m-0 font-weight-bold text-primary">
-
-                Top 3 Performers
-
-            </h6>
-
-        </div>
-
-        <div class="card-body">
-
-            <div class="row text-center">
-
-                <!-- 2nd Place -->
-
-                <div class="col-md-4 mb-3">
-
-                    <div class="border rounded p-4">
-
-                        <i class="fas fa-medal fa-3x text-secondary mb-3"></i>
-
-                        <h5>
-
-                            <%= leaderboard && leaderboard[1] ? leaderboard[1].name : "-" %>
-
-                        </h5>
-
-                        <span class="badge badge-secondary">
-
-                            2nd Place
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <!-- 1st Place -->
-
-                <div class="col-md-4 mb-3">
-
-                    <div class="border rounded p-4 bg-light">
-
-                        <i class="fas fa-crown fa-4x text-warning mb-3"></i>
-
-                        <h4>
-
-                            <%= leaderboard && leaderboard[0] ? leaderboard[0].name : "-" %>
-
-                        </h4>
-
-                        <span class="badge badge-warning">
-
-                            Champion
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <!-- 3rd Place -->
-
-                <div class="col-md-4 mb-3">
-
-                    <div class="border rounded p-4">
-
-                        <i class="fas fa-award fa-3x text-warning mb-3"></i>
-
-                        <h5>
-
-                            <%= leaderboard && leaderboard[2] ? leaderboard[2].name : "-" %>
-
-                        </h5>
-
-                        <span class="badge badge-dark">
-
-                            3rd Place
-
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
+    <!-- FOOTER -->
+    <div class="leaderboard-footer">
+      <span id="leaderboardFooterText">Showing 0 users</span>
     </div>
-
-    <!-- ==========================
-         FILTERS
-    =========================== -->
-
-    <div class="card shadow mb-4">
-
-        <div class="card-body">
-
-            <div class="row">
-
-                <div class="col-md-6 mb-3">
-
-                    <input
-                        type="text"
-                        id="searchLeaderboard"
-                        class="form-control"
-                        placeholder="Search employee...">
-
-                </div>
-
-                <div class="col-md-3 mb-3">
-
-                    <select
-                        id="leaderboardFilter"
-                        class="form-control">
-
-                        <option value="">All Departments</option>
-                        <option>Development</option>
-                        <option>Design</option>
-                        <option>Marketing</option>
-                        <option>Human Resources</option>
-
-                    </select>
-
-                </div>
-
-                <div class="col-md-3 mb-3">
-
-                    <button
-                        id="btnSearchLeaderboard"
-                        class="btn btn-primary btn-block">
-
-                        <i class="fas fa-search mr-2"></i>
-
-                        Search
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- ==========================
-         RANKINGS TABLE
-    =========================== -->
-
-    <div class="card shadow">
-
-        <div class="card-header py-3">
-
-            <h6 class="m-0 font-weight-bold text-primary">
-
-                Employee Rankings
-
-            </h6>
-
-        </div>
-
-        <div class="card-body">
-
-            <div class="table-responsive">
-
-                <table
-                    class="table table-bordered table-hover"
-                    id="leaderboardTable">
-
-                    <thead class="thead-light">
-
-                        <tr>
-
-                            <th width="80">Rank</th>
-                            <th>Employee</th>
-                            <th>Department</th>
-                            <th>Tasks Completed</th>
-                            <th>Performance</th>
-                            <th>Achievement</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        <% if (leaderboard && leaderboard.length > 0) { %>
-
-                            <% leaderboard.forEach((employee, index) => { %>
-
-                                <tr>
-
-                                    <td>
-
-                                        <% if (index === 0) { %>
-
-                                            🥇
-
-                                        <% } else if (index === 1) { %>
-
-                                            🥈
-
-                                        <% } else if (index === 2) { %>
-
-                                            🥉
-
-                                        <% } else { %>
-
-                                            <%= index + 1 %>
-
-                                        <% } %>
-
-                                    </td>
-
-                                    <td>
-
-                                        <strong>
-
-                                            <%= employee.name %>
-
-                                        </strong>
-
-                                    </td>
-
-                                    <td>
-
-                                        <%= employee.department || "-" %>
-
-                                    </td>
-
-                                    <td>
-
-                                        <%= employee.tasksCompleted || 0 %>
-
-                                    </td>
-
-                                    <td>
-
-                                        <span class="badge badge-success">
-
-                                            <%= employee.score || 0 %>%
-
-                                        </span>
-
-                                    </td>
-
-                                    <td>
-
-                                        <% if ((employee.score || 0) >= 95) { %>
-
-                                            <span class="badge badge-warning">
-
-                                                🏆 Champion
-
-                                            </span>
-
-                                        <% } else if ((employee.score || 0) >= 90) { %>
-
-                                            <span class="badge badge-primary">
-
-                                                ⭐ Elite
-
-                                            </span>
-
-                                        <% } else if ((employee.score || 0) >= 80) { %>
-
-                                            <span class="badge badge-success">
-
-                                                🎯 Achiever
-
-                                            </span>
-
-                                        <% } else { %>
-
-                                            <span class="badge badge-secondary">
-
-                                                Participant
-
-                                            </span>
-
-                                        <% } %>
-
-                                    </td>
-
-                                </tr>
-
-                            <% }) %>
-
-                        <% } else { %>
-
-                            <tr>
-
-                                <td
-                                    colspan="6"
-                                    class="text-center py-5 text-muted">
-
-                                    <i class="fas fa-trophy fa-3x mb-3 d-block"></i>
-
-                                    No leaderboard data available.
-
-                                </td>
-
-                            </tr>
-
-                        <% } %>
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-        <div class="card-footer bg-white">
-
-            <div class="d-flex justify-content-between align-items-center">
-
-                <small class="text-muted">
-
-                    Showing
-
-                    <strong>
-
-                        <%= leaderboard ? leaderboard.length : 0 %>
-
-                    </strong>
-
-                    participant(s)
-
-                </small>
-
-                <nav>
-
-                    <ul
-                        class="pagination pagination-sm mb-0"
-                        id="leaderboardPagination">
-
-                        <!-- Pagination generated by JavaScript -->
-
-                    </ul>
-
-                </nav>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</section>
+  </div>
+</div>
+
+<style>
+  /* =========================================================
+   SMARTWORK LEADERBOARD
+========================================================= */
+
+  #adminLeaderboard {
+    --lb-green: #2d5a3d;
+    --lb-dark: #153629;
+    --lb-light-green: #e9f3eb;
+    --lb-text: #26332b;
+    --lb-muted: #77827a;
+    --lb-border: #e4e9e5;
+
+    color: var(--lb-text);
+    width: 100%;
+  }
+
+  /* HEADER */
+
+  #adminLeaderboard .leaderboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 24px;
+  }
+
+  #adminLeaderboard .leaderboard-header h2 {
+    font-size: 27px;
+    font-weight: 800;
+    color: var(--lb-dark);
+    margin: 0 0 6px;
+  }
+
+  #adminLeaderboard .leaderboard-header p {
+    color: var(--lb-muted);
+    margin: 0;
+  }
+
+  #adminLeaderboard .leaderboard-refresh {
+    background: var(--lb-green);
+    color: #fff;
+    border: 0;
+    padding: 11px 18px;
+    border-radius: 9px;
+    font-weight: 600;
+  }
+
+  #adminLeaderboard .leaderboard-refresh:hover {
+    background: var(--lb-dark);
+    color: #fff;
+  }
+
+  /* SUMMARY CARDS */
+
+  #adminLeaderboard .leaderboard-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 25px;
+  }
+
+  #adminLeaderboard .leaderboard-stat-card {
+    background: #fff;
+    border: 1px solid var(--lb-border);
+    border-radius: 12px;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 125px;
+    box-shadow: 0 4px 12px rgba(25, 50, 35, 0.05);
+  }
+
+  #adminLeaderboard .stat-icon {
+    width: 53px;
+    height: 53px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    font-size: 22px;
+  }
+
+  #adminLeaderboard .users-icon {
+    color: #2d5a3d;
+    background: #e9f3eb;
+  }
+
+  #adminLeaderboard .score-icon {
+    color: #c99a2e;
+    background: #fff5df;
+  }
+
+  #adminLeaderboard .winner-icon {
+    color: #b88924;
+    background: #fff2d2;
+  }
+
+  #adminLeaderboard .points-icon {
+    color: #188b77;
+    background: #e0f4ef;
+  }
+
+  #adminLeaderboard .stat-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: var(--lb-muted);
+  }
+
+  #adminLeaderboard .leaderboard-stat-card h3 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 5px 0 0;
+    color: var(--lb-dark);
+    overflow-wrap: anywhere;
+  }
+
+  #adminLeaderboard #lbTopPerformer {
+    font-size: 17px;
+  }
+
+  /* PODIUM */
+
+  #adminLeaderboard .leaderboard-podium-section {
+    background: #fff;
+    border: 1px solid var(--lb-border);
+    border-radius: 13px;
+    margin-bottom: 25px;
+    padding: 24px;
+    box-shadow: 0 4px 12px rgba(25, 50, 35, 0.04);
+  }
+
+  #adminLeaderboard .podium-title {
+    margin-bottom: 25px;
+  }
+
+  #adminLeaderboard .podium-title h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--lb-dark);
+    margin: 0 0 5px;
+  }
+
+  #adminLeaderboard .podium-title h3 i {
+    color: #c49a37;
+  }
+
+  #adminLeaderboard .podium-title p {
+    font-size: 13px;
+    color: var(--lb-muted);
+    margin: 0;
+  }
+
+  #adminLeaderboard .leaderboard-podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 15px;
+    max-width: 850px;
+    margin: 0 auto;
+    min-height: 310px;
+  }
+
+  #adminLeaderboard .podium-card {
+    flex: 1;
+    max-width: 230px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+
+  #adminLeaderboard .podium-avatar {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 23px;
+    margin-bottom: 12px;
+    background: var(--lb-light-green);
+    color: var(--lb-green);
+  }
+
+  #adminLeaderboard .podium-first .podium-avatar {
+    width: 78px;
+    height: 78px;
+    font-size: 28px;
+    color: #bd8d27;
+    background: #fff1cb;
+  }
+
+  #adminLeaderboard .podium-rank {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--lb-muted);
+  }
+
+  #adminLeaderboard .podium-card h4 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 8px 0 4px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  #adminLeaderboard .podium-score {
+    color: var(--lb-green);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  #adminLeaderboard .podium-block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px 9px 0 0;
+    color: #fff;
+    gap: 6px;
+  }
+
+  #adminLeaderboard .podium-block i {
+    font-size: 23px;
+  }
+
+  #adminLeaderboard .podium-block span {
+    font-size: 30px;
+    font-weight: 900;
+  }
+
+  #adminLeaderboard .podium-block-first {
+    height: 155px;
+    background: linear-gradient(180deg, #cba44c, #a57b25);
+  }
+
+  #adminLeaderboard .podium-block-second {
+    height: 115px;
+    background: linear-gradient(180deg, #a8b6ae, #74847b);
+  }
+
+  #adminLeaderboard .podium-block-third {
+    height: 85px;
+    background: linear-gradient(180deg, #bd8960, #98623d);
+  }
+
+  /* TABLE CARD */
+
+  #adminLeaderboard .leaderboard-table-card {
+    background: #fff;
+    border: 1px solid var(--lb-border);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(25, 50, 35, 0.04);
+  }
+
+  #adminLeaderboard .leaderboard-table-header {
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--lb-border);
+  }
+
+  #adminLeaderboard .leaderboard-table-header h3 {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--lb-dark);
+    margin: 0 0 5px;
+  }
+
+  #adminLeaderboard .leaderboard-table-header h3 i {
+    color: var(--lb-green);
+  }
+
+  #adminLeaderboard .leaderboard-table-header p {
+    color: var(--lb-muted);
+    font-size: 13px;
+    margin: 0;
+  }
+
+  /* SEARCH */
+
+  #adminLeaderboard .leaderboard-search-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+  }
+
+  #adminLeaderboard .leaderboard-search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--lb-border);
+    border-radius: 8px;
+    max-width: 420px;
+    width: 100%;
+    background: #f9fbf9;
+    padding: 0 12px;
+  }
+
+  #adminLeaderboard .leaderboard-search-box > i {
+    color: var(--lb-muted);
+  }
+
+  #adminLeaderboard .leaderboard-search-box input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    padding: 11px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  #adminLeaderboard .leaderboard-search-box button {
+    background: transparent;
+    border: 0;
+    color: var(--lb-muted);
+    padding: 5px 8px;
+  }
+
+  #adminLeaderboard .leaderboard-search-box button:hover {
+    color: var(--lb-green);
+  }
+
+  #adminLeaderboard .leaderboard-result-count {
+    font-size: 13px;
+    color: var(--lb-muted);
+    white-space: nowrap;
+  }
+
+  /* TABLE */
+
+  #adminLeaderboard .leaderboard-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  #adminLeaderboard .leaderboard-table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+    margin: 0;
+  }
+
+  #adminLeaderboard .leaderboard-table thead th {
+    background: #f4f7f5;
+    color: #5b6a61;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 15px 16px;
+    border-top: 1px solid var(--lb-border);
+    border-bottom: 1px solid var(--lb-border);
+    white-space: nowrap;
+  }
+
+  #adminLeaderboard .leaderboard-table tbody td {
+    padding: 15px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #edf0ed;
+    font-size: 13px;
+  }
+
+  #adminLeaderboard .leaderboard-table tbody tr:hover {
+    background: #f6faf7;
+  }
+
+  #adminLeaderboard .rank-badge {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 800;
+    background: #edf3ee;
+    color: var(--lb-green);
+  }
+
+  #adminLeaderboard .rank-1 {
+    background: #fff1cd;
+    color: #9b7219;
+  }
+
+  #adminLeaderboard .rank-2 {
+    background: #e7ece9;
+    color: #66766d;
+  }
+
+  #adminLeaderboard .rank-3 {
+    background: #f5e7dd;
+    color: #9b6240;
+  }
+
+  #adminLeaderboard .user-cell {
+    min-width: 190px;
+  }
+
+  #adminLeaderboard .user-name {
+    display: block;
+    color: var(--lb-dark);
+    font-weight: 700;
+  }
+
+  #adminLeaderboard .user-email {
+    display: block;
+    font-size: 11px;
+    color: var(--lb-muted);
+    margin-top: 3px;
+  }
+
+  #adminLeaderboard .score-badge {
+    background: var(--lb-green);
+    color: #fff;
+    border-radius: 7px;
+    padding: 6px 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  #adminLeaderboard .points-cell {
+    font-weight: 700;
+    color: var(--lb-green);
+  }
+
+  #adminLeaderboard .streak-cell {
+    color: #d18a22;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  #adminLeaderboard .leaderboard-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 24px;
+    color: var(--lb-muted);
+    font-size: 12px;
+  }
+
+  /* RESPONSIVE */
+
+  @media (max-width: 1100px) {
+    #adminLeaderboard .leaderboard-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 650px) {
+    #adminLeaderboard .leaderboard-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    #adminLeaderboard .leaderboard-refresh {
+      width: 100%;
+    }
+
+    #adminLeaderboard .leaderboard-stats {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    #adminLeaderboard .leaderboard-stat-card {
+      min-height: 95px;
+      padding: 17px;
+    }
+
+    #adminLeaderboard .leaderboard-podium-section {
+      padding: 14px;
+    }
+
+    #adminLeaderboard .leaderboard-podium {
+      gap: 7px;
+      min-height: 250px;
+    }
+
+    #adminLeaderboard .podium-avatar {
+      width: 46px;
+      height: 46px;
+      font-size: 17px;
+    }
+
+    #adminLeaderboard .podium-first .podium-avatar {
+      width: 55px;
+      height: 55px;
+      font-size: 20px;
+    }
+
+    #adminLeaderboard .podium-card h4 {
+      font-size: 12px;
+    }
+
+    #adminLeaderboard .podium-rank {
+      font-size: 8px;
+    }
+
+    #adminLeaderboard .podium-score {
+      font-size: 10px;
+    }
+
+    #adminLeaderboard .podium-block-first {
+      height: 120px;
+    }
+
+    #adminLeaderboard .podium-block-second {
+      height: 90px;
+    }
+
+    #adminLeaderboard .podium-block-third {
+      height: 65px;
+    }
+
+    #adminLeaderboard .podium-block span {
+      font-size: 23px;
+    }
+
+    #adminLeaderboard .leaderboard-search-row {
+      align-items: flex-start;
+      flex-direction: column;
+      padding: 14px;
+    }
+
+    #adminLeaderboard .leaderboard-search-box {
+      max-width: 100%;
+    }
+
+    #adminLeaderboard .leaderboard-table-header {
+      padding: 17px;
+    }
+  }
+</style>

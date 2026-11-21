@@ -1,197 +1,284 @@
 <script>
-(() => {
+  (() => {
     "use strict";
 
+    const API = "/admindashboard/api/leaderboard";
+    const root = document.getElementById("adminLeaderboard");
+
+    if (!root || root.dataset.initialized === "true") return;
+    root.dataset.initialized = "true";
+
     const $ = (id) => document.getElementById(id);
-    const PAGE_SIZE = 10;
 
-    let page = 1;
+    let leaderboardData = [];
+    let filteredData = [];
 
-    function init() {
+    const esc = (value) =>
+      String(value ?? "").replace(
+        /[&<>"']/g,
+        (char) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[char],
+      );
 
-        const table = $("leaderboardTable");
-        if (!table) return;
+    const number = (value) => Number(value || 0).toLocaleString();
 
-        const tbody = table.querySelector("tbody");
-
-        if (!tbody) return;
-
-        const allRows = [...tbody.querySelectorAll("tr")].filter(
-            row => !row.querySelector("td[colspan]")
-        );
-
-        function filteredRows() {
-
-            const keyword = ($("searchLeaderboard")?.value || "")
-                .trim()
-                .toLowerCase();
-
-            const department = ($("leaderboardFilter")?.value || "")
-                .trim()
-                .toLowerCase();
-
-            return allRows.filter(row => {
-
-                const text = row.textContent.toLowerCase();
-
-                if (keyword && !text.includes(keyword))
-                    return false;
-
-                if (department && !text.includes(department))
-                    return false;
-
-                return true;
-            });
-        }
-
-        function render() {
-
-            const rows = filteredRows();
-
-            const totalPages = Math.max(
-                1,
-                Math.ceil(rows.length / PAGE_SIZE)
-            );
-
-            if (page > totalPages)
-                page = totalPages;
-
-            allRows.forEach(row => row.style.display = "none");
-
-            rows
-                .slice(
-                    (page - 1) * PAGE_SIZE,
-                    page * PAGE_SIZE
-                )
-                .forEach(row => row.style.display = "");
-
-            const pagination = $("leaderboardPagination");
-
-            if (!pagination) return;
-
-            let html = "";
-
-            html += `
-                <li class="page-item ${page === 1 ? "disabled" : ""}">
-                    <a href="#" class="page-link" data-page="${page - 1}">
-                        &laquo;
-                    </a>
-                </li>`;
-
-            for (let i = 1; i <= totalPages; i++) {
-
-                html += `
-                    <li class="page-item ${i === page ? "active" : ""}">
-                        <a href="#" class="page-link" data-page="${i}">
-                            ${i}
-                        </a>
-                    </li>`;
-            }
-
-            html += `
-                <li class="page-item ${page === totalPages ? "disabled" : ""}">
-                    <a href="#" class="page-link" data-page="${page + 1}">
-                        &raquo;
-                    </a>
-                </li>`;
-
-            pagination.innerHTML = html;
-        }
-
-        document.addEventListener("click", function (e) {
-
-            const refresh = e.target.closest("#btnRefreshLeaderboard");
-
-            if (refresh) {
-
-                e.preventDefault();
-
-                refresh.disabled = true;
-                refresh.innerHTML =
-                    '<i class="fas fa-spinner fa-spin mr-2"></i> Refreshing...';
-
-                if (window.Swal) {
-
-                    Swal.fire({
-                        title: "Refreshing Leaderboard",
-                        text: "Loading latest rankings...",
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        showConfirmButton: false,
-                        didOpen: () => Swal.showLoading()
-                    });
-
-                }
-
-                setTimeout(() => location.reload(), 800);
-
-                return;
-            }
-
-            if (e.target.closest("#btnSearchLeaderboard")) {
-
-                page = 1;
-                render();
-                return;
-            }
-
-            const pageBtn = e.target.closest(
-                "#leaderboardPagination [data-page]"
-            );
-
-            if (pageBtn) {
-
-                e.preventDefault();
-
-                const p = Number(pageBtn.dataset.page);
-
-                if (p > 0) {
-
-                    page = p;
-                    render();
-
-                }
-            }
-        });
-
-        document.addEventListener("input", function (e) {
-
-            if (e.target.id === "searchLeaderboard") {
-
-                page = 1;
-                render();
-
-            }
-
-        });
-
-        document.addEventListener("change", function (e) {
-
-            if (e.target.id === "leaderboardFilter") {
-
-                page = 1;
-                render();
-
-            }
-
-        });
-
-        render();
+    function setText(id, value) {
+      const el = $(id);
+      if (el) el.textContent = value ?? "";
     }
 
-    window.AdminLeaderboard = {
+    function rankClass(rank) {
+      if (rank === 1) return "rank-1";
+      if (rank === 2) return "rank-2";
+      if (rank === 3) return "rank-3";
+      return "";
+    }
 
-        load() {
+    function showEmptyPodium() {
+      setText("lbFirstName", "---");
+      setText("lbFirstScore", "0 points");
+      setText("lbSecondName", "---");
+      setText("lbSecondScore", "0 points");
+      setText("lbThirdName", "---");
+      setText("lbThirdScore", "0 points");
+    }
 
-            init();
+    function renderStats(data) {
+      const stats = data.stats || {};
 
-            return Promise.resolve();
+      setText("lbTotalUsers", number(stats.totalParticipants));
+      setText("lbAverageScore", number(stats.averageScore));
+      setText("lbTopPerformer", stats.topPerformer || "---");
+      setText("lbHighestScore", number(stats.highestScore));
+    }
 
+    function renderPodium(rows) {
+      if (!rows.length) {
+        showEmptyPodium();
+        return;
+      }
+
+      const first = rows[0];
+      const second = rows[1];
+      const third = rows[2];
+
+      setText("lbFirstName", first?.name || first?.email || "User");
+      setText("lbFirstScore", number(first?.score) + " points");
+
+      setText("lbSecondName", second?.name || second?.email || "---");
+      setText("lbSecondScore", number(second?.score) + " points");
+
+      setText("lbThirdName", third?.name || third?.email || "---");
+      setText("lbThirdScore", number(third?.score) + " points");
+    }
+
+    function renderTable(rows) {
+      const body = $("leaderboardTableBody");
+      if (!body) return;
+
+      if (!rows.length) {
+        body.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="fas fa-search fa-2x mb-3 d-block"></i>
+                        No leaderboard records found.
+                    </td>
+                </tr>
+            `;
+
+        setText("leaderboardResultCount", "0 users");
+        setText("leaderboardFooterText", "Showing 0 users");
+        return;
+      }
+
+      body.innerHTML = rows
+        .map((user, index) => {
+          const rank = user.rank || index + 1;
+
+          return `
+                <tr>
+                    <td>
+                        <span class="rank-badge ${rankClass(rank)}">
+                            ${rank}
+                        </span>
+                    </td>
+
+                    <td class="user-cell">
+                        <span class="user-name">
+                            ${esc(user.name || "Unnamed User")}
+                        </span>
+                        <span class="user-email">
+                            ${esc(user.email || "No email")}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="score-badge">
+                            ${number(user.score)}
+                        </span>
+                    </td>
+
+                    <td class="points-cell">
+                        ${number(user.totalPoints)}
+                    </td>
+
+                    <td>
+                        ${number(user.weeklyPoints)}
+                    </td>
+
+                    <td>
+                        ${number(user.tasksCompleted)}
+                    </td>
+
+                    <td class="streak-cell">
+                        <i class="fas fa-fire"></i>
+                        ${number(user.studyStreak)} day${Number(user.studyStreak) === 1 ? "" : "s"}
+                    </td>
+                </tr>
+            `;
+        })
+        .join("");
+
+      setText(
+        "leaderboardResultCount",
+        `${rows.length} user${rows.length === 1 ? "" : "s"}`,
+      );
+
+      setText(
+        "leaderboardFooterText",
+        `Showing ${rows.length} user${rows.length === 1 ? "" : "s"}`,
+      );
+    }
+
+    function searchUsers() {
+      const search = $("leaderboardSearch");
+      const term = (search?.value || "").trim().toLowerCase();
+
+      filteredData = leaderboardData.filter((user) => {
+        return (
+          String(user.name || "")
+            .toLowerCase()
+            .includes(term) ||
+          String(user.email || "")
+            .toLowerCase()
+            .includes(term)
+        );
+      });
+
+      // Keep original ranks when searching
+      renderTable(filteredData);
+    }
+
+    async function load() {
+      const refreshButton = $("leaderboardRefresh");
+      if (refreshButton) {
+        refreshButton.disabled = true;
+        refreshButton.innerHTML = `
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+            `;
+      }
+
+      try {
+        const response = await fetch(API, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          credentials: "same-origin",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Unable to load leaderboard.");
         }
 
+        leaderboardData = Array.isArray(data.leaderboard)
+          ? data.leaderboard
+          : [];
+
+        filteredData = [...leaderboardData];
+
+        renderStats(data);
+        renderPodium(leaderboardData);
+        renderTable(filteredData);
+
+        // Clear previous search when refreshed
+        if ($("leaderboardSearch")) {
+          $("leaderboardSearch").value = "";
+        }
+
+        return data;
+      } catch (error) {
+        console.error("Leaderboard error:", error);
+
+        const body = $("leaderboardTableBody");
+        if (body) {
+          body.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-danger py-5">
+                            <i class="fas fa-exclamation-circle"></i>
+                            ${esc(error.message)}
+                        </td>
+                    </tr>
+                `;
+        }
+
+        if (window.Swal) {
+          Swal.fire({
+            icon: "error",
+            title: "Leaderboard Error",
+            text: error.message,
+            confirmButtonColor: "#2d5a3d",
+          });
+        }
+
+        throw error;
+      } finally {
+        if (refreshButton) {
+          refreshButton.disabled = false;
+          refreshButton.innerHTML = `
+                    <i class="fas fa-sync-alt"></i> Refresh
+                `;
+        }
+      }
+    }
+
+    // Search
+    $("leaderboardSearch")?.addEventListener("input", searchUsers);
+
+    // Clear search
+    $("leaderboardClearSearch")?.addEventListener("click", () => {
+      const input = $("leaderboardSearch");
+      if (input) {
+        input.value = "";
+        searchUsers();
+        input.focus();
+      }
+    });
+
+    // Refresh
+    $("leaderboardRefresh")?.addEventListener("click", () => {
+      load().catch(() => {});
+    });
+
+    // Reload leaderboard when tasks/users change
+    ["users:changed", "tasks:changed"].forEach((eventName) => {
+      document.addEventListener(eventName, () => {
+        load().catch(() => {});
+      });
+    });
+
+    // Expose to dashboard navigation loader
+    window.AdminLeaderboard = {
+      load,
+      search: searchUsers,
     };
-
-    document.addEventListener("DOMContentLoaded", init);
-
-})();
+  })();
 </script>
