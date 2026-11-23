@@ -1,191 +1,168 @@
-<!-- ==========================================
-     SMARTWORK ADMIN SIDEBAR
-========================================== -->
+<%# SMARTWORK SIDEBAR (Admin + User). Expects: layoutType ("admin" | "user"), currentPath (optional) %>
+
+<%
+/* ------------------------------------------------
+   1. Inputs
+------------------------------------------------ */
+const type = (typeof layoutType !== "undefined" && layoutType === "admin") ? "admin" : "user";
+
+const current = (typeof currentPath !== "undefined" ? currentPath : "")
+    .split("?")[0]
+    .split("#")[0]
+    .replace(/\/+$/, "");
+
+/* ------------------------------------------------
+   2. Per-layout configuration
+   - mode "anchor": single-page sections (admin), JS handles active state via data-target
+   - mode "url":    real routes (user), active state is computed here
+------------------------------------------------ */
+const base = "/userdashboard";
+
+const configs = {
+    admin: {
+        mode: "anchor",
+        homeUrl: "/admindashboard",
+        brandIcon: "fas fa-brain",
+        subtitle: "AI Management System",
+        footerIcon: "fas fa-robot",
+        footerText: "AI-powered adaptive workload management platform that helps teams work smarter, improve productivity, and maintain employee well-being.",
+        badge: "Version 1.0",
+        sections: [
+            {
+                items: [
+                    { id: "menuDashboard",   title: "Dashboard",       icon: "fas fa-home",      target: "overviewSection" }
+                ]
+            },
+            {
+                heading: "MANAGEMENT",
+                items: [
+                    { id: "menuUsers",       title: "Users",           icon: "fas fa-users",     target: "usersSection" },
+                    { id: "menuTasks",       title: "Task Management", icon: "fas fa-tasks",     target: "tasksSection" },
+                    { id: "menuMood",        title: "Mood Analytics",  icon: "far fa-smile",     target: "moodSection" },
+                    { id: "menuSessions",    title: "Work Sessions",   icon: "fas fa-clock",     target: "sessionsSection" },
+                    { id: "menuLeaderboard", title: "Leaderboard",     icon: "fas fa-trophy",    target: "leaderboardSection" }
+                ]
+            },
+            {
+                divider: true,
+                heading: "REPORTS",
+                items: [
+                    { id: "menuReports",     title: "Reports",         icon: "fas fa-chart-pie", target: "reportsSection" },
+                    { id: "menuSettings",    title: "Settings",        icon: "fas fa-cog",       target: "settingsSection" }
+                ]
+            }
+        ]
+    },
+
+    user: {
+        mode: "url",
+        homeUrl: base,
+        brandIcon: "fas fa-user",
+        subtitle: "User Workspace",
+        footerIcon: "fas fa-user",
+        footerText: "Manage your tasks, monitor your productivity, and improve your work-life balance.",
+        badge: "User Portal",
+        sections: [
+            {
+                heading: "MY WORKSPACE",
+                items: [
+                    { title: "Dashboard",    icon: "fas fa-home",         url: base,                  exact: true },
+                    { title: "My Tasks",     icon: "fas fa-tasks",        url: base + "/tasks" },
+                    { title: "Work Session", icon: "fas fa-stopwatch",    url: base + "/session" },
+                    { title: "My Mood",      icon: "far fa-smile-beam",   url: base + "/mood" },
+                    { title: "Analytics",    icon: "fas fa-chart-line",   url: base + "/analytics" },
+                    { title: "Leaderboard",  icon: "fas fa-medal",        url: base + "/leaderboard" },
+                    { title: "Profile",      icon: "fas fa-user-circle",  url: base + "/profile" }
+                ]
+            }
+        ]
+    }
+};
+
+const cfg = configs[type];
+
+/* ------------------------------------------------
+   3. Helpers
+------------------------------------------------ */
+const isActive = (item) => {
+    if (cfg.mode !== "url") return false; // admin active state handled by JS
+    return item.exact
+        ? current === item.url
+        : current === item.url || current.startsWith(item.url + "/");
+};
+%>
 
 <ul class="navbar-nav sidebar sidebar-dark accordion" id="accordionSidebar">
-  <!-- ==========================================
-         BRAND
-    =========================================== -->
 
-  <a class="sidebar-brand d-flex align-items-center" href="/admindashboard">
-    <div class="brand-logo">
-      <div class="brand-circle">
-        <i class="fas fa-brain"></i>
-      </div>
+    <!-- Brand -->
+    <a class="sidebar-brand d-flex align-items-center" href="<%= cfg.homeUrl %>">
+        <div class="brand-logo">
+            <div class="brand-circle">
+                <i class="<%= cfg.brandIcon %>"></i>
+            </div>
+        </div>
+        <div class="brand-content">
+            <div class="brand-title">SmartWork</div>
+            <div class="brand-subtitle"><%= cfg.subtitle %></div>
+        </div>
+    </a>
+
+    <!-- Banner -->
+    <div class="sidebar-banner">
+        <div class="banner-title">
+            WORK SMART.<br>ACHIEVE MORE.
+        </div>
+        <div class="banner-line"></div>
     </div>
 
-    <div class="brand-content">
-      <div class="brand-title">SmartWork</div>
+    <hr class="sidebar-divider">
 
-      <div class="brand-subtitle">AI Management System</div>
-    </div>
-  </a>
+    <!-- Menu -->
+    <% cfg.sections.forEach(section => { %>
 
-  <!-- ==========================================
-         MOTIVATION
-    =========================================== -->
+        <% if (section.divider) { %>
+            <hr class="sidebar-divider">
+        <% } %>
 
-  <div class="sidebar-banner">
-    <div class="banner-title">
-      WORK SMART.
-      <br />
-      ACHIEVE MORE.
-    </div>
+        <% if (section.heading) { %>
+            <div class="sidebar-heading">
+                <span><%= section.heading %></span>
+            </div>
+        <% } %>
 
-    <div class="banner-line"></div>
-  </div>
+        <% section.items.forEach(item => { %>
+            <li class="nav-item <%= isActive(item) ? 'active' : '' %>"
+                <% if (item.id) { %>id="<%= item.id %>"<% } %>>
 
-  <hr class="sidebar-divider" />
+                <% if (cfg.mode === "anchor") { %>
+                    <a class="nav-link" href="#<%= item.target %>" data-target="<%= item.target %>">
+                <% } else { %>
+                    <a class="nav-link" href="<%= item.url %>">
+                <% } %>
+                    <div class="nav-icon"><i class="<%= item.icon %>"></i></div>
+                    <span><%= item.title %></span>
+                    <div class="nav-active"></div>
+                </a>
+            </li>
+        <% }) %>
 
-  <!-- ==========================================
-         DASHBOARD
-    =========================================== -->
+    <% }) %>
 
-  <li class="nav-item" id="menuDashboard">
-    <a class="nav-link" href="#overviewSection" data-target="overviewSection">
-      <div class="nav-icon">
-        <i class="fas fa-home"></i>
-      </div>
+    <hr class="sidebar-divider">
 
-      <span> Dashboard </span>
-
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <!-- ==========================================
-         MANAGEMENT
-    =========================================== -->
-
-  <div class="sidebar-heading">
-    <span> MANAGEMENT </span>
-  </div>
-
-  <!-- USERS -->
-
-  <li class="nav-item" id="menuUsers">
-    <a class="nav-link" href="#usersSection" data-target="usersSection">
-      <div class="nav-icon">
-        <i class="fas fa-users"></i>
-      </div>
-
-      <span> Users </span>
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <!-- TASKS -->
-
-  <li class="nav-item" id="menuTasks">
-    <a class="nav-link" href="#tasksSection" data-target="tasksSection">
-      <div class="nav-icon">
-        <i class="fas fa-tasks"></i>
-      </div>
-
-      <span> Task Management </span>
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <!-- MOOD -->
-
-  <li class="nav-item" id="menuMood">
-    <a class="nav-link" href="#moodSection" data-target="moodSection">
-      <div class="nav-icon">
-        <i class="far fa-smile"></i>
-      </div>
-
-      <span> Mood Analytics </span>
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <!-- WORK SESSIONS -->
-
-  <li class="nav-item" id="menuSessions">
-    <a class="nav-link" href="#sessionsSection" data-target="sessionsSection">
-      <div class="nav-icon">
-        <i class="fas fa-clock"></i>
-      </div>
-
-      <span> Work Sessions </span>
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <!-- LEADERBOARD -->
-  <li class="nav-item" id="menuLeaderboard">
-    <a class="nav-link" href="#leaderboard" data-target="leaderboardSection">
-      <div class="nav-icon">
-        <i class="fas fa-trophy"></i>
-      </div>
-      <span>Leaderboard</span>
-    </a>
-  </li>
-
-  <hr class="sidebar-divider" />
-
-  <!-- ==========================================
-         REPORTS
-    =========================================== -->
-
-  <div class="sidebar-heading">
-    <span> REPORTS </span>
-    <div class="nav-active"></div>
-  </div>
-
-  <!-- REPORTS -->
-
-  <li class="nav-item">
-    <a class="nav-link" href="#reportsSection" data-target="reportsSection">
-      <div class="nav-icon">
-        <i class="fas fa-chart-pie"></i>
-      </div>
-
-      <span> Reports </span>
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <!-- SETTINGS -->
-
-  <li class="nav-item">
-    <a class="nav-link" href="#settingsSection" data-target="settingsSection">
-      <div class="nav-icon">
-        <i class="fas fa-cog"></i>
-      </div>
-
-      <span> Settings </span>
-      <div class="nav-active"></div>
-    </a>
-  </li>
-
-  <hr class="sidebar-divider" />
-
-  <!-- ==========================================
-         SIDEBAR FOOTER
-    =========================================== -->
-
-  <div class="sidebar-footer">
-    <div class="footer-icon">
-      <i class="fas fa-robot"></i>
+    <!-- Footer -->
+    <div class="sidebar-footer">
+        <div class="footer-icon">
+            <i class="<%= cfg.footerIcon %>"></i>
+        </div>
+        <h5>SmartWork</h5>
+        <p><%= cfg.footerText %></p>
+        <span class="version-badge"><%= cfg.badge %></span>
     </div>
 
-    <h5>SmartWork AI</h5>
+    <!-- Sidebar Toggle -->
+    <div class="text-center d-none d-md-inline mt-4 mb-3">
+        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+    </div>
 
-    <p>
-      AI-powered adaptive workload management platform that helps teams work
-      smarter, improve productivity, and maintain employee well-being.
-    </p>
-
-    <span class="version-badge"> Version 1.0 </span>
-  </div>
-
-  <!-- ==========================================
-         TOGGLE
-    =========================================== -->
-
-  <div class="text-center d-none d-md-inline mt-4 mb-3">
-    <button class="rounded-circle border-0" id="sidebarToggle"></button>
-  </div>
 </ul>

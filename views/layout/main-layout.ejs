@@ -1,49 +1,46 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title><%= title || "SmartWork" %></title>
+    <title><%= typeof title !== "undefined" && title ? title : "SmartWork" %></title>
 
     <!-- Favicon -->
     <link rel="icon" href="data:,">
 
-    <!-- Google Font: Inter -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
+    <!-- Font Awesome 5 (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <!-- Bootstrap 4.6.2 CSS -->
-    <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
-    >
+    <!-- SB Admin 2 (includes Bootstrap 4 styles) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css">
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="/vendor/fontawesome-free/css/all.min.css">
+    <%
+        const lt = (typeof layoutType !== "undefined") ? layoutType : "";
+        const ps = (typeof pageScript !== "undefined") ? pageScript : "";
+        const pst = (typeof pageStyle !== "undefined") ? pageStyle : "";
+        const cp = (typeof currentPath !== "undefined") ? currentPath : "";
+    %>
 
-    <!-- SB Admin 2 -->
-    <link rel="stylesheet" href="/stylesheets/sb-admin-2.min.css">
-    <link rel="stylesheet" href="/stylesheets/sidebar.css">
-    <!-- Global CSS -->
+    <!-- ==========================================
+         SHARED CSS (admin + user)
+    =========================================== -->
     <link rel="stylesheet" href="/stylesheets/style.css">
+    <link rel="stylesheet" href="/stylesheets/sidebar.css">
+    <link rel="stylesheet" href="/stylesheets/admin/admin-header.css">
 
-
-    <!-- ======================================
-         ADMIN CSS
-    ======================================= -->
-
-    <% if (typeof layoutType !== "undefined" && layoutType === "admin") { %>
-
+    <!-- ==========================================
+         ADMIN CSS  (public/stylesheets/admin/)
+    =========================================== -->
+    <% if (lt === "admin") { %>
         <link rel="stylesheet" href="/stylesheets/admin/admin-layout.css">
-        <link rel="stylesheet" href="/stylesheets/admin/admin-header.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-navigation.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-cards.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-tables.css">
@@ -53,97 +50,80 @@
         <link rel="stylesheet" href="/stylesheets/admin/admin-components.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-responsive.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-theme.css">
-        
+    <% } %>
 
-    <% } else if (typeof pageStyle !== "undefined" && pageStyle) { %>
+    <!-- ==========================================
+         USER CSS  (public/stylesheets/user/)
+    =========================================== -->
+    <% if (lt === "user") { %>
+        <link rel="stylesheet" href="/stylesheets/user/dashboard.css">
+    <% } %>
 
-        <link rel="stylesheet" href="/stylesheets/<%= pageStyle %>">
-
+    <!-- Optional page CSS (skips a file already loaded above) -->
+    <% if (pst && pst !== "user/dashboard.css") { %>
+        <link rel="stylesheet" href="/stylesheets/<%= pst %>">
     <% } %>
 
 </head>
 
+<body id="page-top" class="<%= lt === 'admin' ? 'admin-body' : 'main-body' %>">
 
-<body
-    id="page-top"
-    class="<%= (typeof layoutType !== 'undefined' && layoutType === 'admin') ? 'admin-body' : 'main-body' %>"
->
-
-    <!-- Page Wrapper -->
     <div id="wrapper">
 
-        <!-- Sidebar -->
-        <%- include("../components/sidebar") %>
+        <!-- Sidebar (single merged component for admin + user) -->
+        <% if (lt === "admin" || lt === "user") { %>
+            <%- include("../components/sidebar", { layoutType: lt, currentPath: cp }) %>
+        <% } %>
 
-
-        <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
 
-            <!-- Main Content -->
             <div id="content">
-
-                <!-- Page Content -->
                 <main class="container-fluid py-4">
 
+                    <!-- Header (single merged component for admin + user) -->
+                    <% if (lt === "admin" || lt === "user") { %>
+                        <%- include("../components/header") %>
+                    <% } %>
+
                     <%- body %>
-
                 </main>
-
             </div>
 
-
-            <!-- Footer -->
-            <%- include("../components/footer") %>
+            <% if (lt === "admin") { %>
+                <%- include("../components/footer") %>
+            <% } %>
 
         </div>
 
     </div>
 
-
-    <!-- Scroll to Top -->
+    <!-- Scroll To Top -->
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
 
-
-    <!-- ======================================
-         CORE JAVASCRIPT
-    ======================================= -->
-
     <!-- jQuery -->
-    <script src="/vendor/jquery/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
-    <!-- Bootstrap 4.6.2 -->
+    <!-- Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- jQuery Easing -->
-    <script src="/vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- SB Admin 2 (sidebar toggle etc.) -->
+    <script src="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/js/sb-admin-2.min.js"></script>
 
-    <!-- SB Admin 2 -->
-    <script src="/javascripts/sb-admin-2.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-
-    <!-- ======================================
-         DASHBOARD CHART LIBRARY
-    ======================================= -->
-
-    <% if (typeof pageScript !== "undefined" && pageScript === "admindashboard-script") { %>
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- Chart.js: admin dashboard, user dashboard, analytics -->
+    <% if (/(^|\/)(admindashboard|dashboard|analytics)-script$/.test(ps)) { %>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <% } %>
 
-
-    <!-- ======================================
-         PAGE-SPECIFIC EJS SCRIPT
-    ======================================= -->
-
-    <% if (typeof pageScript !== "undefined" && pageScript) { %>
-
-        <%- include("../scripts/" + pageScript) %>
-
+    <!-- Page Script -->
+    <% if (ps) { %>
+        <%- include("../scripts/" + ps) %>
     <% } %>
-
 
 </body>
+
 </html>

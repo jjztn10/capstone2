@@ -1,0 +1,227 @@
+<div class="container-fluid">
+
+    <!-- ==========================================
+         PAGE HEADER
+    =========================================== -->
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+
+        <div>
+
+            <h1 class="h3 mb-1 text-gray-800">
+                My Profile
+            </h1>
+
+            <p class="text-muted mb-0">
+                Manage your SmartWork account information.
+            </p>
+
+        </div>
+
+        <button
+            id="btnRefreshProfile"
+            class="btn btn-success">
+
+            <i class="fas fa-sync-alt"></i>
+
+            Refresh
+
+        </button>
+
+    </div>
+
+    <!-- ==========================================
+         PROFILE CARD
+    =========================================== -->
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-lg-3 text-center mb-4">
+
+                    <img
+                        src="https://ui-avatars.com/api/?background=2d5a3d&color=fff&size=200&name=User"
+                        id="profileAvatar"
+                        class="rounded-circle img-fluid shadow"
+                        style="width:160px;height:160px;object-fit:cover;">
+
+                </div>
+
+                <div class="col-lg-9">
+
+                    <div class="row">
+
+                        <div class="col-md-6 mb-3">
+
+                            <label>Name</label>
+
+                            <input
+                                id="profileName"
+                                class="form-control"
+                                readonly>
+
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+
+                            <label>Email</label>
+
+                            <input
+                                id="profileEmail"
+                                class="form-control"
+                                readonly>
+
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+
+                            <label>Study Streak</label>
+
+                            <input
+                                id="profileStreak"
+                                class="form-control"
+                                readonly>
+
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+
+                            <label>Total Points</label>
+
+                            <input
+                                id="profileTotalPoints"
+                                class="form-control"
+                                readonly>
+
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+
+                            <label>Weekly Points</label>
+
+                            <input
+                                id="profileWeeklyPoints"
+                                class="form-control"
+                                readonly>
+
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex flex-wrap">
+
+                        <button
+                            id="btnEditProfile"
+                            class="btn btn-success mr-2 mb-2">
+
+                            <i class="fas fa-edit"></i>
+
+                            Edit Profile
+
+                        </button>
+
+                        <button
+                            id="btnSaveProfile"
+                            class="btn btn-primary mr-2 mb-2 d-none">
+
+                            <i class="fas fa-save"></i>
+
+                            Save
+
+                        </button>
+
+                        <button
+                            id="btnCancelProfile"
+                            class="btn btn-secondary mb-2 d-none">
+
+                            <i class="fas fa-times"></i>
+
+                            Cancel
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         CHANGE PASSWORD
+    =========================================== -->
+
+    <div class="card shadow">
+
+        <div class="card-header">
+
+            <strong>
+
+                Change Password
+
+            </strong>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4">
+
+                    <label>Current Password</label>
+
+                    <input
+                        id="currentPassword"
+                        type="password"
+                        class="form-control">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label>New Password</label>
+
+                    <input
+                        id="newPassword"
+                        type="password"
+                        class="form-control">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label>Confirm Password</label>
+
+                    <input
+                        id="confirmPassword"
+                        type="password"
+                        class="form-control">
+
+                </div>
+
+            </div>
+
+            <button
+                id="btnChangePassword"
+                class="btn btn-danger mt-3">
+
+                <i class="fas fa-key"></i>
+
+                Change Password
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>

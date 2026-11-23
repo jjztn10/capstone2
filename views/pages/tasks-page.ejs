@@ -1,0 +1,440 @@
+<div class="admin-section">
+
+    <!-- ==========================================
+         PAGE HEADER
+    =========================================== -->
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+
+        <div>
+
+            <h1 class="h3 mb-1 text-gray-800">
+                Task Management
+            </h1>
+
+            <p class="text-muted mb-0">
+                Create, organize, and track your tasks.
+            </p>
+
+        </div>
+
+        <button
+            class="btn btn-success"
+            id="btnAddTask">
+
+            <i class="fas fa-plus mr-1"></i>
+
+            Add Task
+
+        </button>
+
+    </div>
+
+    <!-- ==========================================
+         SUMMARY CARDS
+    =========================================== -->
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-left-primary">
+
+                <div class="card-body">
+
+                    <div class="text-xs text-primary text-uppercase font-weight-bold">
+                        Total Tasks
+                    </div>
+
+                    <div
+                        class="h4 font-weight-bold"
+                        id="totalTasks">
+
+                        0
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-left-warning">
+
+                <div class="card-body">
+
+                    <div class="text-xs text-warning text-uppercase font-weight-bold">
+                        Pending
+                    </div>
+
+                    <div
+                        class="h4 font-weight-bold"
+                        id="pendingCount">
+
+                        0
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-left-success">
+
+                <div class="card-body">
+
+                    <div class="text-xs text-success text-uppercase font-weight-bold">
+                        Completed
+                    </div>
+
+                    <div
+                        class="h4 font-weight-bold"
+                        id="completedCount">
+
+                        0
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow border-left-danger">
+
+                <div class="card-body">
+
+                    <div class="text-xs text-danger text-uppercase font-weight-bold">
+                        Overdue
+                    </div>
+
+                    <div
+                        class="h4 font-weight-bold"
+                        id="overdueCount">
+
+                        0
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         FILTERS
+    =========================================== -->
+
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+
+                <div class="col-md-4 mb-2">
+
+                    <input
+                        id="searchTask"
+                        class="form-control"
+                        placeholder="Search task...">
+
+                </div>
+
+                <div class="col-md-3 mb-2">
+
+                    <select
+                        id="filterStatus"
+                        class="form-control">
+
+                        <option value="">All Status</option>
+
+                        <option>Pending</option>
+
+                        <option>In Progress</option>
+
+                        <option>Completed</option>
+
+                        <option>Overdue</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-3 mb-2">
+
+                    <select
+                        id="filterPriority"
+                        class="form-control">
+
+                        <option value="">All Priority</option>
+
+                        <option>Low</option>
+
+                        <option>Medium</option>
+
+                        <option>High</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2 mb-2">
+
+                    <button
+                        id="btnRefreshTasks"
+                        class="btn btn-success btn-block">
+
+                        <i class="fas fa-sync"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         TASK TABLE
+    =========================================== -->
+
+    <div class="card shadow">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0">
+
+                    <thead class="thead-light">
+
+                        <tr>
+
+                            <th>Title</th>
+
+                            <th>Subject</th>
+
+                            <th>Priority</th>
+
+                            <th>Deadline</th>
+
+                            <th>Status</th>
+
+                            <th width="180">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="taskTableBody">
+
+                        <tr>
+
+                            <td colspan="6"
+                                class="text-center py-5">
+
+                                Loading...
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ==========================================
+     ADD / EDIT MODAL
+========================================== -->
+
+<div
+    class="modal fade"
+    id="taskModal"
+    tabindex="-1">
+
+    <div class="modal-dialog modal-lg">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 id="taskModalTitle">
+
+                    Add Task
+
+                </h5>
+
+                <button
+                    class="close"
+                    data-dismiss="modal">
+
+                    <span>&times;</span>
+
+                </button>
+
+            </div>
+
+            <div class="modal-body">
+
+                <input
+                    type="hidden"
+                    id="taskId">
+
+                <div class="form-group">
+
+                    <label>
+
+                        Title
+
+                    </label>
+
+                    <input
+                        id="taskTitle"
+                        class="form-control">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Subject
+
+                    </label>
+
+                    <input
+                        id="taskSubject"
+                        class="form-control">
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>
+
+                        Description
+
+                    </label>
+
+                    <textarea
+                        id="taskDescription"
+                        rows="3"
+                        class="form-control"></textarea>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4">
+
+                        <label>
+
+                            Priority
+
+                        </label>
+
+                        <select
+                            id="taskPriority"
+                            class="form-control">
+
+                            <option>Low</option>
+
+                            <option>Medium</option>
+
+                            <option>High</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label>
+
+                            Status
+
+                        </label>
+
+                        <select
+                            id="taskStatus"
+                            class="form-control">
+
+                            <option>Pending</option>
+
+                            <option>In Progress</option>
+
+                            <option>Completed</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label>
+
+                            Deadline
+
+                        </label>
+
+                        <input
+                            id="taskDeadline"
+                            type="date"
+                            class="form-control">
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+
+                <button
+                    class="btn btn-secondary"
+                    data-dismiss="modal">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    id="btnSaveTask"
+                    class="btn btn-success">
+
+                    Save Task
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

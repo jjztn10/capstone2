@@ -1,0 +1,166 @@
+<%# SMARTWORK DASHBOARD OVERVIEW (Admin + User).
+    Locals: layoutType ("admin" | "user"), user, stats
+    Optional overrides: overviewStats, overviewActions, overviewCharts, welcomeMessage %>
+
+<%
+/* ------------------------------------------------
+   1. Inputs
+------------------------------------------------ */
+const oType = (typeof layoutType !== "undefined" && layoutType === "admin") ? "admin" : "user";
+const oBase = "/userdashboard";
+
+const oUser  = (typeof user !== "undefined" && user) ? user : { name: oType === "admin" ? "Administrator" : "User" };
+const oStats = (typeof stats !== "undefined" && stats) ? stats : {};
+
+/* ------------------------------------------------
+   2. Per-layout defaults
+   - stat:   { label, value, icon, color }
+   - action: { label, icon, color, id }  -> <button id="...">   (admin, handled by JS)
+             { label, icon, color, url } -> <a href="...">      (user, real routes)
+   - chart:  { title, canvasId }
+------------------------------------------------ */
+const overviewDefaults = {
+    admin: {
+        stats: [
+            { label: "Total Users",   value: oStats.totalUsers,    icon: "fas fa-users",  color: "primary" },
+            { label: "Total Tasks",   value: oStats.totalTasks,    icon: "fas fa-tasks",  color: "success" },
+            { label: "Mood Entries",  value: oStats.totalMoods,    icon: "fas fa-smile",  color: "info" },
+            { label: "Work Sessions", value: oStats.totalSessions, icon: "fas fa-clock",  color: "warning" }
+        ],
+        actions: [
+            { id: "quickAddUser",     label: "Add User",       icon: "fas fa-user-plus",   color: "primary" },
+            { id: "quickAddTask",     label: "New Task",       icon: "fas fa-plus-circle", color: "success" },
+            { id: "quickMood",        label: "Mood Analytics", icon: "fas fa-smile",       color: "info" },
+            { id: "quickLeaderboard", label: "Leaderboard",    icon: "fas fa-trophy",      color: "warning" }
+        ],
+        charts: [
+            { title: "Productivity Overview", canvasId: "productivityChart" },
+            { title: "Task Completion",       canvasId: "taskCompletionChart" }
+        ]
+    },
+
+    user: {
+        stats: [
+            { label: "My Tasks",       value: oStats.totalTasks,     icon: "fas fa-tasks",        color: "primary" },
+            { label: "Completed",      value: oStats.completedTasks, icon: "fas fa-check-circle", color: "success" },
+            { label: "Mood Entries",   value: oStats.totalMoods,     icon: "fas fa-smile",        color: "info" },
+            { label: "Work Sessions",  value: oStats.totalSessions,  icon: "fas fa-clock",        color: "warning" }
+        ],
+        actions: [
+            { url: oBase + "/tasks",       label: "New Task",      icon: "fas fa-plus-circle", color: "primary" },
+            { url: oBase + "/session",     label: "Start Session", icon: "fas fa-stopwatch",   color: "success" },
+            { url: oBase + "/mood",        label: "Log Mood",      icon: "fas fa-smile",       color: "info" },
+            { url: oBase + "/leaderboard", label: "Leaderboard",   icon: "fas fa-trophy",      color: "warning" }
+        ],
+        charts: [
+            { title: "Productivity Overview", canvasId: "productivityChart" },
+            { title: "Task Completion",       canvasId: "taskCompletionChart" }
+        ]
+    }
+};
+
+const od = overviewDefaults[oType];
+
+/* page-level locals override the defaults */
+const oStatCards = (typeof overviewStats   !== "undefined" && overviewStats)   ? overviewStats   : od.stats;
+const oActions   = (typeof overviewActions !== "undefined" && overviewActions) ? overviewActions : od.actions;
+const oCharts    = (typeof overviewCharts  !== "undefined" && overviewCharts)  ? overviewCharts  : od.charts;
+%>
+
+<div class="admin-section <%= oType %>-overview">
+
+    <!-- WELCOME BANNER (admin version includes #btnRefreshDashboard) -->
+    <%- include("welcome", {
+        layoutType: oType,
+        welcomeName: oUser.name || (oType === "admin" ? "Administrator" : "User"),
+        welcomeMessage: (typeof welcomeMessage !== "undefined" && welcomeMessage) ? welcomeMessage : undefined
+    }) %>
+
+    <!-- ==========================================
+         STATISTICS
+    =========================================== -->
+    <div class="row">
+        <% oStatCards.forEach(card => { %>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-<%= card.color %> shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-<%= card.color %> text-uppercase mb-1">
+                                    <%= card.label %>
+                                </div>
+
+                                <div class="h4 mb-0 font-weight-bold text-gray-800">
+                                    <%= card.value || 0 %>
+                                </div>
+                            </div>
+
+                            <div class="col-auto">
+                                <i class="<%= card.icon %> fa-2x text-gray-300"></i>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <!-- ==========================================
+         QUICK ACTIONS
+    =========================================== -->
+    <div class="card shadow mb-4">
+
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+                <% oActions.forEach(action => { %>
+                    <div class="col-md-3 mb-3">
+
+                        <% if (action.url) { %>
+                            <a href="<%= action.url %>" class="btn btn-<%= action.color %> btn-block">
+                                <i class="<%= action.icon %> mr-2"></i>
+                                <%= action.label %>
+                            </a>
+                        <% } else { %>
+                            <button id="<%= action.id %>" type="button" class="btn btn-<%= action.color %> btn-block">
+                                <i class="<%= action.icon %> mr-2"></i>
+                                <%= action.label %>
+                            </button>
+                        <% } %>
+
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         CHARTS
+    =========================================== -->
+    <div class="row">
+        <% oCharts.forEach(chart => { %>
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card shadow">
+
+                    <div class="card-header">
+                        <h6><%= chart.title %></h6>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="<%= chart.canvasId %>"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+</div>

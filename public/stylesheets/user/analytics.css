@@ -1,0 +1,182 @@
+/* ==========================================================
+   ANALYTICS PAGE
+========================================================== */
+
+.container-fluid{
+    padding:30px;
+    animation:fadeIn .35s ease;
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.container-fluid h1{
+    color:#2d5a3d;
+    font-weight:700;
+    letter-spacing:.5px;
+}
+
+.container-fluid p{
+    color:#6c757d;
+    font-size:.95rem;
+}
+
+#btnRefreshAnalytics{
+    background:#2d5a3d;
+    border:none;
+    border-radius:12px;
+    padding:10px 22px;
+    font-weight:600;
+    transition:.25s;
+    box-shadow:0 8px 20px rgba(45,90,61,.18);
+}
+
+#btnRefreshAnalytics:hover{
+    background:#244932;
+    transform:translateY(-2px);
+}
+
+#btnRefreshAnalytics i{
+    margin-right:6px;
+}
+
+/* ==========================================================
+   SUMMARY CARDS
+========================================================== */
+
+.border-left-primary{
+    border-left:5px solid #2d5a3d!important;
+}
+
+.border-left-success{
+    border-left:5px solid #4caf50!important;
+}
+
+.border-left-warning{
+    border-left:5px solid #ffc107!important;
+}
+
+.border-left-danger{
+    border-left:5px solid #dc3545!important;
+}
+
+.card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    transition:.3s;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 20px 45px rgba(0,0,0,.15);
+}
+
+.card-body{
+    padding:1.6rem;
+}
+
+.text-xs{
+    font-size:.74rem;
+    letter-spacing:1px;
+    margin-bottom:12px;
+}
+
+#productivityScore,
+#analyticsStudyHours,
+#analyticsCompletedTasks,
+#analyticsStress{
+    font-size:2rem;
+    color:#2d5a3d;
+    font-weight:700;
+}
+
+/* ==========================================================
+   CHART CARDS
+========================================================== */
+
+.card-header{
+    background:#2d5a3d;
+    border:none;
+    padding:14px 22px;
+}
+
+.card-header strong{
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+}
+
+.card-body canvas{
+    width:100%!important;
+    height:320px!important;
+}
+
+/* ==========================================================
+   ROW SPACING
+========================================================== */
+
+.row{
+    margin-bottom:8px;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:992px){
+
+    .card-body canvas{
+        height:280px!important;
+    }
+
+}
+
+@media(max-width:768px){
+
+    .container-fluid{
+        padding:18px;
+    }
+
+    .d-sm-flex{
+        flex-direction:column;
+        align-items:flex-start!important;
+        gap:15px;
+    }
+
+    #btnRefreshAnalytics{
+        width:100%;
+    }
+
+    #productivityScore,
+    #analyticsStudyHours,
+    #analyticsCompletedTasks,
+    #analyticsStress{
+        font-size:1.7rem;
+    }
+
+    .card-body canvas{
+        height:240px!important;
+    }
+
+}
+
+/* ==========================================================
+   ANIMATION
+========================================================== */
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(15px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}

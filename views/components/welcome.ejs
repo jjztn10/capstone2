@@ -1,0 +1,222 @@
+<%# SMARTWORK WELCOME BANNER (Admin + User).
+    Optional locals: layoutType, user, welcomeName, welcomeMessage, showRefresh %>
+
+<%
+const wType = (typeof layoutType !== "undefined" && layoutType === "admin") ? "admin" : "user";
+
+const welcomeDefaults = {
+    admin: {
+        name: "Administrator",
+        icon: "fa-shield-alt",
+        message: "Here's what's happening across SmartWork today.",
+        showRefresh: true,
+        refreshLabel: "Refresh Dashboard"
+    },
+    user: {
+        name: "User",
+        icon: "fa-smile-beam",
+        message: "Here's your productivity overview.",
+        showRefresh: true,
+        refreshLabel: "Refresh"
+    }
+};
+
+const wd = welcomeDefaults[wType];
+
+const wName =
+    (typeof welcomeName !== "undefined" && welcomeName) ? welcomeName :
+    (typeof user !== "undefined" && user && user.name) ? user.name :
+    wd.name;
+
+const wMessage = (typeof welcomeMessage !== "undefined" && welcomeMessage) ? welcomeMessage : wd.message;
+const wRefresh = (typeof showRefresh !== "undefined") ? showRefresh : wd.showRefresh;
+const wRefreshId = (typeof refreshId !== "undefined" && refreshId) ? refreshId : "btnRefreshDashboard";
+const wRefreshLabel = (typeof refreshLabel !== "undefined" && refreshLabel) ? refreshLabel : wd.refreshLabel;
+%>
+
+<style>
+    .sw-welcome {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+        padding: 1.4rem 1.6rem 1.4rem 2rem;
+        background: #ffffff;
+        border-radius: 18px;
+        box-shadow: 0 6px 22px rgba(23, 58, 43, 0.08);
+        overflow: hidden;
+    }
+
+    /* Accent bar */
+    .sw-welcome::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 6px;
+        background: linear-gradient(180deg, #34b36b, #1d5a3b);
+    }
+
+    /* Soft decorative circle */
+    .sw-welcome::after {
+        content: "";
+        position: absolute;
+        right: -50px;
+        top: -60px;
+        width: 190px;
+        height: 190px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(52, 179, 107, 0.16), rgba(52, 179, 107, 0) 70%);
+        pointer-events: none;
+    }
+
+    .sw-welcome-left {
+        display: flex;
+        align-items: center;
+        gap: 1.1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .sw-welcome-icon {
+        flex: 0 0 auto;
+        width: 58px;
+        height: 58px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #ffffff;
+        background: linear-gradient(135deg, #34b36b, #1d5a3b);
+        box-shadow: 0 6px 14px rgba(29, 90, 59, 0.28);
+    }
+
+    .sw-welcome-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #34b36b;
+        margin-bottom: 0.2rem;
+    }
+
+    .sw-welcome-title {
+        margin: 0;
+        font-size: 1.65rem;
+        font-weight: 800;
+        line-height: 1.2;
+        color: #173a2b;
+    }
+
+    .sw-welcome-title .sw-welcome-name {
+        background: linear-gradient(90deg, #1d5a3b, #34b36b);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: #1d5a3b; /* fallback */
+    }
+
+    .sw-welcome-text {
+        margin: 0.3rem 0 0;
+        font-size: 0.95rem;
+        color: #6b7a72;
+    }
+
+    .sw-welcome-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+
+    .sw-welcome-date {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1d5a3b;
+        background: #eaf6ef;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 576px) {
+        .sw-welcome { padding: 1.2rem 1.2rem 1.2rem 1.6rem; }
+        .sw-welcome-title { font-size: 1.3rem; }
+        .sw-welcome-icon { width: 48px; height: 48px; font-size: 1.25rem; }
+    }
+</style>
+
+<section class="sw-welcome sw-welcome-<%= wType %>">
+
+    <div class="sw-welcome-left">
+        <div class="sw-welcome-icon">
+            <i class="fas <%= wd.icon %>"></i>
+        </div>
+
+        <div>
+            <div class="sw-welcome-eyebrow">
+                <i class="fas fa-sun" data-welcome-greeting-icon></i>
+                <span data-welcome-greeting>Welcome</span>
+            </div>
+
+            <h2 class="sw-welcome-title">
+                Welcome back, <span class="sw-welcome-name"<%- wType === "user" ? ' id="userName"' : "" %>><%= wName %></span>
+            </h2>
+
+            <p class="sw-welcome-text"><%= wMessage %></p>
+        </div>
+    </div>
+
+    <div class="sw-welcome-right">
+        <span class="sw-welcome-date">
+            <i class="far fa-calendar-alt"></i>
+            <span data-welcome-date></span>
+        </span>
+
+        <% if (wRefresh) { %>
+            <button type="button" id="<%= wRefreshId %>" class="btn btn-primary shadow-sm">
+                <i class="fas fa-sync-alt"></i>
+                <%= wRefreshLabel %>
+            </button>
+        <% } %>
+    </div>
+
+</section>
+
+<script>
+    (function () {
+        var now = new Date();
+        var hour = now.getHours();
+
+        var greeting = "Good evening";
+        var icon = "fa-moon";
+
+        if (hour < 12) { greeting = "Good morning"; icon = "fa-sun"; }
+        else if (hour < 18) { greeting = "Good afternoon"; icon = "fa-cloud-sun"; }
+
+        document.querySelectorAll("[data-welcome-greeting]").forEach(function (el) {
+            el.textContent = greeting;
+        });
+
+        document.querySelectorAll("[data-welcome-greeting-icon]").forEach(function (el) {
+            el.className = "fas " + icon;
+        });
+
+        document.querySelectorAll("[data-welcome-date]").forEach(function (el) {
+            el.textContent = now.toLocaleDateString(undefined, {
+                weekday: "long", month: "long", day: "numeric", year: "numeric"
+            });
+        });
+    })();
+</script>

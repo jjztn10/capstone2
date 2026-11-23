@@ -1,17 +1,11 @@
 <!-- ==========================================
      SMARTWORK ADMIN DASHBOARD
+     (header is rendered by layout/main-layout.ejs)
 ========================================== -->
-
-<!-- DASHBOARD HEADER -->
-<%- include("../components/header", {
-    layoutType: "admin",
-    headerTitle: "SmartWork Admin Dashboard",
-    showRefreshButton: false
-}) %>
 
 <!-- OVERVIEW -->
 <section id="overviewSection" class="dashboard-section">
-    <%- include("overview") %>
+    <%- include("../components/overview", { layoutType: "admin" }) %>
 </section>
 
 <!-- USERS -->
@@ -44,12 +38,12 @@
     <%- include("adminsessions-page") %>
 </section>
 
+
 <!-- ==========================================
      SCRIPTS
 ========================================== -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
 
 <%- include("../scripts/adminusers-script") %>
 <%- include("../scripts/admintasks-script") %>

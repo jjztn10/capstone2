@@ -1,0 +1,452 @@
+<script>
+window.UserProfile = (() => {
+
+    "use strict";
+
+    const API = "/userdashboard/api/profile";
+    const GREEN = "#2d5a3d";
+
+    const $ = (id) => document.getElementById(id);
+
+    let originalProfile = null;
+
+    /* ==========================================
+       HELPERS
+    ========================================== */
+
+    const esc = (v) =>
+        String(v ?? "").replace(
+            /[&<>"']/g,
+            c => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[c]
+        );
+
+    function notify(icon, title, text = "") {
+
+        if (window.Swal) {
+
+            return Swal.fire({
+
+                icon,
+
+                title,
+
+                text,
+
+                confirmButtonColor: GREEN,
+
+                timer: icon === "success"
+                    ? 1600
+                    : undefined,
+
+                timerProgressBar: icon === "success"
+
+            });
+
+        }
+
+        alert(title);
+
+    }
+
+    async function request(path = "", options = {}) {
+
+        const res = await fetch(API + path, {
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            ...options
+
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+
+            throw new Error(
+
+                data.error ||
+
+                "Request Failed"
+
+            );
+
+        }
+
+        return data;
+
+    }
+
+    /* ==========================================
+       LOAD PROFILE
+    ========================================== */
+
+    async function load() {
+
+        try {
+
+            const data = await request();
+
+            originalProfile = data.profile;
+
+            renderProfile(data.profile);
+
+        }
+
+        catch (err) {
+
+            console.error(err);
+
+            notify(
+
+                "error",
+
+                "Unable to load profile",
+
+                err.message
+
+            );
+
+        }
+
+    }
+
+    /* ==========================================
+       RENDER
+    ========================================== */
+
+    function renderProfile(user) {
+
+        if (!user) return;
+
+        $("profileName").value =
+            user.name || "";
+
+        $("profileEmail").value =
+            user.email || "";
+
+        $("profileStreak").value =
+            user.study_streak || 0;
+
+        $("profileTotalPoints").value =
+            user.total_points || 0;
+
+        $("profileWeeklyPoints").value =
+            user.weekly_points || 0;
+
+        $("profileAvatar").src =
+            "https://ui-avatars.com/api/?background=2d5a3d&color=ffffff&size=200&name=" +
+            encodeURIComponent(user.name || "User");
+
+    }
+
+    /* ==========================================
+       EDIT MODE
+    ========================================== */
+
+    $("btnEditProfile")?.addEventListener(
+
+        "click",
+
+        () => {
+
+            $("profileName").readOnly = false;
+
+            $("btnEditProfile").classList.add("d-none");
+
+            $("btnSaveProfile").classList.remove("d-none");
+
+            $("btnCancelProfile").classList.remove("d-none");
+
+        }
+
+    );
+        /* ==========================================
+       SAVE PROFILE
+    ========================================== */
+
+    $("btnSaveProfile")?.addEventListener(
+
+        "click",
+
+        async () => {
+
+            try {
+
+                const payload = {
+
+                    name: $("profileName").value.trim()
+
+                };
+
+                await request("", {
+
+                    method: "PUT",
+
+                    body: JSON.stringify(payload)
+
+                });
+
+                $("profileName").readOnly = true;
+
+                $("btnEditProfile").classList.remove("d-none");
+
+                $("btnSaveProfile").classList.add("d-none");
+
+                $("btnCancelProfile").classList.add("d-none");
+
+                notify(
+
+                    "success",
+
+                    "Profile updated."
+
+                );
+
+                await load();
+
+            }
+
+            catch (err) {
+
+                console.error(err);
+
+                notify(
+
+                    "error",
+
+                    "Unable to update profile",
+
+                    err.message
+
+                );
+
+            }
+
+        }
+
+    );
+
+    /* ==========================================
+       CANCEL EDIT
+    ========================================== */
+
+    $("btnCancelProfile")?.addEventListener(
+
+        "click",
+
+        () => {
+
+            renderProfile(originalProfile);
+
+            $("profileName").readOnly = true;
+
+            $("btnEditProfile").classList.remove("d-none");
+
+            $("btnSaveProfile").classList.add("d-none");
+
+            $("btnCancelProfile").classList.add("d-none");
+
+        }
+
+    );
+
+    /* ==========================================
+       CHANGE PASSWORD
+    ========================================== */
+
+    $("btnChangePassword")?.addEventListener(
+
+        "click",
+
+        async () => {
+
+            try {
+
+                const currentPassword = $("currentPassword").value;
+
+                const newPassword = $("newPassword").value;
+
+                const confirmPassword = $("confirmPassword").value;
+
+                if (!currentPassword ||
+                    !newPassword ||
+                    !confirmPassword) {
+
+                    notify(
+
+                        "warning",
+
+                        "Please complete all password fields."
+
+                    );
+
+                    return;
+
+                }
+
+                if (newPassword !== confirmPassword) {
+
+                    notify(
+
+                        "warning",
+
+                        "New passwords do not match."
+
+                    );
+
+                    return;
+
+                }
+
+                await request("/password", {
+
+                    method: "PUT",
+
+                    body: JSON.stringify({
+
+                        currentPassword,
+
+                        newPassword
+
+                    })
+
+                });
+
+                $("currentPassword").value = "";
+
+                $("newPassword").value = "";
+
+                $("confirmPassword").value = "";
+
+                notify(
+
+                    "success",
+
+                    "Password changed successfully."
+
+                );
+
+            }
+
+            catch (err) {
+
+                console.error(err);
+
+                notify(
+
+                    "error",
+
+                    "Unable to change password",
+
+                    err.message
+
+                );
+
+            }
+
+        }
+
+    );
+
+    /* ==========================================
+       REFRESH
+    ========================================== */
+
+    $("btnRefreshProfile")?.addEventListener(
+
+        "click",
+
+        async () => {
+
+            try {
+
+                if (window.Swal) {
+
+                    Swal.fire({
+
+                        title: "Refreshing...",
+
+                        allowOutsideClick: false,
+
+                        showConfirmButton: false,
+
+                        didOpen: () => Swal.showLoading()
+
+                    });
+
+                }
+
+                await load();
+
+                Swal.close();
+
+                notify(
+
+                    "success",
+
+                    "Profile updated."
+
+                );
+
+            }
+
+            catch (err) {
+
+                Swal.close();
+
+                notify(
+
+                    "error",
+
+                    "Unable to refresh profile",
+
+                    err.message
+
+                );
+
+            }
+
+        }
+
+    );
+
+    /* ==========================================
+       AUTO LOAD
+    ========================================== */
+
+    document.addEventListener(
+
+        "DOMContentLoaded",
+
+        () => {
+
+            load();
+
+        }
+
+    );
+
+    /* ==========================================
+       PUBLIC METHODS
+    ========================================== */
+
+    return {
+
+        load,
+
+        refresh: load
+
+    };
+
+})();
+</script>

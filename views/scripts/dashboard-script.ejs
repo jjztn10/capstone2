@@ -1,0 +1,174 @@
+<script>
+(() => {
+    "use strict";
+
+    const API = "/userdashboard/api";
+    const GREEN = "#2d5a3d";
+
+    const $ = (id) => document.getElementById(id);
+
+    const setText = (id, value) => {
+        const el = $(id);
+        if (!el) {
+            console.warn(`Element #${id} not found in the page`);
+            return;
+        }
+        el.textContent = value;
+    };
+
+    let studyChart = null;
+
+    const esc = (v) =>
+        String(v ?? "").replace(/[&<>"']/g, (c) =>
+            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
+        );
+
+    const fmtDate = (v) => {
+        if (!v) return "-";
+        const d = new Date(v);
+        return isNaN(d) ? "-" : d.toLocaleDateString();
+    };
+
+    async function request(path = "") {
+        const res = await fetch(API + path, {
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+        return data;
+    }
+
+    function notify(icon, title, text = "") {
+        if (window.Swal) {
+            return Swal.fire({
+                icon, title, text,
+                confirmButtonColor: GREEN,
+                timer: icon === "success" ? 1500 : undefined,
+                timerProgressBar: icon === "success",
+            });
+        }
+        alert(title + (text ? "\n" + text : ""));
+    }
+
+    async function fetchDashboard() {
+        const data = await request("/dashboard");
+        renderSummary(data.summary || {});
+        renderMood(data.mood || {});
+        renderRecentTasks(data.tasks || []);
+        renderChart(data.chart || {});
+    }
+
+    async function load() {
+        try {
+            await fetchDashboard();
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to load dashboard", err.message);
+        }
+    }
+
+    function renderSummary(s) {
+        setText("userName", s.name || "User");
+        setText("pendingTasks", s.pending || 0);
+        setText("completedTasks", s.completed || 0);
+        setText("studyHours", Number(s.studyHours || 0).toFixed(1) + " hrs");
+        setText("burnoutRisk", s.burnout || "LOW");
+    }
+
+    function renderMood(mood) {
+        const emojis = { happy: "😊", neutral: "😐", sad: "😔", stressed: "😣", frustrated: "😤" };
+        setText("todayMood", emojis[mood.mood] || "🙂");
+        setText("todayMoodText", mood.label || "No Mood Logged");
+    }
+
+    function badge(status) {
+        switch ((status || "").toLowerCase()) {
+            case "completed": return "success";
+            case "pending": return "warning";
+            default: return "secondary";
+        }
+    }
+
+    function renderRecentTasks(tasks) {
+        const tbody = $("recentTaskTable");
+        if (!tbody) return;
+
+        if (!tasks.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No recent tasks found.</td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = tasks.map((t) => `
+            <tr>
+                <td>${esc(t.title)}</td>
+                <td>${esc(t.subject)}</td>
+                <td>${fmtDate(t.deadline)}</td>
+                <td><span class="badge badge-${badge(t.status)}">${esc(t.status)}</span></td>
+            </tr>`).join("");
+    }
+
+    function renderChart(chart) {
+        const canvas = $("studyChart");
+        if (!canvas || typeof Chart === "undefined") {
+            console.warn("Chart.js not loaded or #studyChart missing");
+            return;
+        }
+        if (studyChart) studyChart.destroy();
+
+        studyChart = new Chart(canvas, {
+            type: "line",
+            data: {
+                labels: chart.labels || [],
+                datasets: [{
+                    label: "Study Minutes",
+                    data: chart.data || [],
+                    borderColor: GREEN,
+                    backgroundColor: "rgba(45,90,61,.15)",
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3,
+                    pointRadius: 4,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } },
+            },
+        });
+    }
+
+    $("btnRefreshDashboard")?.addEventListener("click", async () => {
+        if (window.Swal) {
+            Swal.fire({
+                title: "Refreshing Dashboard...",
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading(),
+            });
+        }
+        try {
+            await fetchDashboard();
+            if (window.Swal) Swal.close();
+            notify("success", "Dashboard Refreshed");
+        } catch (err) {
+            console.error(err);
+            if (window.Swal) Swal.close();
+            notify("error", "Refresh Failed", err.message);
+        }
+    });
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", load);
+    } else {
+        load();
+    }
+
+    window.UserDashboard = { load };
+})();
+</script>

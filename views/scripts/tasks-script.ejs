@@ -1,0 +1,461 @@
+<script>
+
+window.UserTasks = (() => {
+
+    "use strict";
+
+    const API = "/userdashboard/api/tasks";
+    const GREEN = "#2d5a3d";
+    const PAGE_SIZE = 10;
+
+    const $ = (id) => document.getElementById(id);
+
+    /* ======================================================
+       STATE
+    ====================================================== */
+
+    let tasks = [];
+    let filtered = [];
+    let page = 1;
+    let saving = false;
+    let initialized = false;
+
+    /* ======================================================
+       HELPERS
+    ====================================================== */
+
+    const esc = (v) =>
+        String(v ?? "").replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+        })[c]);
+
+    function formatDate(v) {
+        if (!v) return "-";
+        const d = new Date(v);
+        if (isNaN(d)) return "-";
+        return d.toLocaleDateString();
+    }
+
+    function notify(icon, title, text = "") {
+        if (window.Swal) {
+            return Swal.fire({
+                icon,
+                title,
+                text,
+                confirmButtonColor: GREEN,
+                timer: icon === "success" ? 1800 : undefined,
+                timerProgressBar: icon === "success",
+            });
+        }
+        alert(text ? title + "\n" + text : title);
+    }
+
+    async function request(path = "", options = {}) {
+        const res = await fetch(API + path, {
+            headers: { "Content-Type": "application/json" },
+            ...options,
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(data.error || "Request failed");
+        }
+        return data;
+    }
+
+    /* ======================================================
+       LOAD TASKS
+    ====================================================== */
+
+    async function load() {
+        try {
+            const data = await request();
+            tasks = data.tasks || [];
+            page = 1;
+            applyFilters();
+            renderSummary();
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to load tasks", err.message);
+        }
+    }
+
+    function changed() {
+        document.dispatchEvent(new CustomEvent("tasks:changed"));
+    }
+
+    /* ======================================================
+       SUMMARY
+    ====================================================== */
+
+    function renderSummary() {
+        const count = (s) => tasks.filter(t => t.status === s).length;
+
+        const set = (id, v) => { if ($(id)) $(id).textContent = v; };
+
+        set("totalTasks", tasks.length);
+        set("pendingCount", count("Pending"));
+        set("completedCount", count("Completed"));
+        set("overdueCount", count("Overdue"));
+    }
+
+    /* ======================================================
+       STATUS BADGE
+    ====================================================== */
+
+    function badge(status) {
+        switch (status) {
+            case "Completed":   return "success";
+            case "Pending":     return "warning";
+            case "In Progress": return "primary";
+            case "Overdue":     return "danger";
+            default:            return "secondary";
+        }
+    }
+
+    /* ======================================================
+       TABLE
+    ====================================================== */
+
+    function renderTable() {
+        const tbody = $("taskTableBody");
+        if (!tbody) return;
+
+        const start = (page - 1) * PAGE_SIZE;
+        const rows = filtered.slice(start, start + PAGE_SIZE);
+
+        if (!rows.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        No tasks found.
+                    </td>
+                </tr>`;
+            renderPagination();
+            return;
+        }
+
+        tbody.innerHTML = rows.map(task => `
+            <tr>
+                <td><strong>${esc(task.title)}</strong></td>
+                <td>${esc(task.subject)}</td>
+                <td><span class="badge badge-info">${esc(task.priority)}</span></td>
+                <td>${formatDate(task.deadline)}</td>
+                <td><span class="badge badge-${badge(task.status)}">${esc(task.status)}</span></td>
+                <td class="text-nowrap">
+                    <button type="button"
+                        class="btn btn-sm btn-primary btn-edit"
+                        title="Edit" aria-label="Edit task"
+                        data-id="${esc(task.task_id)}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+
+                    <button type="button"
+                        class="btn btn-sm btn-success btn-complete"
+                        title="Mark complete" aria-label="Mark task complete"
+                        data-id="${esc(task.task_id)}"
+                        ${task.status === "Completed" ? "disabled" : ""}>
+                        <i class="fas fa-check"></i>
+                    </button>
+
+                    <button type="button"
+                        class="btn btn-sm btn-danger btn-delete"
+                        title="Delete" aria-label="Delete task"
+                        data-id="${esc(task.task_id)}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join("");
+
+        renderPagination();
+    }
+
+    /* ======================================================
+       PAGINATION
+    ====================================================== */
+
+    function totalPages() {
+        return Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    }
+
+    function renderPagination() {
+        let container = $("taskPagination");
+
+        if (!container) {
+            const card = $("taskTableBody")?.closest(".card");
+            if (!card) return;
+
+            container = document.createElement("div");
+            container.id = "taskPagination";
+            container.className = "d-flex justify-content-end align-items-center p-3";
+            card.appendChild(container);
+        }
+
+        const pages = totalPages();
+
+        container.innerHTML = `
+            <button type="button" class="btn btn-outline-secondary btn-sm mr-2"
+                data-page="prev" ${page <= 1 ? "disabled" : ""}>
+                Previous
+            </button>
+
+            <span class="align-self-center">Page ${page} of ${pages}</span>
+
+            <button type="button" class="btn btn-outline-secondary btn-sm ml-2"
+                data-page="next" ${page >= pages ? "disabled" : ""}>
+                Next
+            </button>`;
+    }
+
+    /* ======================================================
+       FILTER
+    ====================================================== */
+
+    function applyFilters() {
+        const keyword = ($("searchTask")?.value || "").trim().toLowerCase();
+        const status = $("filterStatus")?.value;
+        const priority = $("filterPriority")?.value;
+
+        filtered = tasks.filter(task => {
+            const matchKeyword =
+                !keyword ||
+                String(task.title ?? "").toLowerCase().includes(keyword) ||
+                String(task.subject ?? "").toLowerCase().includes(keyword);
+
+            const matchStatus = !status || task.status === status;
+            const matchPriority = !priority || task.priority === priority;
+
+            return matchKeyword && matchStatus && matchPriority;
+        });
+
+        page = Math.min(page, totalPages());
+        renderTable();
+    }
+
+    /* ======================================================
+       MODAL
+       NOTE: $ is getElementById here, so jQuery must be
+       called explicitly through window.jQuery.
+    ====================================================== */
+
+    function clearForm() {
+        $("taskId").value = "";
+        $("taskTitle").value = "";
+        $("taskSubject").value = "";
+        $("taskDescription").value = "";
+        $("taskPriority").value = "Medium";
+        $("taskStatus").value = "Pending";
+        $("taskDeadline").value = "";
+    }
+
+    function modalAction(action) {
+        const el = $("taskModal");
+        if (!el) return;
+
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+            window.jQuery(el).modal(action);
+        } else if (window.bootstrap) {
+            const inst = bootstrap.Modal.getOrCreateInstance(el);
+            action === "show" ? inst.show() : inst.hide();
+        }
+    }
+
+    const openModal = (title = "Add Task") => {
+        $("taskModalTitle").textContent = title;
+        modalAction("show");
+    };
+
+    const closeModal = () => modalAction("hide");
+
+    /* ======================================================
+       SAVE
+    ====================================================== */
+
+    async function saveTask() {
+        if (saving) return;
+
+        const payload = {
+            title: $("taskTitle").value.trim(),
+            subject: $("taskSubject").value.trim(),
+            description: $("taskDescription").value.trim(),
+            priority: $("taskPriority").value,
+            status: $("taskStatus").value,
+            deadline: $("taskDeadline").value,
+        };
+
+        if (!payload.title) {
+            notify("warning", "Task title is required");
+            return;
+        }
+
+        saving = true;
+        const btn = $("btnSaveTask");
+        if (btn) btn.disabled = true;
+
+        try {
+            const id = $("taskId").value;
+
+            if (id) {
+                await request("/" + id, { method: "PUT", body: JSON.stringify(payload) });
+            } else {
+                await request("", { method: "POST", body: JSON.stringify(payload) });
+            }
+
+            closeModal();
+            notify("success", "Task Saved");
+            await load();
+            changed();
+
+        } catch (err) {
+            console.error(err);
+            notify("error", "Save Failed", err.message);
+        } finally {
+            saving = false;
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    /* ======================================================
+       ROW ACTIONS
+    ====================================================== */
+
+    function editTask(id) {
+        const task = tasks.find(x => String(x.task_id) === String(id));
+        if (!task) return;
+
+        $("taskId").value = task.task_id;
+        $("taskTitle").value = task.title || "";
+        $("taskSubject").value = task.subject || "";
+        $("taskDescription").value = task.description || "";
+        $("taskPriority").value = task.priority;
+        $("taskStatus").value = task.status;
+        $("taskDeadline").value = task.deadline ? String(task.deadline).substring(0, 10) : "";
+
+        openModal("Edit Task");
+    }
+
+    async function completeTask(id) {
+        try {
+            await request("/" + id + "/complete", { method: "PUT" });
+            notify("success", "Task Completed");
+            await load();
+            changed();
+        } catch (err) {
+            notify("error", "Unable to complete task", err.message);
+        }
+    }
+
+    async function deleteTask(id) {
+        let confirmed = true;
+
+        if (window.Swal) {
+            const result = await Swal.fire({
+                icon: "warning",
+                title: "Delete Task?",
+                text: "This action cannot be undone.",
+                showCancelButton: true,
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Delete",
+            });
+            confirmed = result.isConfirmed;
+        } else {
+            confirmed = confirm("Delete this task? This cannot be undone.");
+        }
+
+        if (!confirmed) return;
+
+        try {
+            await request("/" + id, { method: "DELETE" });
+            notify("success", "Task Deleted");
+            await load();
+            changed();
+        } catch (err) {
+            notify("error", "Delete Failed", err.message);
+        }
+    }
+
+    /* ======================================================
+       REFRESH
+    ====================================================== */
+
+    async function refresh() {
+        if (window.Swal) {
+            Swal.fire({
+                title: "Refreshing...",
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading(),
+            });
+        }
+
+        await load();
+
+        if (window.Swal) Swal.close();
+        notify("success", "Tasks Updated");
+    }
+
+    /* ======================================================
+       INITIALIZE (listeners are bound ONCE, here only)
+    ====================================================== */
+
+    function init() {
+        if (initialized) return;
+        initialized = true;
+
+        // Static buttons
+        $("btnAddTask")?.addEventListener("click", () => {
+            clearForm();
+            openModal("Add Task");
+        });
+
+        $("btnSaveTask")?.addEventListener("click", saveTask);
+        $("btnRefreshTasks")?.addEventListener("click", refresh);
+
+        // Filters
+        $("searchTask")?.addEventListener("input", () => { page = 1; applyFilters(); });
+        $("filterStatus")?.addEventListener("change", () => { page = 1; applyFilters(); });
+        $("filterPriority")?.addEventListener("change", () => { page = 1; applyFilters(); });
+
+        // Dynamic buttons (table rows + pagination) via delegation
+        document.addEventListener("click", (e) => {
+            const edit = e.target.closest(".btn-edit");
+            if (edit) return editTask(edit.dataset.id);
+
+            const complete = e.target.closest(".btn-complete");
+            if (complete) return completeTask(complete.dataset.id);
+
+            const del = e.target.closest(".btn-delete");
+            if (del) return deleteTask(del.dataset.id);
+
+            const pager = e.target.closest("#taskPagination [data-page]");
+            if (pager && !pager.disabled) {
+                if (pager.dataset.page === "prev" && page > 1) page--;
+                if (pager.dataset.page === "next" && page < totalPages()) page++;
+                renderTable();
+            }
+        });
+
+        load();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+    /* ======================================================
+       PUBLIC METHODS
+    ====================================================== */
+
+    return { load, refresh: load };
+
+})();
+</script>

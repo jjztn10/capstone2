@@ -1,4 +1,3 @@
-
 const express = require("express");
 const { Query } = require("../database/config/db");
 
@@ -8,15 +7,16 @@ const router = express.Router();
    ASYNC HANDLER
 ========================================== */
 const asyncHandler = (fn) => (req, res, next) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
+  Promise.resolve(fn(req, res, next)).catch(next);
 };
 
 /* ==========================================
    GET LEADERBOARD
    GET /admindashboard/api/leaderboard
 ========================================== */
-router.get("/", asyncHandler(async (req, res) => {
-
+router.get(
+  "/",
+  asyncHandler(async (req, res) => {
     const rows = await Query(`
         SELECT
             u.uid,
@@ -70,42 +70,41 @@ router.get("/", asyncHandler(async (req, res) => {
     `);
 
     const leaderboard = rows.map((row, index) => ({
-        rank: index + 1,
-        uid: row.uid,
-        name: row.name,
-        email: row.email,
-        score: Number(row.score) || 0,
-        totalPoints: Number(row.total_points) || 0,
-        weeklyPoints: Number(row.weekly_points) || 0,
-        tasksCompleted: Number(row.tasks_completed) || 0,
-        studyStreak: Number(row.study_streak) || 0
+      rank: index + 1,
+      uid: row.uid,
+      name: row.name,
+      email: row.email,
+      score: Number(row.score) || 0,
+      totalPoints: Number(row.total_points) || 0,
+      weeklyPoints: Number(row.weekly_points) || 0,
+      tasksCompleted: Number(row.tasks_completed) || 0,
+      studyStreak: Number(row.study_streak) || 0,
     }));
 
     const totalParticipants = leaderboard.length;
 
     const averageScore = totalParticipants
-        ? leaderboard.reduce((total, user) => total + user.score, 0)
-            / totalParticipants
-        : 0;
+      ? leaderboard.reduce((total, user) => total + user.score, 0) /
+        totalParticipants
+      : 0;
 
     const topPerformer = leaderboard.length
-        ? leaderboard[0].name || leaderboard[0].email
-        : "---";
+      ? leaderboard[0].name || leaderboard[0].email
+      : "---";
 
-    const highestScore = leaderboard.length
-        ? leaderboard[0].score
-        : 0;
+    const highestScore = leaderboard.length ? leaderboard[0].score : 0;
 
     res.json({
-        success: true,
-        leaderboard,
-        stats: {
-            totalParticipants,
-            averageScore: Number(averageScore.toFixed(1)),
-            topPerformer,
-            highestScore
-        }
+      success: true,
+      leaderboard,
+      stats: {
+        totalParticipants,
+        averageScore: Number(averageScore.toFixed(1)),
+        topPerformer,
+        highestScore,
+      },
     });
-}));
+  }),
+);
 
 module.exports = router;

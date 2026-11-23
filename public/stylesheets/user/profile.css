@@ -1,0 +1,257 @@
+/* ==========================================================
+   MY PROFILE PAGE
+========================================================== */
+
+.container-fluid{
+    padding:30px;
+    animation:fadeIn .35s ease;
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.container-fluid h1{
+    color:#2d5a3d;
+    font-weight:700;
+    letter-spacing:.5px;
+}
+
+.container-fluid p{
+    color:#6c757d;
+    font-size:.95rem;
+}
+
+#btnRefreshProfile{
+    background:#2d5a3d;
+    border:none;
+    border-radius:12px;
+    padding:10px 22px;
+    color:#fff;
+    font-weight:600;
+    transition:.3s;
+    box-shadow:0 8px 20px rgba(45,90,61,.18);
+}
+
+#btnRefreshProfile:hover{
+    background:#244932;
+    transform:translateY(-2px);
+}
+
+#btnRefreshProfile i{
+    margin-right:6px;
+}
+
+/* ==========================================================
+   CARD
+========================================================== */
+
+.card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+    transition:.3s;
+}
+
+.card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 20px 45px rgba(0,0,0,.15);
+}
+
+.card-body{
+    padding:2rem;
+}
+
+/* ==========================================================
+   AVATAR
+========================================================== */
+
+#profileAvatar{
+    border:6px solid #2d5a3d;
+    transition:.3s;
+    box-shadow:0 15px 35px rgba(45,90,61,.18);
+}
+
+#profileAvatar:hover{
+    transform:scale(1.05);
+}
+
+/* ==========================================================
+   FORM
+========================================================== */
+
+label{
+    font-weight:600;
+    color:#495057;
+    margin-bottom:8px;
+}
+
+.form-control{
+    border:1px solid #d8dee6;
+    border-radius:12px;
+    padding:11px 14px;
+    transition:.25s;
+    box-shadow:none;
+}
+
+.form-control:focus{
+    border-color:#2d5a3d;
+    box-shadow:0 0 0 .2rem rgba(45,90,61,.15);
+}
+
+.form-control[readonly]{
+    background:#f8f9fa;
+    color:#495057;
+}
+
+/* ==========================================================
+   CARD HEADER
+========================================================== */
+
+.card-header{
+    background:#2d5a3d;
+    color:#fff;
+    border:none;
+    padding:15px 22px;
+}
+
+.card-header strong{
+    font-size:15px;
+    font-weight:600;
+}
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+#btnEditProfile,
+#btnSaveProfile,
+#btnCancelProfile,
+#btnChangePassword{
+    border:none;
+    border-radius:12px;
+    padding:11px 24px;
+    font-weight:600;
+    transition:.3s;
+    color:#fff;
+}
+
+/* Edit */
+
+#btnEditProfile{
+    background:#2d5a3d;
+    box-shadow:0 8px 20px rgba(45,90,61,.18);
+}
+
+#btnEditProfile:hover{
+    background:#244932;
+    transform:translateY(-2px);
+}
+
+/* Save */
+
+#btnSaveProfile{
+    background:#007bff;
+    box-shadow:0 8px 20px rgba(0,123,255,.18);
+}
+
+#btnSaveProfile:hover{
+    background:#0069d9;
+    transform:translateY(-2px);
+}
+
+/* Cancel */
+
+#btnCancelProfile{
+    background:#6c757d;
+    box-shadow:0 8px 20px rgba(108,117,125,.18);
+}
+
+#btnCancelProfile:hover{
+    background:#5a6268;
+    transform:translateY(-2px);
+}
+
+/* Change Password */
+
+#btnChangePassword{
+    background:#dc3545;
+    box-shadow:0 8px 20px rgba(220,53,69,.18);
+}
+
+#btnChangePassword:hover{
+    background:#c82333;
+    transform:translateY(-2px);
+}
+
+button i{
+    margin-right:6px;
+}
+
+/* ==========================================================
+   HORIZONTAL RULE
+========================================================== */
+
+hr{
+    border-top:1px solid #e9ecef;
+    margin:25px 0;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:992px){
+
+    #profileAvatar{
+        width:140px!important;
+        height:140px!important;
+    }
+
+}
+
+@media(max-width:768px){
+
+    .container-fluid{
+        padding:18px;
+    }
+
+    .d-sm-flex{
+        flex-direction:column;
+        align-items:flex-start!important;
+        gap:15px;
+    }
+
+    #btnRefreshProfile{
+        width:100%;
+    }
+
+    .d-flex.flex-wrap button{
+        width:100%;
+        margin-right:0!important;
+    }
+
+    #btnChangePassword{
+        width:100%;
+    }
+
+}
+
+/* ==========================================================
+   ANIMATION
+========================================================== */
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(15px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}

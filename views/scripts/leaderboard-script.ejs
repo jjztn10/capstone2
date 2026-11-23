@@ -1,0 +1,333 @@
+<script>
+window.UserLeaderboard = (() => {
+
+    "use strict";
+
+    const API = "/userdashboard/api/leaderboard";
+    const GREEN = "#2d5a3d";
+
+    const $ = (id) => document.getElementById(id);
+
+    let leaderboard = [];
+
+    /* ==========================================
+       HELPERS
+    ========================================== */
+
+    const esc = (v) =>
+        String(v ?? "").replace(
+            /[&<>"']/g,
+            c => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            })[c]
+        );
+
+    function notify(icon, title, text = "") {
+
+        if (window.Swal) {
+
+            return Swal.fire({
+
+                icon,
+
+                title,
+
+                text,
+
+                confirmButtonColor: GREEN,
+
+                timer: icon === "success"
+                    ? 1500
+                    : undefined,
+
+                timerProgressBar: icon === "success"
+
+            });
+
+        }
+
+        alert(title);
+
+    }
+
+    async function request(path = "", options = {}) {
+
+        const response = await fetch(API + path, {
+
+            headers: {
+
+                "Content-Type": "application/json"
+
+            },
+
+            ...options
+
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+
+            throw new Error(
+
+                data.error ||
+
+                "Request Failed"
+
+            );
+
+        }
+
+        return data;
+
+    }
+
+    /* ==========================================
+       LOAD
+    ========================================== */
+
+    async function load() {
+
+        try {
+
+            const data = await request();
+
+            leaderboard = data.users || [];
+
+            renderTopThree();
+
+            renderTable();
+
+        }
+
+        catch (err) {
+
+            console.error(err);
+
+            notify(
+
+                "error",
+
+                "Unable to load leaderboard",
+
+                err.message
+
+            );
+
+        }
+
+    }
+
+    /* ==========================================
+       TOP 3
+    ========================================== */
+
+    function renderTopThree() {
+
+        const top = leaderboard.slice(0, 3);
+
+        $("firstUser").textContent =
+            top[0]?.name || "-";
+
+        $("firstScore").textContent =
+            (top[0]?.productivity || 0) + "%";
+
+        $("secondUser").textContent =
+            top[1]?.name || "-";
+
+        $("secondScore").textContent =
+            (top[1]?.productivity || 0) + "%";
+
+        $("thirdUser").textContent =
+            top[2]?.name || "-";
+
+        $("thirdScore").textContent =
+            (top[2]?.productivity || 0) + "%";
+
+    }
+        /* ==========================================
+       LEADERBOARD TABLE
+    ========================================== */
+
+    function renderTable() {
+
+        const tbody = $("leaderboardTableBody");
+
+        if (!tbody) return;
+
+        $("leaderboardCount").textContent =
+            leaderboard.length + " Users";
+
+        if (!leaderboard.length) {
+
+            tbody.innerHTML = `
+
+                <tr>
+
+                    <td colspan="6"
+
+                        class="text-center py-5">
+
+                        No leaderboard data found.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+            return;
+
+        }
+
+        tbody.innerHTML = leaderboard.map((user, index) => `
+
+            <tr>
+
+                <td>
+
+                    ${index === 0 ? "🥇" :
+                      index === 1 ? "🥈" :
+                      index === 2 ? "🥉" :
+                      "#" + (index + 1)}
+
+                </td>
+
+                <td>
+
+                    ${esc(user.name)}
+
+                </td>
+
+                <td>
+
+                    ${esc(user.email)}
+
+                </td>
+
+                <td>
+
+                    ${user.completedTasks || 0}
+
+                </td>
+
+                <td>
+
+                    ${user.studyHours || 0}
+
+                </td>
+
+                <td>
+
+                    <span class="badge badge-success">
+
+                        ${user.productivity || 0}%
+
+                    </span>
+
+                </td>
+
+            </tr>
+
+        `).join("");
+
+    }
+
+    /* ==========================================
+       REFRESH
+    ========================================== */
+
+    $("btnRefreshLeaderboard")?.addEventListener(
+
+        "click",
+
+        async () => {
+
+            try {
+
+                if (window.Swal) {
+
+                    Swal.fire({
+
+                        title: "Refreshing...",
+
+                        allowOutsideClick: false,
+
+                        showConfirmButton: false,
+
+                        didOpen: () => Swal.showLoading()
+
+                    });
+
+                }
+
+                await load();
+
+                Swal.close();
+
+                notify(
+
+                    "success",
+
+                    "Leaderboard updated."
+
+                );
+
+            }
+
+            catch (err) {
+
+                Swal.close();
+
+                console.error(err);
+
+                notify(
+
+                    "error",
+
+                    "Unable to refresh leaderboard",
+
+                    err.message
+
+                );
+
+            }
+
+        }
+
+    );
+
+    /* ==========================================
+       AUTO LOAD
+    ========================================== */
+
+    document.addEventListener(
+
+        "DOMContentLoaded",
+
+        () => {
+
+            load();
+
+        }
+
+    );
+
+    /* ==========================================
+       PUBLIC METHODS
+    ========================================== */
+
+    return {
+
+        load,
+
+        refresh: load
+
+    };
+
+})();
+</script>

@@ -1,0 +1,91 @@
+/* ==========================================================
+   TASK MODAL
+========================================================== */
+
+#taskModal .modal-content{
+    border:none !important;
+    border-radius:18px !important;
+    overflow:hidden;
+    box-shadow:0 25px 60px rgba(0,0,0,.25);
+}
+
+/* HEADER */
+
+#taskModal .modal-header{
+    background:linear-gradient(135deg,#14301f,#2d5a3d) !important;
+    border:none !important;
+    color:#fff !important;
+    padding:22px 28px;
+}
+
+#taskModal .modal-title{
+    color:#fff !important;
+    font-size:1.4rem;
+    font-weight:700;
+}
+
+#taskModal .close{
+    color:#fff !important;
+    opacity:1;
+    text-shadow:none;
+}
+
+#taskModal .close:hover{
+    opacity:.8;
+}
+
+/* BODY */
+
+#taskModal .modal-body{
+    padding:28px;
+    background:#fff;
+}
+
+#taskModal label{
+    color:#14301f;
+    font-weight:600;
+    margin-bottom:8px;
+}
+
+#taskModal .form-control{
+    border-radius:12px;
+    border:1px solid #d9dfd7;
+    min-height:48px;
+    box-shadow:none;
+}
+
+#taskModal textarea.form-control{
+    min-height:120px;
+}
+
+#taskModal .form-control:focus{
+    border-color:#2d5a3d;
+    box-shadow:0 0 0 .2rem rgba(45,90,61,.15);
+}
+
+/* FOOTER */
+
+#taskModal .modal-footer{
+    border:none;
+    background:#fafafa;
+    padding:18px 28px;
+}
+
+#taskModal .btn-secondary{
+    background:#9096a3;
+    border:none;
+}
+
+#taskModal .btn-secondary:hover{
+    background:#7c8492;
+}
+
+#btnSaveTask{
+    background:#2d5a3d !important;
+    border:none !important;
+    color:#fff !important;
+}
+
+#btnSaveTask:hover{
+    background:#1b3d2b !important;
+}

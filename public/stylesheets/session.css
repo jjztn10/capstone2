@@ -1,0 +1,289 @@
+/* ==========================================================
+   STUDY SESSION PAGE
+========================================================== */
+
+.admin-section{
+    padding:30px;
+    animation:fadeIn .35s ease;
+}
+
+/* ==========================================================
+   PAGE HEADER
+========================================================== */
+
+.admin-section h1{
+    color:#2d5a3d;
+    font-weight:700;
+    letter-spacing:.5px;
+}
+
+.admin-section p{
+    color:#6c757d;
+    font-size:.95rem;
+}
+
+#btnStartSession{
+    background:#2d5a3d;
+    border:none;
+    border-radius:12px;
+    color:#fff;
+    font-weight:600;
+    padding:10px 22px;
+    transition:.3s;
+    box-shadow:0 8px 20px rgba(45,90,61,.18);
+}
+
+#btnStartSession:hover{
+    background:#244932;
+    transform:translateY(-2px);
+}
+
+#btnStartSession i{
+    margin-right:6px;
+}
+
+/* ==========================================================
+   CARDS
+========================================================== */
+
+.card{
+    border:none;
+    border-radius:18px;
+    overflow:hidden;
+    transition:.3s;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.card:hover{
+    transform:translateY(-5px);
+    box-shadow:0 18px 40px rgba(0,0,0,.14);
+}
+
+.card-body{
+    padding:1.6rem;
+}
+
+/* ==========================================================
+   SUMMARY CARDS
+========================================================== */
+
+.border-left-success{
+    border-left:5px solid #28a745!important;
+}
+
+.border-left-primary{
+    border-left:5px solid #2d5a3d!important;
+}
+
+.border-left-warning{
+    border-left:5px solid #ffc107!important;
+}
+
+.border-left-danger{
+    border-left:5px solid #dc3545!important;
+}
+
+.text-xs{
+    font-size:.75rem;
+    letter-spacing:1px;
+    margin-bottom:12px;
+}
+
+#todayStudy,
+#weekStudy,
+#totalSessions,
+#averageDuration{
+    font-size:1.9rem;
+    font-weight:700;
+    color:#2d5a3d;
+}
+
+/* ==========================================================
+   TIMER CARD
+========================================================== */
+
+#sessionTimer{
+    font-size:4rem;
+    font-weight:700;
+    color:#2d5a3d;
+    letter-spacing:3px;
+    margin:20px 0;
+    font-family:"Courier New", monospace;
+}
+
+#btnStopSession{
+    background:#dc3545;
+    border:none;
+    border-radius:12px;
+    padding:11px 26px;
+    color:#fff;
+    font-weight:600;
+    transition:.3s;
+    box-shadow:0 8px 20px rgba(220,53,69,.2);
+}
+
+#btnStopSession:hover{
+    background:#c82333;
+    transform:translateY(-2px);
+}
+
+#btnStopSession i{
+    margin-right:6px;
+}
+
+/* ==========================================================
+   TABLE CARD
+========================================================== */
+
+.card-header{
+    background:#2d5a3d;
+    color:#fff;
+    border:none;
+    padding:15px 22px;
+}
+
+.card-header h6{
+    color:#fff!important;
+    font-size:15px;
+    font-weight:600;
+}
+
+#btnRefreshSessions{
+    width:38px;
+    height:38px;
+    border:none;
+    border-radius:10px;
+    background:#fff;
+    color:#2d5a3d;
+    transition:.3s;
+}
+
+#btnRefreshSessions:hover{
+    background:#edf7ef;
+    transform:rotate(180deg);
+}
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+.table{
+    margin-bottom:0;
+}
+
+.table thead{
+    background:#edf7ef;
+}
+
+.table thead th{
+    border:none;
+    color:#2d5a3d;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    font-size:.83rem;
+    font-weight:700;
+    padding:15px;
+}
+
+.table tbody td{
+    padding:15px;
+    border-top:1px solid #edf0f3;
+    vertical-align:middle;
+}
+
+.table tbody tr{
+    transition:.2s;
+}
+
+.table tbody tr:hover{
+    background:#f7fbf8;
+}
+
+/* ==========================================================
+   STATUS BADGES (Optional)
+========================================================== */
+
+.badge-success{
+    background:#28a745;
+}
+
+.badge-danger{
+    background:#dc3545;
+}
+
+.badge-warning{
+    background:#ffc107;
+    color:#212529;
+}
+
+.badge-secondary{
+    background:#6c757d;
+}
+
+.badge{
+    padding:6px 12px;
+    border-radius:20px;
+    font-size:.75rem;
+    font-weight:600;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media(max-width:992px){
+
+    #sessionTimer{
+        font-size:3rem;
+    }
+
+}
+
+@media(max-width:768px){
+
+    .admin-section{
+        padding:18px;
+    }
+
+    .d-sm-flex{
+        flex-direction:column;
+        align-items:flex-start!important;
+        gap:15px;
+    }
+
+    #btnStartSession{
+        width:100%;
+    }
+
+    #sessionTimer{
+        font-size:2.3rem;
+        letter-spacing:1px;
+    }
+
+    #btnStopSession{
+        width:100%;
+    }
+
+    .table{
+        min-width:700px;
+    }
+
+}
+
+/* ==========================================================
+   FADE IN
+========================================================== */
+
+@keyframes fadeIn{
+
+    from{
+        opacity:0;
+        transform:translateY(15px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}

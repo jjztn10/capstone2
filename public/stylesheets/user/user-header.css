@@ -1,0 +1,138 @@
+/* ==========================================
+   USER HEADER (matches admin banner)
+========================================== */
+
+.user-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:18px;
+
+    margin-bottom:26px;
+    padding:30px 38px;
+
+    border-radius:26px;
+
+    background:linear-gradient(135deg, #15352a 0%, #1b4434 100%);
+    color:#fff;
+
+    box-shadow:0 18px 40px rgba(15, 42, 28, .28);
+}
+
+.uh-left{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    min-width:0;
+}
+
+.uh-icon{
+    font-size:2.4rem;
+    color:#8fbf7f;
+    line-height:1;
+}
+
+.uh-title{
+    margin:0;
+    color:#fff;
+    font-size:1.9rem;
+    font-weight:800;
+    letter-spacing:.2px;
+}
+
+.uh-subtitle{
+    margin:6px 0 0;
+    color:rgba(255,255,255,.82);
+    font-size:1rem;
+}
+
+.uh-right{
+    display:flex;
+    align-items:center;
+    gap:16px;
+}
+
+.uh-user{
+    text-align:right;
+}
+
+.uh-name{
+    color:#fff;
+    font-size:1.05rem;
+    font-weight:800;
+}
+
+.uh-role{
+    color:#9fd18b;
+    font-size:.88rem;
+}
+
+.uh-avatar{
+    width:62px;
+    height:62px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+
+    border-radius:50%;
+    background:#9bc98b;
+    color:#15352a;
+    font-size:1.5rem;
+}
+
+.uh-logout{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+    padding:11px 20px;
+
+    border:1px solid rgba(255,255,255,.22);
+    border-radius:14px;
+
+    background:rgba(255,255,255,.10);
+    color:#fff;
+    font-weight:700;
+    font-size:.92rem;
+
+    cursor:pointer;
+    transition:background .25s ease, transform .25s ease, border-color .25s ease;
+}
+
+.uh-logout:hover{
+    background:#e5484d;
+    border-color:#e5484d;
+    transform:translateY(-2px);
+}
+
+.uh-logout:focus{
+    outline:none;
+    box-shadow:0 0 0 .2rem rgba(255,255,255,.25);
+}
+
+@media (max-width:768px){
+
+    .user-header{
+        padding:22px 22px;
+    }
+
+    .uh-title{
+        font-size:1.4rem;
+    }
+
+    .uh-right{
+        width:100%;
+        justify-content:flex-end;
+    }
+}
+
+@media (max-width:480px){
+
+    .uh-logout span,
+    .uh-user{
+        display:none;
+    }
+}

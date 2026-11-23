@@ -1,0 +1,457 @@
+<script>
+/* ==========================================================
+   SESSION SCRIPT  — one file for BOTH user and admin pages.
+
+   Configure with data- attributes on the page's root element:
+
+     <div class="admin-section"
+          data-session-app
+          data-session-api="/userdashboard/api/session"
+          data-session-mode="user">          user = timer + start/stop
+                                             admin = read-only history
+
+   Optional:  data-show-user="true"   adds a User cell to each history row
+                                      (admin mode turns this on by default)
+
+   Every element is optional: whatever isn't on the page is skipped.
+   Defaults (no attributes) = the normal user page.
+
+   User mode also LOCKS NAVIGATION while a session is running:
+   links are blocked, back button is trapped, and refresh/close asks
+   for confirmation. Clicking Stop Session removes the lock.
+========================================================== */
+(() => {
+
+    "use strict";
+
+    // guard against the script being included twice
+    if (window.SessionApp) return;
+
+    const GREEN = "#2d5a3d";
+
+    const $ = (id) => document.getElementById(id);
+
+    /* ==========================================
+       CONFIG
+    ========================================== */
+
+    function readConfig() {
+        const root = document.querySelector("[data-session-app]") || document.body;
+        const d = root.dataset || {};
+
+        const mode = d.sessionMode === "admin" ? "admin" : "user";
+
+        return {
+            api: d.sessionApi || "/userdashboard/api/session",
+            mode,
+            tracking: mode === "user",                       // timer + start/stop + lock
+            showUser: d.showUser ? d.showUser === "true" : mode === "admin"
+        };
+    }
+
+    let cfg = null;
+
+    /* ==========================================
+       STATE
+    ========================================== */
+
+    let sessions = [];
+    let timer = null;
+    let startedAt = null;
+    let sessionRunning = false;
+    let currentSessionId = null;
+    let busy = false;
+    let initialized = false;
+    let backTrapped = false;
+
+    /* ==========================================
+       HELPERS
+    ========================================== */
+
+    const esc = (v) =>
+        String(v ?? "").replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+        })[c]);
+
+    function formatDate(date) {
+        if (!date) return "-";
+        const d = new Date(date);
+        return isNaN(d) ? "-" : d.toLocaleDateString();
+    }
+
+    function formatTime(date) {
+        if (!date) return "-";
+        const d = new Date(date);
+        return isNaN(d) ? "-" : d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function formatSeconds(sec) {
+        sec = Math.max(0, sec);
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        return [h, m, s].map(v => String(v).padStart(2, "0")).join(":");
+    }
+
+    // decimal columns arrive as text ("12.50"): round for display
+    function mins(v) {
+        const n = Number(v) || 0;
+        return n > 0 && n < 1 ? "<1 min" : Math.round(n) + " mins";
+    }
+
+    function notify(icon, title, text = "") {
+        if (window.Swal) {
+            return Swal.fire({
+                icon,
+                title,
+                text,
+                confirmButtonColor: GREEN,
+                timer: icon === "success" ? 1800 : undefined,
+                timerProgressBar: icon === "success"
+            });
+        }
+        alert(text ? title + "\n" + text : title);
+    }
+
+    async function request(path = "", options = {}) {
+        const res = await fetch(cfg.api + path, {
+            headers: { "Content-Type": "application/json" },
+            ...options
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(data.error || `Request failed (${res.status})`);
+        }
+        return data;
+    }
+
+    /* ==========================================
+       NAVIGATION LOCK  (user mode, while running)
+    ========================================== */
+
+    const isLocked = () => !!(cfg && cfg.tracking && sessionRunning);
+
+    function warnLocked() {
+        notify(
+            "warning",
+            "Session in progress",
+            "Stop your session before leaving this page."
+        );
+    }
+
+    // sidebar / any link to another page
+    function onLinkClick(e) {
+        if (!isLocked()) return;
+
+        const a = e.target.closest && e.target.closest("a[href]");
+        if (!a) return;
+
+        const raw = a.getAttribute("href") || "";
+        if (!raw || raw.startsWith("#") || /^(javascript|mailto|tel):/i.test(raw)) return;
+
+        const url = new URL(a.href, location.href);
+        if (url.origin === location.origin && url.pathname === location.pathname) return;
+
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        warnLocked();
+    }
+
+    // refresh, close tab, typed address (browser shows its own message)
+    function onBeforeUnload(e) {
+        if (!isLocked()) return;
+        e.preventDefault();
+        e.returnValue = "";
+    }
+
+    // browser back button
+    function onPopState() {
+        if (!isLocked()) return;
+        history.pushState({ swLock: true }, "", location.href);
+        warnLocked();
+    }
+
+    function enableLock() {
+        if (!cfg.tracking || backTrapped) return;
+        backTrapped = true;
+        history.pushState({ swLock: true }, "", location.href);
+    }
+
+    function disableLock() {
+        backTrapped = false;
+    }
+
+    /* ==========================================
+       BUTTONS + TIMER  (user mode only)
+    ========================================== */
+
+    function setButtons() {
+        const start = $("btnStartSession");
+        const stop = $("btnStopSession");
+        if (start) start.disabled = !cfg.tracking || sessionRunning || busy;
+        if (stop) stop.disabled = !cfg.tracking || !sessionRunning || busy;
+    }
+
+    function updateTimer() {
+        const el = $("sessionTimer");
+        if (!el) return;
+        const secs = startedAt ? Math.floor((Date.now() - startedAt) / 1000) : 0;
+        el.textContent = formatSeconds(secs);
+    }
+
+    function startTimer() {
+        stopTimer();
+        updateTimer();
+        timer = setInterval(updateTimer, 1000);
+    }
+
+    function stopTimer() {
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+    }
+
+    /* ==========================================
+       LOAD + RENDER
+    ========================================== */
+
+    async function load() {
+        try {
+            const data = await request();
+            sessions = data.sessions || [];
+            renderSummary(data.summary || {});
+            renderHistory();
+            return true;
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to load sessions", err.message);
+            return false;
+        }
+    }
+
+    function renderSummary(s) {
+        const set = (id, v) => { if ($(id)) $(id).textContent = v; };
+
+        set("todayStudy", mins(s.todayMinutes));
+        set("weekStudy", (Number(s.weekHours) || 0) + " hrs");
+        set("totalSessions", s.totalSessions || 0);
+        set("averageDuration", mins(s.averageMinutes));
+    }
+
+    function badge(status) {
+        switch ((status || "").toLowerCase()) {
+            case "completed": return "success";
+            case "running":
+            case "active":    return "primary";
+            case "stopped":   return "secondary";
+            default:          return "warning";
+        }
+    }
+
+    function renderHistory() {
+        const tbody = $("sessionTableBody");
+        if (!tbody) return;
+
+        // colspan follows the real number of header columns
+        const cols = tbody.closest("table")?.querySelectorAll("thead th").length
+            || (cfg.showUser ? 6 : 5);
+
+        if (!sessions.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="${cols}" class="text-center py-5 text-muted">
+                        No study sessions found.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        tbody.innerHTML = sessions.map(s => `
+            <tr>
+                ${cfg.showUser
+                    ? `<td>${esc(s.user_name || s.user_email || s.uid || "-")}</td>`
+                    : ""}
+                <td>${formatDate(s.session_date)}</td>
+                <td>${formatTime(s.started_at)}</td>
+                <td>${formatTime(s.ended_at)}</td>
+                <td>${s.ended_at ? mins(s.duration_minutes) : "-"}</td>
+                <td><span class="badge badge-${badge(s.status)}">${esc(s.status)}</span></td>
+            </tr>
+        `).join("");
+    }
+
+    /* ==========================================
+       RESTORE RUNNING SESSION  (user mode only)
+    ========================================== */
+
+    function restoreActiveSession() {
+        if (!cfg.tracking) return;
+
+        const active = sessions.find(s =>
+            !s.ended_at && ["running", "active"].includes(String(s.status || "").toLowerCase())
+        );
+
+        if (!active) {
+            sessionRunning = false;
+            currentSessionId = null;
+            startedAt = null;
+            stopTimer();
+            updateTimer();
+            disableLock();
+            setButtons();
+            return;
+        }
+
+        sessionRunning = true;
+        currentSessionId = active.session_id;
+        startedAt = new Date(active.started_at).getTime();
+
+        startTimer();
+        enableLock();
+        setButtons();
+    }
+
+    async function initialize() {
+        await load();
+        restoreActiveSession();
+    }
+
+    /* ==========================================
+       START / STOP  (user mode only)
+    ========================================== */
+
+    async function startSession() {
+        if (!cfg.tracking || sessionRunning || busy) return;
+
+        busy = true;
+        setButtons();
+
+        try {
+            const data = await request("/start", { method: "POST" });
+            currentSessionId = data.session_id;
+
+            await load();
+            restoreActiveSession();
+
+            notify("success", data.resumed ? "Resumed your running session." : "Study session started.");
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to start session", err.message);
+        } finally {
+            busy = false;
+            setButtons();
+        }
+    }
+
+    async function stopSession() {
+        if (!cfg.tracking || busy) return;
+
+        if (!sessionRunning) {
+            notify("warning", "No active session.");
+            return;
+        }
+
+        busy = true;
+        setButtons();
+
+        try {
+            await request("/stop", {
+                method: "PUT",
+                body: JSON.stringify({ session_id: currentSessionId })
+            });
+
+            stopTimer();
+            sessionRunning = false;       // this unlocks navigation
+            currentSessionId = null;
+            startedAt = null;
+            updateTimer();
+            disableLock();
+
+            notify("success", "Study session completed.");
+
+            await load();
+            document.dispatchEvent(new CustomEvent("sessions:changed"));
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to stop session", err.message);
+        } finally {
+            busy = false;
+            setButtons();
+        }
+    }
+
+    /* ==========================================
+       REFRESH
+    ========================================== */
+
+    async function refresh() {
+        if (window.Swal) {
+            Swal.fire({
+                title: "Refreshing...",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+        }
+
+        const ok = await load();
+        restoreActiveSession();
+
+        if (window.Swal) Swal.close();
+        if (ok) notify("success", "Sessions Updated");
+    }
+
+    /* ==========================================
+       INIT  (listeners bound once, after the DOM exists)
+    ========================================== */
+
+    function init() {
+        if (initialized) return;
+        initialized = true;
+
+        cfg = readConfig();
+
+        $("btnStartSession")?.addEventListener("click", startSession);
+        $("btnStopSession")?.addEventListener("click", stopSession);
+        $("btnRefreshSessions")?.addEventListener("click", refresh);
+
+        if (cfg.tracking) {
+            document.addEventListener("click", onLinkClick, true);   // capture: runs before other handlers
+            window.addEventListener("beforeunload", onBeforeUnload);
+            window.addEventListener("popstate", onPopState);
+        }
+
+        setButtons();
+
+        initialize().then(() => {
+            // the server sends people back here with ?locked=1
+            if (new URLSearchParams(location.search).has("locked")) {
+                history.replaceState(history.state, "", location.pathname);
+                if (sessionRunning) warnLocked();
+            }
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+    /* ==========================================
+       PUBLIC
+    ========================================== */
+
+    window.SessionApp = { load: initialize, refresh: initialize };
+    window.UserSessions = window.SessionApp;   // keeps old calls working
+
+})();
+</script>

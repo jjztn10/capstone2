@@ -17,6 +17,13 @@ const expressLayouts = require("express-ejs-layouts");
 
 const { testConnection } = require("./database/config/db");
 const { initSession } = require("./middleware/session");
+const dashboardRoutes = require("./routes/dashboard");
+const tasksRoutes = require("./routes/tasks");
+const sessionRoutes = require("./routes/session");
+const moodRoutes = require("./routes/mood");
+const analyticsRoutes = require("./routes/analytics");
+const leaderboardRoutes = require("./routes/leaderboard");
+const profileRoutes = require("./routes/profile");
 
 // ==========================================
 // APP INITIALIZATION
@@ -57,9 +64,28 @@ initSession(app);
 // ==========================================
 app.use(express.static(path.join(__dirname, "public")));
 
+// ==========================================
+// VIEW LOCALS (available in every EJS view)
+// - currentPath: used by the sidebar for active links
+// - layoutType:  fallback only; values passed to
+//   res.render() override these defaults
+// ==========================================
+app.use((req, res, next) => {
+    res.locals.currentPath = req.originalUrl;
+
+    if (req.path.startsWith("/admin")) {
+        res.locals.layoutType = "admin";
+    } else if (req.path.startsWith("/userdashboard")) {
+        res.locals.layoutType = "user";
+    }
+
+    next();
+});
+
 console.log("ENV FILE:", path.resolve(__dirname, ".env"));
 console.log("SESSION_SECRET loaded:", Boolean(process.env.SESSION_SECRET));
 console.log("MONGODB_URL loaded:", Boolean(process.env.MONGODB_URL));
+
 // ==========================================
 // DATABASE CONNECTION TEST
 // ==========================================
@@ -91,9 +117,25 @@ if (typeof adminLeaderboardRouter !== "function") {
     throw new Error("routes/adminleaderboard.js must export an Express router.");
 }
 
+console.log("dashboardRoutes:", typeof dashboardRoutes);
+console.log("tasksRoutes:", typeof tasksRoutes);
+console.log("sessionRoutes:", typeof sessionRoutes);
+console.log("moodRoutes:", typeof moodRoutes);
+console.log("analyticsRoutes:", typeof analyticsRoutes);
+console.log("leaderboardRoutes:", typeof leaderboardRoutes);
+console.log("profileRoutes:", typeof profileRoutes);
+
 // Mount routes
 app.use("/", indexRouter);
 app.use("/admindashboard", adminDashboardRouter);
+app.use("/userdashboard", dashboardRoutes);
+app.use("/userdashboard", tasksRoutes);
+app.use("/userdashboard", sessionRoutes);
+app.use("/userdashboard", moodRoutes);
+app.use("/userdashboard", analyticsRoutes);
+app.use("/userdashboard", leaderboardRoutes);
+app.use("/userdashboard", profileRoutes);
+
 app.use("/adminleaderboard", adminLeaderboardRouter);
 
 // ==========================================

@@ -93,7 +93,6 @@ async function getLeaderboard() {
 router.get(
   "/",
   h(async (req, res) => {
-
     const [stats, leaderboard] = await Promise.all([
       getStats(),
       getLeaderboard(),
@@ -105,7 +104,7 @@ router.get(
           ? (
               leaderboard.reduce(
                 (sum, row) => sum + Number(row.score || 0),
-                0
+                0,
               ) / leaderboard.length
             ).toFixed(1)
           : 0,
@@ -120,7 +119,7 @@ router.get(
       leaderboard,
       leaderboardStats,
     });
-  })
+  }),
 );
 
 /* ------------------------------------------
@@ -129,16 +128,10 @@ router.get(
 api.get(
   "/overview",
   h(async (req, res) => {
+    const [stats, productivity, taskStatus, leaderboard] = await Promise.all([
+      getStats(),
 
-    const [
-    stats,
-    productivity,
-    taskStatus,
-    leaderboard
-] = await Promise.all([
-    getStats(),
-
-    Query(`
+      Query(`
         SELECT
             day,
             ROUND(
@@ -152,7 +145,7 @@ api.get(
         ORDER BY day
     `),
 
-    Query(`
+      Query(`
         SELECT
             status,
             COUNT(*) AS count
@@ -160,25 +153,25 @@ api.get(
         GROUP BY status
     `),
 
-    getLeaderboard()
-]);
+      getLeaderboard(),
+    ]);
 
     res.json({
       stats,
 
       productivity: {
-        labels: productivity.map(r => r.day),
-        values: productivity.map(r => Number(r.productivity) || 0),
+        labels: productivity.map((r) => r.day),
+        values: productivity.map((r) => Number(r.productivity) || 0),
       },
 
       taskStatus: {
-        labels: taskStatus.map(r => r.status),
-        values: taskStatus.map(r => r.count),
+        labels: taskStatus.map((r) => r.status),
+        values: taskStatus.map((r) => r.count),
       },
 
       leaderboard,
     });
-  })
+  }),
 );
 
 /* ------------------------------------------
@@ -196,7 +189,6 @@ api.use("/leaderboard", require("./adminleaderboard"));
 api.get(
   "/mood",
   h(async (req, res) => {
-
     const rows = await Query(`
       SELECT
         m.id,
@@ -215,7 +207,7 @@ api.get(
     `);
 
     res.json(rows);
-  })
+  }),
 );
 
 /* ------------------------------------------
@@ -241,16 +233,14 @@ api.get(
     `);
 
     res.json(rows);
-  })
+  }),
 );
 
 /* ------------------------------------------
    API ERROR HANDLER
 ------------------------------------------ */
 api.use((err, req, res, next) => {
-
   if (err.code === "ER_DUP_ENTRY") {
-
     const msg = String(err.sqlMessage || "");
 
     return res.status(409).json({

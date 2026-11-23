@@ -1,133 +1,106 @@
+<%# SMARTWORK HEADER (Admin + User).
+    Optional locals: layoutType, user, headerTitle, headerDescription, headerIcon, showRefreshButton %>
 
 <%
-    // ==========================================
-    // SMARTWORK REUSABLE HEADER
-    // ADMIN AND USER
-    // ==========================================
+/* ------------------------------------------------
+   1. Per-layout defaults
+------------------------------------------------ */
+const hType = (typeof layoutType !== "undefined" && layoutType === "admin") ? "admin" : "user";
 
-    const currentLayoutType =
-        typeof layoutType !== "undefined" ? layoutType : "main";
+const headerDefaults = {
+    admin: {
+        title: "SmartWork Admin Dashboard",
+        description: "Manage your platform and monitor productivity.",
+        icon: "fa-user-shield",
+        showRefresh: false, // the dashboard page already has its own #refreshDashboardBtn
+        fallbackUser: { name: "Administrator", role: "System Administrator" },
+        menu: [
+            { label: "Settings", icon: "fa-cog", url: "/admindashboard#settingsSection" }
+        ]
+    },
+    user: {
+        title: "SmartWork Dashboard",
+        description: "Stay organized and make things simple.",
+        icon: "fa-user",
+        showRefresh: false,
+        fallbackUser: { name: "User", role: "Member" },
+        menu: [
+            { label: "My Profile", icon: "fa-user", url: "/userdashboard/profile" }
+        ]
+    }
+};
 
-    const isAdmin = currentLayoutType === "admin";
+const hd = headerDefaults[hType];
 
-    const headerUser =
-        typeof user !== "undefined" && user
-            ? user
-            : {
-                name: isAdmin ? "Administrator" : "User",
-                role: isAdmin ? "System Administrator" : "Member"
-            };
+/* ------------------------------------------------
+   2. Resolve values (page-level locals override defaults)
+------------------------------------------------ */
+const hUser = (typeof user !== "undefined" && user) ? user : hd.fallbackUser;
 
-    const currentHeaderTitle =
-        typeof headerTitle !== "undefined" && headerTitle
-            ? headerTitle
-            : isAdmin
-                ? "SmartWork Admin Dashboard"
-                : "SmartWork Dashboard";
-
-    const currentHeaderDescription =
-        typeof headerDescription !== "undefined" && headerDescription
-            ? headerDescription
-            : isAdmin
-                ? "Manage your platform and monitor productivity."
-                : "Stay organized and make things simple.";
-
-    const currentHeaderIcon =
-        typeof headerIcon !== "undefined" && headerIcon
-            ? headerIcon
-            : isAdmin ? "fa-user-shield" : "fa-user";
-
-    const showRefresh =
-        typeof showRefreshButton !== "undefined"
-            ? showRefreshButton
-            : isAdmin;
+const hTitle       = (typeof headerTitle !== "undefined" && headerTitle) ? headerTitle : hd.title;
+const hDescription = (typeof headerDescription !== "undefined" && headerDescription) ? headerDescription : hd.description;
+const hIcon        = (typeof headerIcon !== "undefined" && headerIcon) ? headerIcon : hd.icon;
+const hRefresh     = (typeof showRefreshButton !== "undefined") ? showRefreshButton : hd.showRefresh;
 %>
 
-<header class="admin-header <%= isAdmin ? 'admin-header-mode' : 'user-header-mode' %>">
+<header class="admin-header <%= hType === 'admin' ? 'admin-header-mode' : 'user-header-mode' %>">
 
-    <!-- LEFT: HEADER TITLE -->
+    <!-- LEFT: TITLE -->
     <div class="admin-header-title">
-
         <div class="admin-header-icon">
-            <i class="fas <%= currentHeaderIcon %>"></i>
+            <i class="fas <%= hIcon %>"></i>
         </div>
 
         <div class="admin-header-content">
-            <h1><%= currentHeaderTitle %></h1>
-            <p><%= currentHeaderDescription %></p>
+            <h1><%= hTitle %></h1>
+            <p><%= hDescription %></p>
         </div>
-
     </div>
 
-    <!-- RIGHT: PROFILE AND ACTIONS -->
+    <!-- RIGHT: ACTIONS + PROFILE -->
     <div class="admin-header-right">
 
-        <% if (showRefresh) { %>
-            <button
-                type="button"
-                id="refreshDashboardBtn"
-                class="btn btn-refresh">
-
+        <% if (hRefresh) { %>
+            <button type="button" id="refreshDashboardBtn" class="btn btn-refresh">
                 <i class="fas fa-sync-alt"></i>
                 Refresh Dashboard
-
             </button>
         <% } %>
 
-        <!-- PROFILE DROPDOWN -->
         <div class="admin-profile dropdown">
 
-            <a
-                href="#"
-                class="admin-profile-toggle dropdown-toggle"
-                id="smartWorkProfileDropdown"
-                role="button"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false">
+            <a href="#"
+               class="admin-profile-toggle dropdown-toggle"
+               id="smartWorkProfileDropdown"
+               role="button"
+               data-toggle="dropdown"
+               aria-haspopup="true"
+               aria-expanded="false">
 
                 <div class="profile-info">
-
-                    <h6><%= headerUser.name || "User" %></h6>
-
-                    <small>
-                        <%= headerUser.role || (isAdmin ? "System Administrator" : "Member") %>
-                    </small>
-
+                    <h6><%= hUser.name || hd.fallbackUser.name %></h6>
+                    <small><%= hUser.role || hd.fallbackUser.role %></small>
                 </div>
 
                 <div class="profile-avatar">
-
-                    <% if (headerUser.avatar) { %>
-
-                        <img
-                            src="<%= headerUser.avatar %>"
-                            alt="Profile">
-
+                    <% if (hUser.avatar) { %>
+                        <img src="<%= hUser.avatar %>" alt="Profile">
                     <% } else { %>
-
                         <i class="fas fa-user"></i>
-
                     <% } %>
-
                 </div>
 
             </a>
 
-            <!-- DROPDOWN MENU -->
-            <div
-                class="dropdown-menu dropdown-menu-right shadow"
-                aria-labelledby="smartWorkProfileDropdown">
+            <div class="dropdown-menu dropdown-menu-right shadow"
+                 aria-labelledby="smartWorkProfileDropdown">
 
-                <a class="dropdown-item" href="/profile">
-                    <i class="fas fa-user fa-sm fa-fw mr-2"></i>
-                    My Profile
-                </a>
-
-                <a class="dropdown-item" href="/settings">
-                    <i class="fas fa-cog fa-sm fa-fw mr-2"></i>
-                    Settings
-                </a>
+                <% hd.menu.forEach(link => { %>
+                    <a class="dropdown-item" href="<%= link.url %>">
+                        <i class="fas <%= link.icon %> fa-sm fa-fw mr-2"></i>
+                        <%= link.label %>
+                    </a>
+                <% }) %>
 
                 <div class="dropdown-divider"></div>
 
@@ -137,7 +110,6 @@
                 </a>
 
             </div>
-
         </div>
 
     </div>

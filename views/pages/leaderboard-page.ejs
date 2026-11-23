@@ -1,0 +1,169 @@
+<div class="container-fluid">
+
+    <!-- ==========================================
+         PAGE HEADER
+    =========================================== -->
+
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+
+        <div>
+
+            <h1 class="h3 mb-1 text-gray-800">
+                Leaderboard
+            </h1>
+
+            <p class="text-muted mb-0">
+                See the top performing users based on productivity.
+            </p>
+
+        </div>
+
+        <button
+            id="btnRefreshLeaderboard"
+            class="btn btn-success">
+
+            <i class="fas fa-sync-alt"></i>
+
+            Refresh
+
+        </button>
+
+    </div>
+
+    <!-- ==========================================
+         TOP 3 CARDS
+    =========================================== -->
+
+    <div class="row mb-4">
+
+        <div class="col-lg-4 mb-3">
+
+            <div class="card shadow border-left-warning">
+
+                <div class="card-body text-center">
+
+                    <h5>🥇 First Place</h5>
+
+                    <h3 id="firstUser">-</h3>
+
+                    <h5 id="firstScore">0 pts</h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4 mb-3">
+
+            <div class="card shadow border-left-secondary">
+
+                <div class="card-body text-center">
+
+                    <h5>🥈 Second Place</h5>
+
+                    <h3 id="secondUser">-</h3>
+
+                    <h5 id="secondScore">0 pts</h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4 mb-3">
+
+            <div class="card shadow border-left-primary">
+
+                <div class="card-body text-center">
+
+                    <h5>🥉 Third Place</h5>
+
+                    <h3 id="thirdUser">-</h3>
+
+                    <h5 id="thirdScore">0 pts</h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         LEADERBOARD TABLE
+    =========================================== -->
+
+    <div class="card shadow">
+
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+
+            <h6 class="m-0 font-weight-bold text-success">
+
+                Productivity Rankings
+
+            </h6>
+
+            <span
+                id="leaderboardCount"
+                class="badge badge-success">
+
+                0 Users
+
+            </span>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0">
+
+                    <thead class="thead-light">
+
+                        <tr>
+
+                            <th width="80">Rank</th>
+
+                            <th>Name</th>
+
+                            <th>Email</th>
+
+                            <th>Tasks</th>
+
+                            <th>Study Hours</th>
+
+                            <th>Productivity</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="leaderboardTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="6"
+                                class="text-center py-5">
+
+                                Loading leaderboard...
+
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

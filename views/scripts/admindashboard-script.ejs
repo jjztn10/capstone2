@@ -1,403 +1,384 @@
 <script>
-    (() => {
-      "use strict";
+  (() => {
+    "use strict";
 
-      const API = "/admindashboard/api";
-      const $ = (id) => document.getElementById(id);
-      const q = (sel) => document.querySelector(sel);
+    const API = "/admindashboard/api";
+    const $ = (id) => document.getElementById(id);
+    const q = (sel) => document.querySelector(sel);
 
-      const SECTIONS = {
-        overview: "overviewSection",
-        users: "usersSection",
-        tasks: "tasksSection",
-        mood: "moodSection",
-        sessions: "sessionsSection",
-        leaderboard: "leaderboardSection",
-      };
+    const SECTIONS = {
+      overview: "overviewSection",
+      users: "usersSection",
+      tasks: "tasksSection",
+      mood: "moodSection",
+      sessions: "sessionsSection",
+      leaderboard: "leaderboardSection",
+    };
 
-      const LABELS = {
-        dashboard: "overview",
-        users: "users",
-        "task management": "tasks",
-        "mood analytics": "mood",
-        "work sessions": "sessions",
-        "leaderboard": "leaderboard",
-      };
+    const LABELS = {
+      dashboard: "overview",
+      users: "users",
+      "task management": "tasks",
+      "mood analytics": "mood",
+      "work sessions": "sessions",
+      leaderboard: "leaderboard",
+    };
 
-      const GREEN = "#2d5a3d";
-      const loaded = {};
+    const GREEN = "#2d5a3d";
+    const loaded = {};
 
-      /* ---------- helpers ---------- */
-      const esc = (v) =>
-        String(v ?? "").replace(
-          /[&<>"']/g,
-          (c) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[c],
-        );
-
-      const fmtDate = (v) => {
-        if (!v) return "-";
-        const d = new Date(v);
-        return isNaN(d) ? esc(v) : d.toLocaleDateString();
-      };
-
-      function notify(icon, title, html) {
-        if (window.Swal) {
-          return Swal.fire({
-            icon,
-            title,
-            html: html || "",
-            confirmButtonColor: GREEN,
-            timer: icon === "success" ? 2500 : undefined,
-            timerProgressBar: icon === "success",
-          });
-        }
-        alert(title + (html ? "\n\n" + html.replace(/<[^>]+>/g, " ") : ""));
-        return Promise.resolve();
-      }
-
-      async function request(path, options = {}) {
-        const res = await fetch(API + path, {
-          headers: { "Content-Type": "application/json" },
-          ...options,
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok)
-          throw new Error(data.error || "Request failed (" + res.status + ")");
-        return data;
-      }
-
-      function fillTable(body, rows, colspan, rowHtml) {
-        if (!body) return;
-        body.innerHTML = rows.length
-          ? rows.map(rowHtml).join("")
-          : '<tr><td colspan="' +
-            colspan +
-            '" class="text-center text-muted py-4">No records found.</td></tr>';
-      }
-
-      const isVisible = (name) => {
-        const el = $(SECTIONS[name]);
-        return !!el && !el.classList.contains("d-none");
-      };
-
-      /* ---------- overview ---------- */
-      function drawChart(canvasId, config) {
-        const canvas = $(canvasId);
-        if (!canvas || typeof Chart === "undefined") return;
-        const existing = Chart.getChart(canvas);
-        if (existing) existing.destroy();
-        new Chart(canvas, config);
-      }
-
-      function updateStats(stats) {
-        const map = {
-          "total users": stats.totalUsers,
-          "total tasks": stats.totalTasks,
-          "mood entries": stats.totalMoods,
-          "work sessions": stats.totalSessions,
-        };
-        document
-          .querySelectorAll("#overviewSection .text-xs")
-          .forEach((label) => {
-            const key = label.textContent.trim().toLowerCase();
-            const valueEl = label.nextElementSibling;
-            if (valueEl && map[key] !== undefined) valueEl.textContent = map[key];
-          });
-      }
-
-      async function loadOverview() {
-        const d = await request("/overview");
-        updateStats(d.stats);
-
-        drawChart("productivityChart", {
-          type: "line",
-          data: {
-            labels: d.productivity.labels.map(fmtDate),
-            datasets: [
-              {
-                label: "Productivity",
-                data: d.productivity.values,
-                borderColor: GREEN,
-                backgroundColor: "rgba(45,90,61,0.1)",
-                fill: true,
-                tension: 0.4,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { min: 0, max: 100 } },
-          },
-        });
-
-        drawChart("taskCompletionChart", {
-          type: "doughnut",
-          data: {
-            labels: d.taskStatus.labels,
-            datasets: [
-              {
-                data: d.taskStatus.values,
-                backgroundColor: [
-                  GREEN,
-                  "#9bc27a",
-                  "#d9b56b",
-                  "#6c757d",
-                  "#17a2b8",
-                ],
-              },
-            ],
-          },
-          options: { responsive: true, maintainAspectRatio: false },
-        });
-
-        fillTable(
-          $("leaderboardBody"),
-          d.leaderboard,
-          5,
-          (r, i) =>
-            "<tr><td>" +
-            (i + 1) +
-            "</td><td>" +
-            esc(r.name || r.email) +
-            "</td><td>" +
-            esc(r.total_points) +
-            "</td><td>" +
-            esc(r.weekly_points) +
-            "</td><td>" +
-            esc(r.study_streak) +
-            "</td></tr>",
-        );
-      }
-
-      /* ---------- users (handled by the users script) ---------- */
-      async function loadUsers() {
-        if (window.AdminUsers) await window.AdminUsers.load();
-        else console.warn("Users script is not loaded.");
-      }
-
-      /* ---------- tasks (handled by the tasks script) ---------- */
-      async function loadTasks() {
-        if (window.AdminTasks) await window.AdminTasks.load();
-        else console.warn("Tasks script is not loaded.");
-      }
-
-      /* ---------- mood (handled by the mood script) ---------- */
-      async function loadMood() {
-        if (window.AdminMood) await window.AdminMood.load();
-        else console.warn("Mood script is not loaded.");
-      }
-
-      /* ---------- sessions (handled by the sessions script) ---------- */
-      async function loadSessions() {
-        if (window.AdminSessions) await window.AdminSessions.load();
-        else console.warn("Sessions script is not loaded.");
-      }
-
-      // users / tasks / sessions scripts fire these after add / edit / delete
-      ["users:changed", "tasks:changed", "sessions:changed"].forEach((evt) =>
-        document.addEventListener(evt, async () => {
-          loaded.overview = false;
-          // deleting a user also deletes their tasks, mood entries and sessions
-          if (evt === "users:changed") {
-            loaded.tasks = false;
-            loaded.mood = false;
-            loaded.sessions = false;
-          }
-          if (isVisible("overview")) {
-            try {
-              await loadOverview();
-              loaded.overview = true;
-            } catch (err) {
-              console.error(err);
-            }
-          }
-        }),
+    /* ---------- helpers ---------- */
+    const esc = (v) =>
+      String(v ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
       );
-const loaders = {
-    overview: loadOverview,
-    users: loadUsers,
-    tasks: loadTasks,
-    mood: loadMood,
-    sessions: loadSessions,
 
-    leaderboard: () => {
+    const fmtDate = (v) => {
+      if (!v) return "-";
+      const d = new Date(v);
+      return isNaN(d) ? esc(v) : d.toLocaleDateString();
+    };
+
+    function notify(icon, title, html) {
+      if (window.Swal) {
+        return Swal.fire({
+          icon,
+          title,
+          html: html || "",
+          confirmButtonColor: GREEN,
+          timer: icon === "success" ? 2500 : undefined,
+          timerProgressBar: icon === "success",
+        });
+      }
+      alert(title + (html ? "\n\n" + html.replace(/<[^>]+>/g, " ") : ""));
+      return Promise.resolve();
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(API + path, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(data.error || "Request failed (" + res.status + ")");
+      return data;
+    }
+
+    function fillTable(body, rows, colspan, rowHtml) {
+      if (!body) return;
+      body.innerHTML = rows.length
+        ? rows.map(rowHtml).join("")
+        : '<tr><td colspan="' +
+          colspan +
+          '" class="text-center text-muted py-4">No records found.</td></tr>';
+    }
+
+    const isVisible = (name) => {
+      const el = $(SECTIONS[name]);
+      return !!el && !el.classList.contains("d-none");
+    };
+
+    /* ---------- overview ---------- */
+    function drawChart(canvasId, config) {
+      const canvas = $(canvasId);
+      if (!canvas || typeof Chart === "undefined") return;
+      const existing = Chart.getChart(canvas);
+      if (existing) existing.destroy();
+      new Chart(canvas, config);
+    }
+
+    function updateStats(stats) {
+      const map = {
+        "total users": stats.totalUsers,
+        "total tasks": stats.totalTasks,
+        "mood entries": stats.totalMoods,
+        "work sessions": stats.totalSessions,
+      };
+      document
+        .querySelectorAll("#overviewSection .text-xs")
+        .forEach((label) => {
+          const key = label.textContent.trim().toLowerCase();
+          const valueEl = label.nextElementSibling;
+          if (valueEl && map[key] !== undefined) valueEl.textContent = map[key];
+        });
+    }
+
+    async function loadOverview() {
+      const d = await request("/overview");
+      updateStats(d.stats);
+
+      drawChart("productivityChart", {
+        type: "line",
+        data: {
+          labels: d.productivity.labels.map(fmtDate),
+          datasets: [
+            {
+              label: "Productivity",
+              data: d.productivity.values,
+              borderColor: GREEN,
+              backgroundColor: "rgba(45,90,61,0.1)",
+              fill: true,
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { min: 0, max: 100 } },
+        },
+      });
+
+      drawChart("taskCompletionChart", {
+        type: "doughnut",
+        data: {
+          labels: d.taskStatus.labels,
+          datasets: [
+            {
+              data: d.taskStatus.values,
+              backgroundColor: [
+                GREEN,
+                "#9bc27a",
+                "#d9b56b",
+                "#6c757d",
+                "#17a2b8",
+              ],
+            },
+          ],
+        },
+        options: { responsive: true, maintainAspectRatio: false },
+      });
+
+      fillTable(
+        $("leaderboardBody"),
+        d.leaderboard,
+        5,
+        (r, i) =>
+          "<tr><td>" +
+          (i + 1) +
+          "</td><td>" +
+          esc(r.name || r.email) +
+          "</td><td>" +
+          esc(r.total_points) +
+          "</td><td>" +
+          esc(r.weekly_points) +
+          "</td><td>" +
+          esc(r.study_streak) +
+          "</td></tr>",
+      );
+    }
+
+    /* ---------- users (handled by the users script) ---------- */
+    async function loadUsers() {
+      if (window.AdminUsers) await window.AdminUsers.load();
+      else console.warn("Users script is not loaded.");
+    }
+
+    /* ---------- tasks (handled by the tasks script) ---------- */
+    async function loadTasks() {
+      if (window.AdminTasks) await window.AdminTasks.load();
+      else console.warn("Tasks script is not loaded.");
+    }
+
+    /* ---------- mood (handled by the mood script) ---------- */
+    async function loadMood() {
+      if (window.AdminMood) await window.AdminMood.load();
+      else console.warn("Mood script is not loaded.");
+    }
+
+    /* ---------- sessions (handled by the sessions script) ---------- */
+    async function loadSessions() {
+      if (window.AdminSessions) await window.AdminSessions.load();
+      else console.warn("Sessions script is not loaded.");
+    }
+
+    // users / tasks / sessions scripts fire these after add / edit / delete
+    ["users:changed", "tasks:changed", "sessions:changed"].forEach((evt) =>
+      document.addEventListener(evt, async () => {
+        loaded.overview = false;
+        // deleting a user also deletes their tasks, mood entries and sessions
+        if (evt === "users:changed") {
+          loaded.tasks = false;
+          loaded.mood = false;
+          loaded.sessions = false;
+        }
+        if (isVisible("overview")) {
+          try {
+            await loadOverview();
+            loaded.overview = true;
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      }),
+    );
+    const loaders = {
+      overview: loadOverview,
+      users: loadUsers,
+      tasks: loadTasks,
+      mood: loadMood,
+      sessions: loadSessions,
+
+      leaderboard: () => {
         if (
-            window.AdminLeaderboard &&
-            typeof window.AdminLeaderboard.load === "function"
+          window.AdminLeaderboard &&
+          typeof window.AdminLeaderboard.load === "function"
         ) {
-            return window.AdminLeaderboard.load();
+          return window.AdminLeaderboard.load();
         }
 
         return Promise.resolve();
-    }
-};
-      /* ---------- navigation ---------- */
-      async function showSection(name, force) {
-
+      },
+    };
+    /* ---------- navigation ---------- */
+    async function showSection(name, force) {
       if (!SECTIONS[name]) {
-          name = "overview";
+        name = "overview";
       }
 
       Object.entries(SECTIONS).forEach(([key, id]) => {
+        const el = $(id);
 
-          const el = $(id);
-
-          if (el) {
-              el.classList.toggle("d-none", key !== name);
-          }
-
+        if (el) {
+          el.classList.toggle("d-none", key !== name);
+        }
       });
 
       if (force || !loaded[name]) {
+        try {
+          const loader = loaders[name];
 
-          try {
-
-              const loader = loaders[name];
-
-              if (typeof loader === "function") {
-                  await loader();
-              }
-
-              loaded[name] = true;
-
-          } catch (err) {
-
-              console.error(err);
-
-              notify(
-                  "error",
-                  "Could not load data",
-                  esc(err.message)
-              );
-
+          if (typeof loader === "function") {
+            await loader();
           }
 
+          loaded[name] = true;
+        } catch (err) {
+          console.error(err);
+
+          notify("error", "Could not load data", esc(err.message));
+        }
       }
 
       history.replaceState(null, "", "#" + name);
 
       window.scrollTo({
-          top: 0,
-          behavior: "smooth",
+        top: 0,
+        behavior: "smooth",
       });
+    }
 
-  }
+    /* ---------- sidebar clicks ---------- */
 
-      /* ---------- sidebar clicks ---------- */
-      document.addEventListener("click", async (e) => {
-
+    document.addEventListener("click", async (e) => {
       const link = e.target.closest("#accordionSidebar .nav-link");
 
       if (!link) return;
 
+      /* ------------------------------------
+       NORMAL PAGE LINKS
+       Let the browser navigate.
+    ------------------------------------ */
+
+      if (!link.dataset.target) {
+        return;
+      }
+
+      /* ------------------------------------
+       DASHBOARD SECTION LINKS
+    ------------------------------------ */
+
       e.preventDefault();
 
-      // Move the white active card
-      document.querySelectorAll("#accordionSidebar .nav-link").forEach(item => {
-          item.classList.remove("active");
-      });
+      document
+        .querySelectorAll("#accordionSidebar .nav-link")
+        .forEach((item) => item.classList.remove("active"));
 
       link.classList.add("active");
 
-      // Load the correct section
       const target = link.dataset.target;
 
-      if (target) {
+      const name = Object.keys(SECTIONS).find(
+        (key) => SECTIONS[key] === target,
+      );
 
-          const name = Object.keys(SECTIONS).find(
-              key => SECTIONS[key] === target
-          );
-
-          if (name) {
-
-              await showSection(name);
-
-          }
-
+      if (name) {
+        await showSection(name);
       }
+    });
 
-  });
-
-      /* ---------- init ---------- */
-      $("btnRefreshDashboard")?.addEventListener("click", async () => {
-
-      const currentSection = Object.keys(SECTIONS).find(isVisible) || "overview";
+    /* ---------- init ---------- */
+    $("btnRefreshDashboard")?.addEventListener("click", async () => {
+      const currentSection =
+        Object.keys(SECTIONS).find(isVisible) || "overview";
 
       Swal.fire({
-          title: "Refreshing Dashboard...",
-          text: "Please wait...",
-          allowOutsideClick: false,
-          allowEscapeKey: false,
-          showConfirmButton: false,
-          didOpen: () => {
-              Swal.showLoading();
-          }
+        title: "Refreshing Dashboard...",
+        text: "Please wait...",
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
       });
 
       try {
+        await showSection(currentSection, true);
 
-          await showSection(currentSection, true);
+        Swal.close();
 
-          Swal.close();
-
-          Swal.fire({
-              icon: "success",
-              title: "Dashboard Refreshed",
-              timer: 1200,
-              showConfirmButton: false
-          });
-
-      } catch (err) {
-
-          Swal.close();
-
-          Swal.fire({
-              icon: "error",
-              title: "Refresh Failed",
-              text: err.message
-          });
-
-      }
-
-  });
-        // opens the modal over whatever section is showing
-        $("quickAddUser")?.addEventListener("click", () => {
-          const el = $("addUserModal");
-          if (!el) return;
-          if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
-            window.jQuery(el).modal("show");
-          } else if (window.bootstrap) {
-            bootstrap.Modal.getOrCreateInstance(el).show();
-          }
+        Swal.fire({
+          icon: "success",
+          title: "Dashboard Refreshed",
+          timer: 1200,
+          showConfirmButton: false,
         });
-        $("quickAddTask")?.addEventListener("click", () => showSection("tasks"));
-        $("quickMood")?.addEventListener("click", () => showSection("mood"));
-  $("quickLeaderboard")?.addEventListener("click", () =>
+      } catch (err) {
+        Swal.close();
+
+        Swal.fire({
+          icon: "error",
+          title: "Refresh Failed",
+          text: err.message,
+        });
+      }
+    });
+    // opens the modal over whatever section is showing
+    $("quickAddUser")?.addEventListener("click", () => {
+      const el = $("addUserModal");
+      if (!el) return;
+      if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+        window.jQuery(el).modal("show");
+      } else if (window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(el).show();
+      }
+    });
+    $("quickAddTask")?.addEventListener("click", () => showSection("tasks"));
+    $("quickMood")?.addEventListener("click", () => showSection("mood"));
+    $("quickLeaderboard")?.addEventListener("click", () =>
       showSection("leaderboard"),
-  );
+    );
 
-        const start = location.hash.replace("#", "");
-        showSection(SECTIONS[start] ? start : "overview", true);
-        const currentLink = document.querySelector(
+    const start = location.hash.replace("#", "");
+    showSection(SECTIONS[start] ? start : "overview", true);
+    const currentLink = document.querySelector(
       '#accordionSidebar .nav-link[data-target="' +
-      SECTIONS[SECTIONS[start] ? start : "overview"] +
-      '"]'
-  );
+        SECTIONS[SECTIONS[start] ? start : "overview"] +
+        '"]',
+    );
 
-  if (currentLink) {
-
+    if (currentLink) {
       currentLink.classList.add("active");
-
-  }
-
-
-    })();
+    }
+  })();
 </script>
