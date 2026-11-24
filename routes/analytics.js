@@ -56,26 +56,25 @@ router.get("/api/analytics", async (req, res) => {
 
         /* WEEKLY STUDY (one row per day) */
 
-        const studyRows = await Query(`
-            SELECT
-                DATE(session_date) AS day,
-                ROUND(SUM(duration_minutes) / 60, 1) AS hours
-            FROM study_sessions
-            WHERE uid = ?
-            GROUP BY day
-            ORDER BY day DESC
-            LIMIT 7
-        `, [uid]);
+       /* WEEKLY STUDY (one row per day, last 7 days with sessions) */
 
-        studyRows.reverse();
+const studyRows = await Query(`
+    SELECT
+        DATE_FORMAT(session_date, '%b %d') AS label,
+        ROUND(SUM(duration_minutes) / 60, 2) AS hours
+    FROM study_sessions
+    WHERE uid = ?
+    GROUP BY session_date
+    ORDER BY session_date DESC
+    LIMIT 7
+`, [uid]);
 
-        const study = studyRows.map((row) => ({
-            label: new Date(row.day).toLocaleDateString("en-US", {
-                month: "short",
-                day: "2-digit"
-            }),
-            hours: Number(row.hours)
-        }));
+studyRows.reverse();
+
+const study = studyRows.map((row) => ({
+    label: row.label,
+    hours: Number(row.hours)
+}));
 
         /* TASK STATUS */
 

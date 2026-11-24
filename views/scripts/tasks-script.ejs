@@ -4,9 +4,8 @@ window.UserTasks = (() => {
 
     "use strict";
 
-    const API = "/userdashboard/api/tasks";
+    const API = "api/tasks";
     const GREEN = "#2d5a3d";
-    const PAGE_SIZE = 10;
 
     const $ = (id) => document.getElementById(id);
 
@@ -16,7 +15,6 @@ window.UserTasks = (() => {
 
     let tasks = [];
     let filtered = [];
-    let page = 1;
     let saving = false;
     let initialized = false;
 
@@ -68,6 +66,23 @@ window.UserTasks = (() => {
         return data;
     }
 
+    async function confirmAdd(title) {
+        if (window.Swal) {
+            const result = await Swal.fire({
+                icon: "question",
+                title: "Add this task?",
+                text: "Are you sure you want to add \"" + title + "\"?",
+                showCancelButton: true,
+                confirmButtonColor: GREEN,
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: "Yes, add it",
+                cancelButtonText: "Cancel",
+            });
+            return result.isConfirmed;
+        }
+        return confirm("Are you sure you want to add this task?");
+    }
+
     /* ======================================================
        LOAD TASKS
     ====================================================== */
@@ -76,7 +91,6 @@ window.UserTasks = (() => {
         try {
             const data = await request();
             tasks = data.tasks || [];
-            page = 1;
             applyFilters();
             renderSummary();
         } catch (err) {
@@ -119,35 +133,31 @@ window.UserTasks = (() => {
     }
 
     /* ======================================================
-       TABLE
+       TABLE (shows every task, no pagination)
     ====================================================== */
 
     function renderTable() {
         const tbody = $("taskTableBody");
         if (!tbody) return;
 
-        const start = (page - 1) * PAGE_SIZE;
-        const rows = filtered.slice(start, start + PAGE_SIZE);
-
-        if (!rows.length) {
+        if (!filtered.length) {
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center py-5 text-muted">
                         No tasks found.
                     </td>
                 </tr>`;
-            renderPagination();
             return;
         }
 
-        tbody.innerHTML = rows.map(task => `
+        tbody.innerHTML = filtered.map(task => `
             <tr>
                 <td><strong>${esc(task.title)}</strong></td>
                 <td>${esc(task.subject)}</td>
-                <td><span class="badge badge-info">${esc(task.priority)}</span></td>
+                <td><span class="badge priority-${esc(task.priority).toLowerCase()}">${esc(task.priority)}</span></td>
                 <td>${formatDate(task.deadline)}</td>
                 <td><span class="badge badge-${badge(task.status)}">${esc(task.status)}</span></td>
-                <td class="text-nowrap">
+                <td class="text-nowrap text-right">
                     <button type="button"
                         class="btn btn-sm btn-primary btn-edit"
                         title="Edit" aria-label="Edit task"
@@ -172,45 +182,6 @@ window.UserTasks = (() => {
                 </td>
             </tr>
         `).join("");
-
-        renderPagination();
-    }
-
-    /* ======================================================
-       PAGINATION
-    ====================================================== */
-
-    function totalPages() {
-        return Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    }
-
-    function renderPagination() {
-        let container = $("taskPagination");
-
-        if (!container) {
-            const card = $("taskTableBody")?.closest(".card");
-            if (!card) return;
-
-            container = document.createElement("div");
-            container.id = "taskPagination";
-            container.className = "d-flex justify-content-end align-items-center p-3";
-            card.appendChild(container);
-        }
-
-        const pages = totalPages();
-
-        container.innerHTML = `
-            <button type="button" class="btn btn-outline-secondary btn-sm mr-2"
-                data-page="prev" ${page <= 1 ? "disabled" : ""}>
-                Previous
-            </button>
-
-            <span class="align-self-center">Page ${page} of ${pages}</span>
-
-            <button type="button" class="btn btn-outline-secondary btn-sm ml-2"
-                data-page="next" ${page >= pages ? "disabled" : ""}>
-                Next
-            </button>`;
     }
 
     /* ======================================================
@@ -234,7 +205,6 @@ window.UserTasks = (() => {
             return matchKeyword && matchStatus && matchPriority;
         });
 
-        page = Math.min(page, totalPages());
         renderTable();
     }
 
@@ -274,7 +244,7 @@ window.UserTasks = (() => {
     const closeModal = () => modalAction("hide");
 
     /* ======================================================
-       SAVE
+       SAVE (asks for confirmation only when adding)
     ====================================================== */
 
     async function saveTask() {
@@ -294,13 +264,16 @@ window.UserTasks = (() => {
             return;
         }
 
+        const id = $("taskId").value;
+
+        // Ask only when adding a new task
+        if (!id && !(await confirmAdd(payload.title))) return;
+
         saving = true;
         const btn = $("btnSaveTask");
         if (btn) btn.disabled = true;
 
         try {
-            const id = $("taskId").value;
-
             if (id) {
                 await request("/" + id, { method: "PUT", body: JSON.stringify(payload) });
             } else {
@@ -308,7 +281,7 @@ window.UserTasks = (() => {
             }
 
             closeModal();
-            notify("success", "Task Saved");
+            notify("success", id ? "Task Updated" : "Task Added");
             await load();
             changed();
 
@@ -334,7 +307,7 @@ window.UserTasks = (() => {
         $("taskSubject").value = task.subject || "";
         $("taskDescription").value = task.description || "";
         $("taskPriority").value = task.priority;
-        $("taskStatus").value = task.status;
+        $("taskStatus").value = task.status === "Overdue" ? "Pending" : task.status;
         $("taskDeadline").value = task.deadline ? String(task.deadline).substring(0, 10) : "";
 
         openModal("Edit Task");
@@ -419,11 +392,11 @@ window.UserTasks = (() => {
         $("btnRefreshTasks")?.addEventListener("click", refresh);
 
         // Filters
-        $("searchTask")?.addEventListener("input", () => { page = 1; applyFilters(); });
-        $("filterStatus")?.addEventListener("change", () => { page = 1; applyFilters(); });
-        $("filterPriority")?.addEventListener("change", () => { page = 1; applyFilters(); });
+        $("searchTask")?.addEventListener("input", applyFilters);
+        $("filterStatus")?.addEventListener("change", applyFilters);
+        $("filterPriority")?.addEventListener("change", applyFilters);
 
-        // Dynamic buttons (table rows + pagination) via delegation
+        // Row buttons via delegation
         document.addEventListener("click", (e) => {
             const edit = e.target.closest(".btn-edit");
             if (edit) return editTask(edit.dataset.id);
@@ -433,13 +406,6 @@ window.UserTasks = (() => {
 
             const del = e.target.closest(".btn-delete");
             if (del) return deleteTask(del.dataset.id);
-
-            const pager = e.target.closest("#taskPagination [data-page]");
-            if (pager && !pager.disabled) {
-                if (pager.dataset.page === "prev" && page > 1) page--;
-                if (pager.dataset.page === "next" && page < totalPages()) page++;
-                renderTable();
-            }
         });
 
         load();

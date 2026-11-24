@@ -13,6 +13,9 @@
     let ready = false;
     let saving = false;
 
+    const changed = () =>
+      document.dispatchEvent(new CustomEvent("sessions:changed"));
+
     const esc = (v) =>
       String(v ?? "").replace(
         /[&<>"']/g,
@@ -79,6 +82,7 @@
       return Promise.resolve();
     }
 
+    // Red confirmation (delete)
     async function confirmBox(html) {
       if (window.Swal) {
         const r = await Swal.fire({
@@ -96,6 +100,25 @@
         return r.isConfirmed;
       }
       return confirm("Are you sure?\n\n" + html.replace(/<[^>]+>/g, " "));
+    }
+
+    // Green confirmation (add / update)
+    async function confirmAction(title, html, confirmText) {
+      if (window.Swal) {
+        const r = await Swal.fire({
+          icon: "question",
+          title,
+          html,
+          showCancelButton: true,
+          confirmButtonText: confirmText || "Yes",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: GREEN,
+          cancelButtonColor: "#6c757d",
+          reverseButtons: true,
+        });
+        return r.isConfirmed;
+      }
+      return confirm(title + "\n\n" + (html || "").replace(/<[^>]+>/g, " "));
     }
 
     async function request(path, options = {}) {
@@ -150,6 +173,7 @@
     /* ---------- student dropdown ---------- */
     function fillUsers() {
       const sel = $("sessionUser");
+      if (!sel) return;
       const keep = sel.value;
       sel.innerHTML =
         '<option value="">' +
@@ -260,67 +284,43 @@
       pag.innerHTML = html;
     }
 
-     async function load(showSuccess = false) {
+    /* ---------- load ----------
+       Returns true on success, false on failure.
+       With { rethrow: true } it throws instead of showing a popup,
+       so the caller (main script) can show its own message. */
+    async function load(showSuccess = false, opts = {}) {
+      const btn = $("btnRefreshSessions");
 
-    const btn = $("btnRefreshSessions");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML =
+          '<i class="fas fa-spinner fa-spin mr-1"></i> Refreshing...';
+      }
 
-if (btn) {
-    btn.disabled = true;
-
-    btn.classList.remove(
-        "btn-primary",
-        "btn-secondary",
-        "btn-danger",
-        "btn-warning",
-        "btn-info",
-        "btn-light",
-        "btn-dark"
-    );
-
-    btn.classList.add("btn-success");
-
-    btn.style.backgroundColor = GREEN;
-    btn.style.borderColor = GREEN;
-    btn.style.color = "#fff";
-
-    btn.innerHTML =
-        '<i class="fas fa-spinner fa-spin mr-1"></i> Refreshing...';
-}
-
-    if (showSuccess && window.Swal) {
+      if (showSuccess && window.Swal) {
         Swal.fire({
-            title: "Refreshing Sessions",
-            text: "Loading latest work session data...",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
+          title: "Refreshing Sessions",
+          text: "Loading latest work session data...",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => Swal.showLoading(),
         });
-    }
+      }
 
-    try {
-
-        const days = $("sessionRange")
-            ? $("sessionRange").value
-            : "30";
+      try {
+        const days = $("sessionRange") ? $("sessionRange").value : "30";
 
         const qs =
-            "?days=" +
-            encodeURIComponent(days) +
-            "&now=" +
-            encodeURIComponent(nowLocal());
+          "?days=" +
+          encodeURIComponent(days) +
+          "&now=" +
+          encodeURIComponent(nowLocal());
 
-        const [m, d] = await Promise.all([
-            request("/meta"),
-            request(qs),
-        ]);
+        const [m, d] = await Promise.all([request("/meta"), request(qs)]);
 
         if (Array.isArray(d) || !d.stats) {
-            throw new Error(
-                "The sessions API is returning the old format."
-            );
+          throw new Error("The sessions API is returning the old format.");
         }
 
         meta = m;
@@ -336,65 +336,39 @@ if (btn) {
         render();
 
         if (showSuccess && window.Swal) {
-
-            Swal.close();
-
-            Swal.fire({
-                icon: "success",
-                title: "Sessions Updated",
-                text: "Latest work session data has been loaded.",
-                timer: 1500,
-                showConfirmButton: false,
-            });
-
+          Swal.close();
+          Swal.fire({
+            icon: "success",
+            title: "Sessions Updated",
+            text: "Latest work session data has been loaded.",
+            timer: 1500,
+            showConfirmButton: false,
+          });
         }
 
-    } catch (err) {
-
+        return true;
+      } catch (err) {
         console.error(err);
+        ready = false;
 
-        if (window.Swal) {
+        if (window.Swal) Swal.close();
 
-            Swal.close();
+        if (opts.rethrow) throw err;
 
-            Swal.fire({
-                icon: "error",
-                title: "Unable to load sessions",
-                text: err.message,
-                confirmButtonColor: GREEN,
-            });
-
-        } else {
-
-            alert(err.message);
-
-        }
-
-    } finally {
-
+        notify("error", "Unable to load sessions", esc(err.message));
+        return false;
+      } finally {
         if (btn) {
-            btn.disabled = false;
-            btn.innerHTML =
-                '<i class="fas fa-sync-alt"></i> Refresh';
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
         }
-
+      }
     }
-
-}
 
     /* ---------- modal ---------- */
     async function openSessionModal(s) {
-      if (!ready) {
-        try {
-          await load();
-        } catch (err) {
-          return notify(
-            "error",
-            "Could not load session data",
-            esc(err.message),
-          );
-        }
-      }
+      if (!ready && !(await load())) return;
+
       if (!meta.users.length) {
         return notify(
           "warning",
@@ -433,9 +407,7 @@ if (btn) {
       }
       if (id === "sessionRange") {
         page = 1;
-        load().catch((err) =>
-          notify("error", "Could not load sessions", esc(err.message)),
-        );
+        load();
       }
     });
 
@@ -473,6 +445,25 @@ if (btn) {
       if (!payload.session_date && !payload.started_at)
         return notify("warning", "Please enter the session date");
 
+      const a = parseLocal(payload.started_at);
+      const b = parseLocal(payload.ended_at);
+      if (a && b && b < a) {
+        return notify("warning", "End time must be after the start time");
+      }
+
+      // who is this session for? (used in the confirmation text)
+      const user = meta.users.find((u) => u.uid === payload.uid);
+      const who = esc(user ? user.name || user.email : "this student");
+
+      const ok = await confirmAction(
+        id ? "Save changes?" : "Add this session?",
+        id
+          ? "Are you sure you want to update the session of <b>" + who + "</b>?"
+          : "Are you sure you want to add a session for <b>" + who + "</b>?",
+        id ? "Yes, save" : "Yes, add session",
+      );
+      if (!ok) return;
+
       const btn = e.target.querySelector('button[type="submit"]');
       saving = true;
       if (btn) btn.disabled = true;
@@ -482,12 +473,9 @@ if (btn) {
           method: id ? "PUT" : "POST",
           body: JSON.stringify(payload),
         });
+
         modalAction("sessionModal", "hide");
-        try {
-          await load();
-        } catch (err) {
-          console.error(err);
-        }
+        await load();
         changed();
         notify("success", id ? "Session updated!" : "Session added!");
       } catch (err) {
@@ -502,13 +490,11 @@ if (btn) {
     document.addEventListener("click", async (e) => {
       if (e.target.closest("#btnAddSession")) return openSessionModal(null);
 
-      const refreshBtn = e.target.closest("#btnRefreshSessions");
-
-if (refreshBtn) {
-    e.preventDefault();
-    load(true);
-    return;
-}
+      if (e.target.closest("#btnRefreshSessions")) {
+        e.preventDefault();
+        load(true);
+        return;
+      }
 
       if (e.target.closest("#btnSearchSession")) {
         page = 1;
@@ -588,20 +574,14 @@ if (refreshBtn) {
           notify("success", "Session deleted");
         } catch (err) {
           notify("error", "Could not delete session", esc(err.message));
-          load().catch(() => {});
+          load();
         }
       }
     });
 
     window.AdminSessions = {
-      load: async () => {
-        try {
-          await load();
-        } catch (err) {
-          ready = false;
-          throw err; // main script shows the "Could not load data" popup
-        }
-      },
+      // throws on failure so the main script can show its own popup
+      load: () => load(false, { rethrow: true }),
     };
   })();
 </script>

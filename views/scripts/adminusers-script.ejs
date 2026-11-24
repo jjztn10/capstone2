@@ -6,6 +6,8 @@
     const GREEN = "#2d5a3d";
     const $ = (id) => document.getElementById(id);
 
+    const PASSWORD_FIELDS = ["addPassword", "addConfirm", "editPassword", "editConfirm"];
+
     let users = [];
 
     const esc = (v) =>
@@ -42,6 +44,7 @@
       return Promise.resolve();
     }
 
+    // Red "danger" confirmation (used for delete)
     async function confirmBox(html) {
       if (window.Swal) {
         const r = await Swal.fire({
@@ -59,6 +62,25 @@
         return r.isConfirmed;
       }
       return confirm("Are you sure?\n\n" + html.replace(/<[^>]+>/g, " "));
+    }
+
+    // Green confirmation (used for add / update)
+    async function confirmAction(title, html, confirmText) {
+      if (window.Swal) {
+        const r = await Swal.fire({
+          icon: "question",
+          title,
+          html,
+          showCancelButton: true,
+          confirmButtonText: confirmText || "Yes",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: GREEN,
+          cancelButtonColor: "#6c757d",
+          reverseButtons: true,
+        });
+        return r.isConfirmed;
+      }
+      return confirm(title + "\n\n" + (html || "").replace(/<[^>]+>/g, " "));
     }
 
     async function request(path, options = {}) {
@@ -84,6 +106,80 @@
       }
     }
 
+    /* ---------- password eye ---------- */
+
+    function setEyeIcon(btn, visible) {
+      const icon = btn.matches("i") ? btn : btn.querySelector("i");
+      if (!icon) return;
+      icon.classList.remove("fa-eye", "fa-eye-slash");
+      icon.classList.add(visible ? "fa-eye-slash" : "fa-eye");
+    }
+
+    function togglePassword(input, btn) {
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      setEyeIcon(btn, show);
+    }
+
+    function setupPasswordEyes() {
+      PASSWORD_FIELDS.forEach((id) => {
+        const input = $(id);
+        if (!input || input.dataset.eyeReady) return;
+        input.dataset.eyeReady = "1";
+
+        // Reuse an eye icon that already sits next to the input, if any
+        const existingIcon = input.parentElement.querySelector('[class*="fa-eye"]');
+        let btn;
+
+        if (existingIcon) {
+          const holder =
+            existingIcon.closest("button, a, .input-group-text, span") ||
+            existingIcon;
+          // clone to drop any old broken handlers
+          btn = holder.cloneNode(true);
+          holder.parentNode.replaceChild(btn, holder);
+          btn.style.cursor = "pointer";
+          btn.setAttribute("role", "button");
+          btn.setAttribute("tabindex", "0");
+        } else {
+          const wrap = document.createElement("div");
+          wrap.style.position = "relative";
+          input.parentNode.insertBefore(wrap, input);
+          wrap.appendChild(input);
+          input.style.paddingRight = "44px";
+
+          btn = document.createElement("button");
+          btn.type = "button";
+          btn.innerHTML = '<i class="fas fa-eye"></i>';
+          btn.setAttribute("aria-label", "Show or hide password");
+          btn.style.cssText =
+            "position:absolute;top:50%;right:8px;transform:translateY(-50%);" +
+            "border:0;background:transparent;color:#6c757d;padding:6px 8px;" +
+            "cursor:pointer;line-height:1;";
+          wrap.appendChild(btn);
+        }
+
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          togglePassword(input, btn);
+        });
+
+        btn._eyeInput = input;
+      });
+    }
+
+    function resetPasswordEyes() {
+      PASSWORD_FIELDS.forEach((id) => {
+        const input = $(id);
+        if (!input) return;
+        input.type = "password";
+        const holder = input.parentElement;
+        const btn = holder && holder.querySelector('[class*="fa-eye"]');
+        if (btn) setEyeIcon(btn, false);
+      });
+    }
+
     // Modals must live directly under <body>, otherwise they cannot show
     // while the users section is hidden (d-none).
     function moveModalsToBody() {
@@ -94,10 +190,16 @@
         }
       });
     }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", moveModalsToBody);
-    } else {
+
+    function prepare() {
       moveModalsToBody();
+      setupPasswordEyes();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", prepare);
+    } else {
+      prepare();
     }
 
     /* ---------- table + search ---------- */
@@ -146,8 +248,13 @@
     }
 
     async function load() {
-      users = await request("");
-      render();
+      try {
+        users = await request("");
+        render();
+      } catch (err) {
+        console.error(err);
+        notify("error", "Unable to load users", esc(err.message));
+      }
     }
 
     const changed = () =>
@@ -164,20 +271,35 @@
 
       if (form.id === "addUserForm") {
         e.preventDefault();
+
+        const name = $("addName").value.trim();
+        const email = $("addEmail").value.trim();
         const password = $("addPassword").value;
+
+        if (!password) {
+          return notify("warning", "Password is required");
+        }
         if (password !== $("addConfirm").value) {
           return notify("error", "Passwords do not match");
         }
+
+        const ok = await confirmAction(
+          "Add this user?",
+          "Are you sure you want to add <b>" +
+            esc(name || email) +
+            "</b>?<br>" +
+            esc(email),
+          "Yes, add user",
+        );
+        if (!ok) return;
+
         try {
           const created = await request("", {
             method: "POST",
-            body: JSON.stringify({
-              name: $("addName").value,
-              email: $("addEmail").value,
-              password,
-            }),
+            body: JSON.stringify({ name, email, password }),
           });
           form.reset();
+          resetPasswordEyes();
           modalAction("addUserModal", "hide");
           await load();
           changed();
@@ -196,20 +318,33 @@
 
       if (form.id === "editUserForm") {
         e.preventDefault();
+
         const password = $("editPassword").value;
         if (password !== $("editConfirm").value) {
           return notify("error", "Passwords do not match");
         }
+
+        const name = $("editName").value.trim();
+        const email = $("editEmail").value.trim();
+
+        const ok = await confirmAction(
+          "Save changes?",
+          "Are you sure you want to update <b>" +
+            esc(name || email) +
+            "</b>?" +
+            (password ? "<br>Their password will also be changed." : ""),
+          "Yes, save",
+        );
+        if (!ok) return;
+
         try {
-          const body = {
-            name: $("editName").value,
-            email: $("editEmail").value,
-          };
+          const body = { name, email };
           if (password) body.password = password;
           await request("/" + encodeURIComponent($("editUid").value), {
             method: "PUT",
             body: JSON.stringify(body),
           });
+          resetPasswordEyes();
           modalAction("editUserModal", "hide");
           await load();
           changed();
@@ -223,6 +358,8 @@
     /* ---------- clicks ---------- */
     document.addEventListener("click", async (e) => {
       if (e.target.closest("#btnAddUser")) {
+        setupPasswordEyes();
+        resetPasswordEyes();
         return modalAction("addUserModal", "show");
       }
 
@@ -233,6 +370,8 @@
         $("editEmail").value = edit.dataset.email || "";
         $("editPassword").value = "";
         $("editConfirm").value = "";
+        setupPasswordEyes();
+        resetPasswordEyes();
         return modalAction("editUserModal", "show");
       }
 

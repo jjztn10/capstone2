@@ -114,14 +114,20 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Chart.js: admin dashboard, user dashboard, analytics -->
-    <% if (/(^|\/)(admindashboard|dashboard|analytics)-script$/.test(ps)) { %>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <% } %>
-
+    <!-- Chart.js: admin dashboard, user dashboard, analytics, mood -->
+<% if (/(^|\/)(admindashboard|dashboard|analytics|mood)-script$/.test(ps)) { %>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<% } %>
     <!-- Page Script -->
-    <% if (ps) { %>
+<% if (ps) { %>
+    <% try { %>
         <%- include("../scripts/" + ps) %>
+    <% } catch (e) { console.error("Page script not found:", ps); } %>
+<% } %>
+
+    <!-- Daily mood check-in (every user page, once a day, cannot be dismissed) -->
+    <% if (lt === "user") { %>
+        <%- include("../scripts/moodgate-script") %>
     <% } %>
 
 </body>

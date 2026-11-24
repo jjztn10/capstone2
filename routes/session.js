@@ -14,12 +14,6 @@ const fail = (res, err) => {
     res.status(err.status || 500).json({ error: err.message });
 };
 
-// study_sessions has no status column, so it is derived:
-// no end time = still running.
-const STATUS_SQL = `
-    CASE WHEN ended_at IS NULL THEN 'Running' ELSE 'Completed' END
-`;
-
 // Looks up the real primary key of study_sessions once (name + whether
 // it is AUTO_INCREMENT), so the queries don't depend on a guessed name.
 let meta = null;
@@ -75,17 +69,21 @@ router.get("/api/session", async (req, res) => {
         const uid = getUid(req);
         const { pk } = await getMeta();
 
+        // status is derived: no end time = still running
         const sessions = await Query(`
             SELECT
-                \`${pk}\` AS session_id,
-                DATE_FORMAT(session_date, '%Y-%m-%d') AS session_date,
-                started_at,
-                ended_at,
-                duration_minutes,
-                ${STATUS_SQL} AS status
-            FROM study_sessions
-            WHERE uid = ?
-            ORDER BY started_at DESC
+                s.\`${pk}\` AS session_id,
+                s.task_id,
+                t.title AS task_title,
+                DATE_FORMAT(s.session_date, '%Y-%m-%d') AS session_date,
+                s.started_at,
+                s.ended_at,
+                s.duration_minutes,
+                CASE WHEN s.ended_at IS NULL THEN 'Running' ELSE 'Completed' END AS status
+            FROM study_sessions s
+            LEFT JOIN tasks t ON t.id = s.task_id
+            WHERE s.uid = ?
+            ORDER BY s.started_at DESC
         `, [uid]);
 
         // only finished sessions count toward totals
@@ -112,13 +110,35 @@ router.get("/api/session", async (req, res) => {
 });
 
 /* ==========================================================
-   START SESSION
+   PENDING TASKS (for the picker)
+========================================================== */
+
+router.get("/api/session/tasks", async (req, res) => {
+    try {
+        const uid = getUid(req);
+
+        const tasks = await Query(`
+            SELECT id, title, subject
+            FROM tasks
+            WHERE uid = ? AND status = 'pending'
+            ORDER BY priority_score DESC, deadline ASC
+        `, [uid]);
+
+        res.json({ tasks });
+    } catch (err) {
+        fail(res, err);
+    }
+});
+
+/* ==========================================================
+   START SESSION  (a task is required)
 ========================================================== */
 
 router.post("/api/session/start", async (req, res) => {
     try {
         const uid = getUid(req);
         const { pk, auto } = await getMeta();
+        const { task_id } = req.body || {};
 
         // already running? hand that one back instead of creating another
         const running = await Query(`
@@ -137,24 +157,40 @@ router.post("/api/session/start", async (req, res) => {
             });
         }
 
+        // the task must be chosen, belong to this user, and still be pending
+        if (!task_id) {
+            return res.status(400).json({ error: "Please choose a task first." });
+        }
+
+        const task = await Query(`
+            SELECT id
+            FROM tasks
+            WHERE id = ? AND uid = ? AND status = 'pending'
+            LIMIT 1
+        `, [task_id, uid]);
+
+        if (!task.length) {
+            return res.status(400).json({ error: "That task is not available." });
+        }
+
         // duration_minutes is NOT NULL with no default, so start at 0
         if (!auto) {
             const id = crypto.randomUUID();
 
             await Query(`
                 INSERT INTO study_sessions
-                    (\`${pk}\`, uid, duration_minutes, session_date, started_at)
-                VALUES (?, ?, 0, CURDATE(), NOW())
-            `, [id, uid]);
+                    (\`${pk}\`, uid, task_id, duration_minutes, session_date, started_at)
+                VALUES (?, ?, ?, 0, CURDATE(), NOW())
+            `, [id, uid, task_id]);
 
             return res.status(201).json({ success: true, session_id: id });
         }
 
         await Query(`
             INSERT INTO study_sessions
-                (uid, duration_minutes, session_date, started_at)
-            VALUES (?, 0, CURDATE(), NOW())
-        `, [uid]);
+                (uid, task_id, duration_minutes, session_date, started_at)
+            VALUES (?, ?, 0, CURDATE(), NOW())
+        `, [uid, task_id]);
 
         const created = await Query(`
             SELECT \`${pk}\` AS session_id

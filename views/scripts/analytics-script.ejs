@@ -1,0 +1,240 @@
+<script>
+(() => {
+
+    "use strict";
+
+    if (window.UserAnalytics) return;
+
+    const API = "/userdashboard/api/analytics";
+    const GREEN = "#2d5a3d";
+
+    const $ = (id) => document.getElementById(id);
+
+    const set = (id, value) => {
+        const el = $(id);
+        if (el) el.textContent = value;
+    };
+
+    const charts = { study: null, tasks: null, mood: null, workload: null };
+
+    /* ---------- helpers ---------- */
+
+    function notify(icon, title, text = "") {
+        if (!window.Swal) {
+            alert(text ? title + "\n" + text : title);
+            return;
+        }
+
+        Swal.fire({
+            icon, title, text,
+            confirmButtonColor: GREEN,
+            timer: icon === "success" ? 1500 : undefined,
+            timerProgressBar: icon === "success"
+        });
+    }
+
+    async function request(path = "", options = {}) {
+        const res = await fetch(API + path, {
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            ...options
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(data.error || "Request failed.");
+        }
+        return data;
+    }
+
+    // replaces any existing chart on that canvas, then draws the new one
+    function draw(key, canvasId, config) {
+        if (charts[key]) {
+            charts[key].destroy();
+            charts[key] = null;
+        }
+
+        const canvas = $(canvasId);
+
+        if (!canvas || typeof Chart === "undefined") {
+            console.warn(`Chart.js not loaded or #${canvasId} missing`);
+            return;
+        }
+
+        charts[key] = new Chart(canvas, config);
+    }
+
+    /* ---------- summary ---------- */
+
+    function updateSummary(s) {
+        set("productivityScore", (s.productivity || 0) + "%");
+        set("analyticsStudyHours", (s.studyHours || 0) + " hrs");
+        set("analyticsCompletedTasks", s.completedTasks || 0);
+        set("analyticsStress", (s.averageStress || 0) + " / 10");
+    }
+
+    /* ---------- charts ---------- */
+
+    function renderStudyChart(data) {
+        draw("study", "studyHoursChart", {
+            type: "line",
+            data: {
+                labels: data.map(x => x.label),
+                datasets: [{
+                    label: "Study Hours",
+                    data: data.map(x => x.hours),
+                    borderColor: GREEN,
+                    backgroundColor: "rgba(45,90,61,.15)",
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    function renderTaskChart(data) {
+        draw("tasks", "taskChart", {
+            type: "doughnut",
+            data: {
+                labels: ["Completed", "Pending", "In Progress"],
+                datasets: [{
+                    data: [data.completed || 0, data.pending || 0, data.inProgress || 0],
+                    backgroundColor: [GREEN, "#f6c23e", "#4e73df"],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: "bottom" } }
+            }
+        });
+    }
+
+    // score: 5 happy ... 1 frustrated
+    const MOOD_NAMES = { 5: "Happy", 4: "Neutral", 3: "Sad", 2: "Stressed", 1: "Frustrated" };
+
+    function renderMoodChart(data) {
+        draw("mood", "moodChart", {
+            type: "bar",
+            data: {
+                labels: data.map(x => x.label),
+                datasets: [{
+                    label: "Mood",
+                    data: data.map(x => x.score),
+                    backgroundColor: "#36b9cc"
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${MOOD_NAMES[ctx.raw] || ctx.raw}`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5,
+                        ticks: {
+                            stepSize: 1,
+                            callback: (v) => MOOD_NAMES[v] || ""
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderWorkloadChart(data) {
+        draw("workload", "workloadChart", {
+            type: "line",
+            data: {
+                labels: data.map(x => x.label),
+                datasets: [{
+                    label: "Workload",
+                    data: data.map(x => x.value),
+                    borderColor: "#e74a3b",
+                    backgroundColor: "rgba(231,74,59,.15)",
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 10 } }
+            }
+        });
+    }
+
+    /* ---------- load ---------- */
+
+    async function load() {
+        try {
+            const data = await request();
+
+            updateSummary(data.summary || {});
+            renderStudyChart(data.study || []);
+            renderTaskChart(data.tasks || {});
+            renderMoodChart(data.moods || []);
+            renderWorkloadChart(data.workload || []);
+
+            return true;
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to load analytics", err.message);
+            return false;
+        }
+    }
+
+    async function refresh() {
+        if (window.Swal) {
+            Swal.fire({
+                title: "Refreshing...",
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+        }
+
+        const ok = await load();
+
+        if (window.Swal) Swal.close();
+        if (ok) notify("success", "Analytics updated.");
+    }
+
+    /* ---------- init ---------- */
+
+    function init() {
+        $("btnRefreshAnalytics")?.addEventListener("click", refresh);
+
+        // the daily mood popup just saved an entry: update the charts
+        document.addEventListener("mood:saved", load);
+
+        load();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+    window.UserAnalytics = { load, refresh: load };
+
+})();
+</script>

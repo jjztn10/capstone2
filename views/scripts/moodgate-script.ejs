@@ -1,0 +1,289 @@
+<script>
+/* ==========================================================
+   MOOD GATE — forced daily mood check-in (user pages only).
+
+   Asks once per day. Cannot be dismissed: no close button,
+   Esc and outside clicks do nothing. It goes away only after
+   the mood is saved.
+
+   The faces are display only. The stress slider (1-10) picks
+   the mood: 1-2 happy, 3-4 neutral, 5-6 sad, 7-8 stressed,
+   9-10 frustrated.
+========================================================== */
+(() => {
+
+    "use strict";
+
+    if (window.MoodGate) return;
+
+    const API = "/userdashboard/api/mood";
+
+    const MOODS = [
+        { key: "happy",      emoji: "😊", label: "Happy",      min: 1, max: 2 },
+        { key: "neutral",    emoji: "😐", label: "Neutral",    min: 3, max: 4 },
+        { key: "sad",        emoji: "😔", label: "Sad",        min: 5, max: 6 },
+        { key: "stressed",   emoji: "😣", label: "Stressed",   min: 7, max: 8 },
+        { key: "frustrated", emoji: "😤", label: "Frustrated", min: 9, max: 10 }
+    ];
+
+    const moodFor = (v) => MOODS.find(m => v >= m.min && v <= m.max) || MOODS[2];
+
+    let overlay = null;
+    let saving = false;
+
+    /* ---------- request ---------- */
+
+    async function request(path = "", options = {}) {
+        const res = await fetch(API + path, {
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            ...options
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(data.error || `Request failed (${res.status})`);
+        }
+        return data;
+    }
+
+    /* ---------- styles ---------- */
+
+    function injectStyles() {
+        if (document.getElementById("moodGateStyles")) return;
+
+        const style = document.createElement("style");
+        style.id = "moodGateStyles";
+        style.textContent = `
+            .mg-overlay {
+                position: fixed; inset: 0; z-index: 99999;
+                display: flex; align-items: center; justify-content: center;
+                padding: 16px; overflow-y: auto;
+                background: rgba(16, 38, 26, .92);
+                backdrop-filter: blur(4px);
+            }
+            .mg-card {
+                width: 100%; max-width: 520px;
+                background: #fff; border-radius: 18px;
+                padding: 28px 24px;
+                box-shadow: 0 20px 60px rgba(0,0,0,.35);
+                font-family: inherit;
+            }
+            .mg-card h2 { margin: 0 0 6px; font-size: 1.5rem; color: #1b3a29; font-weight: 700; }
+            .mg-sub { margin: 0 0 18px; color: #6b7280; font-size: .92rem; }
+
+            /* faces: display only, not clickable */
+            .mg-moods {
+                display: grid; grid-template-columns: repeat(5, 1fr);
+                gap: 8px; margin-bottom: 18px;
+                pointer-events: none; user-select: none;
+            }
+            .mg-mood {
+                border: 2px solid #e5e7eb; background: #f9fafb;
+                border-radius: 12px; padding: 10px 2px;
+                text-align: center; line-height: 1.2;
+                font-size: .72rem; color: #374151;
+                opacity: .55;
+                transition: all .15s ease;
+            }
+            .mg-mood span { display: block; font-size: 1.7rem; margin-bottom: 2px; }
+            .mg-mood.active {
+                opacity: 1;
+                border-color: #2d5a3d; background: #e8f3ec;
+                box-shadow: 0 0 0 3px rgba(45,90,61,.2);
+                font-weight: 700;
+                transform: scale(1.06);
+            }
+
+            .mg-row { margin-bottom: 14px; }
+            .mg-row label { display: flex; justify-content: space-between; margin-bottom: 4px; font-weight: 600; color: #374151; font-size: .9rem; }
+            .mg-row input[type=range] { width: 100%; accent-color: #2d5a3d; }
+            .mg-scale {
+    display: flex; justify-content: space-between;
+    margin-top: 2px;
+}
+.mg-scale span {
+    width: 16px; text-align: center;      /* matches the slider thumb width, so numbers line up */
+    font-size: .75rem; color: #9ca3af;
+}
+.mg-scale span.on { color: #2d5a3d; font-weight: 700; }
+            .mg-hint { margin: 4px 0 0; font-size: .8rem; color: #2d5a3d; font-weight: 600; }
+            .mg-card textarea {
+                width: 100%; resize: none; border: 1px solid #d1d5db;
+                border-radius: 10px; padding: 10px; font-size: .9rem; margin-bottom: 6px;
+            }
+            .mg-error { color: #dc3545; font-size: .85rem; min-height: 1.1em; margin: 0 0 8px; }
+            .mg-submit {
+                width: 100%; border: 0; border-radius: 12px; padding: 12px;
+                background: #2d5a3d; color: #fff; font-weight: 700; font-size: 1rem;
+                cursor: pointer; transition: opacity .15s ease;
+            }
+            .mg-submit:disabled { opacity: .45; cursor: not-allowed; }
+            @media (max-width: 420px) {
+                .mg-card { padding: 22px 16px; }
+                .mg-mood { font-size: .65rem; }
+                .mg-mood span { font-size: 1.45rem; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /* ---------- overlay ---------- */
+
+    function build() {
+        overlay = document.createElement("div");
+        overlay.className = "mg-overlay";
+
+        overlay.innerHTML = `
+            <div class="mg-card" role="dialog" aria-modal="true" aria-labelledby="mgTitle" tabindex="-1">
+                <h2 id="mgTitle">How are you feeling today?</h2>
+                <p class="mg-sub">
+                    Slide the stress level to show how you feel. It only takes
+                    a few seconds and is asked once a day.
+                </p>
+
+                <div class="mg-moods" aria-hidden="true">
+                    ${MOODS.map(m => `
+                        <div class="mg-mood" data-mood="${m.key}">
+                            <span>${m.emoji}</span>${m.label}
+                        </div>`).join("")}
+                </div>
+
+                <div class="mg-row">
+                    <label for="mgStress">Stress level <b><span id="mgStressVal">5</span> / 10</b></label>
+                    <input type="range" id="mgStress" min="1" max="10" step="1" value="5">
+                    <div class="mg-scale" id="mgScale">
+    ${Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join("")}
+</div>
+                    <p class="mg-hint" id="mgStressHint"></p>
+                </div>
+
+                <div class="mg-row">
+                    <label for="mgWorkload">Workload <b><span id="mgWorkloadVal">5</span> / 10</b></label>
+                    <input type="range" id="mgWorkload" min="1" max="10" value="5">
+                </div>
+
+                <textarea id="mgNotes" rows="2" maxlength="500"
+                    placeholder="Anything on your mind? (optional)"></textarea>
+
+                <p class="mg-error" id="mgError"></p>
+
+                <button type="button" class="mg-submit" id="mgSubmit">
+                    Save &amp; Continue
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        document.body.style.overflow = "hidden";
+
+        const q = (sel) => overlay.querySelector(sel);
+        const stress = q("#mgStress");
+
+        // slider -> lights up the matching face
+        const sync = () => {
+            const v = Number(stress.value);
+            const m = moodFor(v);
+
+            q("#mgStressVal").textContent = v;
+            q("#mgStressHint").textContent = `${m.emoji} ${m.label}`;
+
+            overlay.querySelectorAll(".mg-mood").forEach(el => {
+                el.classList.toggle("active", el.dataset.mood === m.key);
+            });
+        };
+
+        stress.addEventListener("input", sync);
+        q("#mgWorkload").addEventListener("input", e => q("#mgWorkloadVal").textContent = e.target.value);
+        q("#mgSubmit").addEventListener("click", submit);
+
+        sync();
+
+        // keep keyboard focus inside the popup
+        document.addEventListener("focusin", trapFocus);
+
+        q(".mg-card").focus();
+    }
+
+    function trapFocus(e) {
+        if (overlay && !overlay.contains(e.target)) {
+            overlay.querySelector(".mg-card").focus();
+        }
+    }
+
+    function close() {
+        document.removeEventListener("focusin", trapFocus);
+        overlay?.remove();
+        overlay = null;
+        document.body.style.overflow = "";
+    }
+
+    /* ---------- submit ---------- */
+
+    async function submit() {
+        if (saving) return;
+
+        const btn = overlay.querySelector("#mgSubmit");
+        const err = overlay.querySelector("#mgError");
+
+        const stressValue = Number(overlay.querySelector("#mgStress").value);
+
+        saving = true;
+        btn.disabled = true;
+        btn.textContent = "Saving...";
+        err.textContent = "";
+
+        try {
+            await request("", {
+                method: "POST",
+                body: JSON.stringify({
+                    mood: moodFor(stressValue).key,
+                    stress_level: stressValue,
+                    workload: Number(overlay.querySelector("#mgWorkload").value),
+                    notes: overlay.querySelector("#mgNotes").value.trim(),
+                    once: true
+                })
+            });
+
+            close();
+            document.dispatchEvent(new CustomEvent("mood:saved"));
+        } catch (e) {
+            console.error(e);
+            err.textContent = e.message || "Could not save. Please try again.";
+            btn.disabled = false;
+            btn.textContent = "Save & Continue";
+        } finally {
+            saving = false;
+        }
+    }
+
+    /* ---------- start ---------- */
+
+    async function check() {
+        try {
+            const data = await request("/today");
+            if (data.answered) return;          // already answered today
+
+            injectStyles();
+            build();
+        } catch (e) {
+            // never lock people out because of a failed check
+            console.warn("Mood check skipped:", e.message);
+        }
+    }
+
+    function init() {
+        check();
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+    window.MoodGate = { check };
+
+})();
+</script>

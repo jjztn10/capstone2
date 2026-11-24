@@ -1,440 +1,432 @@
-<div class="admin-section">
+<style>
+/* ===== HERO ===== */
+.page-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 22px 28px 22px 34px;
+    margin-bottom: 24px;
+    background: #fff;
+    border-radius: 22px;
+    box-shadow: 0 6px 24px rgba(20, 55, 42, .08);
+    overflow: hidden;
+}
+.page-hero::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 6px;
+    background: linear-gradient(180deg, #34b36b, #2d5a3d);
+}
+.page-hero::after {
+    content: "";
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(52, 179, 107, .18), transparent 70%);
+    pointer-events: none;
+}
+.page-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    position: relative;
+    z-index: 1;
+}
+.page-hero-icon {
+    width: 62px; height: 62px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: #fff;
+    background: linear-gradient(145deg, #34b36b, #1f6b45);
+    border-radius: 18px;
+    box-shadow: 0 8px 18px rgba(45, 90, 61, .3);
+}
+.page-hero-eyebrow {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #2fa862;
+    margin-bottom: 2px;
+}
+.page-hero-eyebrow i { margin-right: 4px; }
+.page-hero-title {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    color: #14372a;
+    line-height: 1.15;
+}
+.page-hero-title span { color: #2f9e63; }
+.page-hero-sub {
+    margin: 4px 0 0;
+    color: #7a8580;
+    font-size: .95rem;
+}
+.page-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+.page-hero-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #e8f5ee;
+    color: #1f5a3c;
+    font-weight: 700;
+    font-size: .85rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.page-hero .page-hero-btn {
+    background: #2d5a3d;
+    color: #fff;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(45, 90, 61, .25);
+    transition: background .15s, transform .15s;
+}
+.page-hero .page-hero-btn:hover {
+    background: #234a31;
+    color: #fff;
+    transform: translateY(-1px);
+}
+.page-hero .page-hero-btn i { margin-right: 6px; }
 
-    <!-- ==========================================
-         PAGE HEADER
-    =========================================== -->
+@media (max-width: 767px) {
+    .page-hero { padding: 18px 20px 18px 26px; }
+    .page-hero-title { font-size: 1.5rem; }
+    .page-hero-actions { width: 100%; justify-content: space-between; }
+}
 
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+/* ===== TABLE CARD ===== */
+.task-card {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 6px 24px rgba(20, 55, 42, .08) !important;
+    overflow: hidden;
+}
+.task-card .card-header {
+    background: #fff;
+    border-bottom: 1px solid #eef2ef;
+    padding: 18px 22px;
+}
+.task-card .form-control {
+    border-radius: 10px;
+    border: 1px solid #dfe7e2;
+    height: 42px;
+}
+.task-card .form-control:focus {
+    border-color: #34b36b;
+    box-shadow: 0 0 0 3px rgba(52, 179, 107, .15);
+}
+.task-card #btnRefreshTasks {
+    background: #2d5a3d;
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    color: #fff;
+}
+.task-card #btnRefreshTasks:hover { background: #234a31; }
 
-        <div>
+.task-card .table thead th {
+    background: #f3f8f5;
+    color: #5d6b64;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 0;
+    padding: 14px 22px;
+}
+.task-card .table td {
+    padding: 16px 22px;
+    vertical-align: middle;
+    border-top: 1px solid #eef2ef;
+    color: #33413a;
+}
+.task-card .table-hover tbody tr:hover { background: #f8fbf9; }
 
-            <h1 class="h3 mb-1 text-gray-800">
-                Task Management
-            </h1>
+/* badges as pills */
+.task-card .badge {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 700;
+}
+.badge.priority-high   { background: #fde8e8; color: #c0392b; }
+.badge.priority-medium { background: #fff3dc; color: #b9770e; }
+.badge.priority-low    { background: #e3f5ea; color: #1f7a48; }
 
-            <p class="text-muted mb-0">
-                Create, organize, and track your tasks.
-            </p>
+/* row action buttons (scoped so Refresh is not affected) */
+#taskTableBody .btn-sm {
+    width: 34px; height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    border: 0;
+    margin-left: 4px;
+}
 
+/* pagination */
+#taskPagination { border-top: 1px solid #eef2ef; background: #fff; }
+
+/* Save button in the modal */
+#btnSaveTask {
+    background: #2d5a3d;
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 20px;
+    font-weight: 600;
+}
+#btnSaveTask:hover { background: #234a31; color: #fff; }
+</style>
+
+<div class="container-fluid">
+
+    <!-- PAGE HERO -->
+    <div class="page-hero">
+
+        <div class="page-hero-left">
+            <div class="page-hero-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+
+            <div>
+                <div class="page-hero-eyebrow">
+                    <i class="fas fa-layer-group"></i> My Workspace
+                </div>
+
+                <h1 class="page-hero-title">
+                    Task <span>Management</span>
+                </h1>
+
+                <p class="page-hero-sub">Create, organize, and track your tasks.</p>
+            </div>
         </div>
 
-        <button
-            class="btn btn-success"
-            id="btnAddTask">
+        <div class="page-hero-actions">
+            <span class="page-hero-date">
+                <i class="far fa-calendar-alt"></i>
+                <span id="heroDate"></span>
+            </span>
 
-            <i class="fas fa-plus mr-1"></i>
-
-            Add Task
-
-        </button>
+            <button id="btnAddTask" type="button" class="btn page-hero-btn">
+                <i class="fas fa-plus"></i> Add Task
+            </button>
+        </div>
 
     </div>
 
-    <!-- ==========================================
-         SUMMARY CARDS
-    =========================================== -->
-
+    <!-- SUMMARY CARDS -->
     <div class="row mb-4">
 
-        <div class="col-md-3">
-
-            <div class="card shadow border-left-primary">
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow border-left-primary h-100">
                 <div class="card-body">
-
-                    <div class="text-xs text-primary text-uppercase font-weight-bold">
-                        Total Tasks
-                    </div>
-
-                    <div
-                        class="h4 font-weight-bold"
-                        id="totalTasks">
-
-                        0
-
-                    </div>
-
+                    <div class="text-xs text-primary text-uppercase font-weight-bold mb-1">Total Tasks</div>
+                    <div id="totalTasks" class="h3 mb-0 font-weight-bold">0</div>
                 </div>
-
             </div>
-
         </div>
 
-        <div class="col-md-3">
-
-            <div class="card shadow border-left-warning">
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow border-left-warning h-100">
                 <div class="card-body">
-
-                    <div class="text-xs text-warning text-uppercase font-weight-bold">
-                        Pending
-                    </div>
-
-                    <div
-                        class="h4 font-weight-bold"
-                        id="pendingCount">
-
-                        0
-
-                    </div>
-
+                    <div class="text-xs text-warning text-uppercase font-weight-bold mb-1">Pending</div>
+                    <div id="pendingCount" class="h3 mb-0 font-weight-bold">0</div>
                 </div>
-
             </div>
-
         </div>
 
-        <div class="col-md-3">
-
-            <div class="card shadow border-left-success">
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow border-left-success h-100">
                 <div class="card-body">
-
-                    <div class="text-xs text-success text-uppercase font-weight-bold">
-                        Completed
-                    </div>
-
-                    <div
-                        class="h4 font-weight-bold"
-                        id="completedCount">
-
-                        0
-
-                    </div>
-
+                    <div class="text-xs text-success text-uppercase font-weight-bold mb-1">Completed</div>
+                    <div id="completedCount" class="h3 mb-0 font-weight-bold">0</div>
                 </div>
-
             </div>
-
         </div>
 
-        <div class="col-md-3">
-
-            <div class="card shadow border-left-danger">
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card shadow border-left-danger h-100">
                 <div class="card-body">
-
-                    <div class="text-xs text-danger text-uppercase font-weight-bold">
-                        Overdue
-                    </div>
-
-                    <div
-                        class="h4 font-weight-bold"
-                        id="overdueCount">
-
-                        0
-
-                    </div>
-
+                    <div class="text-xs text-danger text-uppercase font-weight-bold mb-1">Overdue</div>
+                    <div id="overdueCount" class="h3 mb-0 font-weight-bold">0</div>
                 </div>
-
             </div>
-
         </div>
 
     </div>
 
-    <!-- ==========================================
-         FILTERS
-    =========================================== -->
+    <!-- FILTERS + TABLE -->
+    <div class="card shadow task-card">
 
-    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <div class="row align-items-center">
 
-        <div class="card-body">
-
-            <div class="row">
-
-                <div class="col-md-4 mb-2">
-
-                    <input
-                        id="searchTask"
-                        class="form-control"
-                        placeholder="Search task...">
-
+                <div class="col-lg-4 mb-2 mb-lg-0">
+                    <input type="text" id="searchTask" class="form-control"
+                           placeholder="Search tasks...">
                 </div>
 
-                <div class="col-md-3 mb-2">
-
-                    <select
-                        id="filterStatus"
-                        class="form-control">
-
+                <div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+                    <select id="filterStatus" class="form-control">
                         <option value="">All Status</option>
-
-                        <option>Pending</option>
-
-                        <option>In Progress</option>
-
-                        <option>Completed</option>
-
-                        <option>Overdue</option>
-
+                        <option value="Pending">Pending</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Overdue">Overdue</option>
                     </select>
-
                 </div>
 
-                <div class="col-md-3 mb-2">
-
-                    <select
-                        id="filterPriority"
-                        class="form-control">
-
+                <div class="col-lg-3 col-md-6 mb-2 mb-lg-0">
+                    <select id="filterPriority" class="form-control">
                         <option value="">All Priority</option>
-
-                        <option>Low</option>
-
-                        <option>Medium</option>
-
-                        <option>High</option>
-
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
                     </select>
-
                 </div>
 
-                <div class="col-md-2 mb-2">
-
-                    <button
-                        id="btnRefreshTasks"
-                        class="btn btn-success btn-block">
-
-                        <i class="fas fa-sync"></i>
-
+                <div class="col-lg-2 text-lg-right">
+                    <button id="btnRefreshTasks" type="button" class="btn btn-success btn-sm">
+                        <i class="fas fa-sync-alt"></i> Refresh
                     </button>
-
                 </div>
 
             </div>
-
         </div>
-
-    </div>
-
-    <!-- ==========================================
-         TASK TABLE
-    =========================================== -->
-
-    <div class="card shadow">
 
         <div class="card-body p-0">
-
             <div class="table-responsive">
 
                 <table class="table table-hover mb-0">
 
                     <thead class="thead-light">
-
                         <tr>
-
-                            <th>Title</th>
-
+                            <th>Task</th>
                             <th>Subject</th>
-
                             <th>Priority</th>
-
                             <th>Deadline</th>
-
                             <th>Status</th>
-
-                            <th width="180">
-                                Action
-                            </th>
-
+                            <th class="text-right">Actions</th>
                         </tr>
-
                     </thead>
 
                     <tbody id="taskTableBody">
-
                         <tr>
-
-                            <td colspan="6"
-                                class="text-center py-5">
-
-                                Loading...
-
-                            </td>
-
+                            <td colspan="6" class="text-center text-muted py-5">Loading...</td>
                         </tr>
-
                     </tbody>
 
                 </table>
 
             </div>
-
         </div>
 
     </div>
 
 </div>
 
-<!-- ==========================================
-     ADD / EDIT MODAL
-========================================== -->
-
-<div
-    class="modal fade"
-    id="taskModal"
-    tabindex="-1">
-
-    <div class="modal-dialog modal-lg">
-
+<!-- ADD / EDIT TASK MODAL -->
+<div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
 
             <div class="modal-header">
-
-                <h5 id="taskModalTitle">
-
-                    Add Task
-
-                </h5>
-
-                <button
-                    class="close"
-                    data-dismiss="modal">
-
-                    <span>&times;</span>
-
+                <h5 class="modal-title" id="taskModalTitle">Add Task</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
                 </button>
-
             </div>
 
-            <div class="modal-body">
+            <form id="taskForm" novalidate onsubmit="return false;">
 
-                <input
-                    type="hidden"
-                    id="taskId">
+                <div class="modal-body">
 
-                <div class="form-group">
+                    <input type="hidden" id="taskId">
 
-                    <label>
+                    <div class="form-row">
 
-                        Title
+                        <div class="form-group col-md-8">
+                            <label for="taskTitle">Title</label>
+                            <input type="text" id="taskTitle" class="form-control"
+                                   maxlength="255" required>
+                        </div>
 
-                    </label>
-
-                    <input
-                        id="taskTitle"
-                        class="form-control">
-
-                </div>
-
-                <div class="form-group">
-
-                    <label>
-
-                        Subject
-
-                    </label>
-
-                    <input
-                        id="taskSubject"
-                        class="form-control">
-
-                </div>
-
-                <div class="form-group">
-
-                    <label>
-
-                        Description
-
-                    </label>
-
-                    <textarea
-                        id="taskDescription"
-                        rows="3"
-                        class="form-control"></textarea>
-
-                </div>
-
-                <div class="row">
-
-                    <div class="col-md-4">
-
-                        <label>
-
-                            Priority
-
-                        </label>
-
-                        <select
-                            id="taskPriority"
-                            class="form-control">
-
-                            <option>Low</option>
-
-                            <option>Medium</option>
-
-                            <option>High</option>
-
-                        </select>
+                        <div class="form-group col-md-4">
+                            <label for="taskSubject">Subject</label>
+                            <input type="text" id="taskSubject" class="form-control"
+                                   maxlength="120">
+                        </div>
 
                     </div>
 
-                    <div class="col-md-4">
-
-                        <label>
-
-                            Status
-
-                        </label>
-
-                        <select
-                            id="taskStatus"
-                            class="form-control">
-
-                            <option>Pending</option>
-
-                            <option>In Progress</option>
-
-                            <option>Completed</option>
-
-                        </select>
-
+                    <div class="form-group">
+                        <label for="taskDescription">Description</label>
+                        <textarea id="taskDescription" class="form-control" rows="3"></textarea>
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="form-row">
 
-                        <label>
+                        <div class="form-group col-md-4">
+                            <label for="taskDeadline">Deadline</label>
+                            <input type="date" id="taskDeadline" class="form-control">
+                        </div>
 
-                            Deadline
+                        <div class="form-group col-md-4">
+                            <label for="taskPriority">Priority</label>
+                            <select id="taskPriority" class="form-control">
+                                <option value="Low">Low</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
 
-                        </label>
-
-                        <input
-                            id="taskDeadline"
-                            type="date"
-                            class="form-control">
+                        <div class="form-group col-md-4">
+                            <label for="taskStatus">Status</label>
+                            <select id="taskStatus" class="form-control">
+                                <option value="Pending" selected>Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="btnSaveTask" class="btn">
+                        <i class="fas fa-save"></i> Save Task
+                    </button>
+                </div>
 
-            <div class="modal-footer">
-
-                <button
-                    class="btn btn-secondary"
-                    data-dismiss="modal">
-
-                    Cancel
-
-                </button>
-
-                <button
-                    id="btnSaveTask"
-                    class="btn btn-success">
-
-                    Save Task
-
-                </button>
-
-            </div>
+            </form>
 
         </div>
-
     </div>
-
 </div>
+
+<script>
+    // fills the date pill, e.g. "Tuesday, November 24, 2026"
+    (function () {
+        var el = document.getElementById("heroDate");
+        if (el) el.textContent = new Date().toLocaleDateString("en-US", {
+            weekday: "long", year: "numeric", month: "long", day: "numeric"
+        });
+    })();
+</script>

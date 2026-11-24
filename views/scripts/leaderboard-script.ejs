@@ -9,117 +9,66 @@ window.UserLeaderboard = (() => {
     const $ = (id) => document.getElementById(id);
 
     let leaderboard = [];
+    let busy = false;
+    let initialized = false;
 
     /* ==========================================
        HELPERS
     ========================================== */
 
     const esc = (v) =>
-        String(v ?? "").replace(
-            /[&<>"']/g,
-            c => ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                '"': "&quot;",
-                "'": "&#39;"
-            })[c]
-        );
+        String(v ?? "").replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        })[c]);
 
     function notify(icon, title, text = "") {
-
         if (window.Swal) {
-
             return Swal.fire({
-
                 icon,
-
                 title,
-
                 text,
-
                 confirmButtonColor: GREEN,
-
-                timer: icon === "success"
-                    ? 1500
-                    : undefined,
-
+                timer: icon === "success" ? 1500 : undefined,
                 timerProgressBar: icon === "success"
-
             });
-
         }
-
-        alert(title);
-
+        alert(text ? title + "\n" + text : title);
     }
 
     async function request(path = "", options = {}) {
-
         const response = await fetch(API + path, {
-
-            headers: {
-
-                "Content-Type": "application/json"
-
-            },
-
+            headers: { "Content-Type": "application/json" },
             ...options
-
         });
 
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-
-            throw new Error(
-
-                data.error ||
-
-                "Request Failed"
-
-            );
-
+            throw new Error(data.error || "Request failed (" + response.status + ")");
         }
-
         return data;
-
     }
 
     /* ==========================================
-       LOAD
+       LOAD  (returns true on success, false on failure)
     ========================================== */
 
-    async function load() {
-
+    async function load(silent = false) {
         try {
-
             const data = await request();
-
             leaderboard = data.users || [];
-
             renderTopThree();
-
             renderTable();
-
-        }
-
-        catch (err) {
-
+            return true;
+        } catch (err) {
             console.error(err);
-
-            notify(
-
-                "error",
-
-                "Unable to load leaderboard",
-
-                err.message
-
-            );
-
+            if (!silent) notify("error", "Unable to load leaderboard", err.message);
+            return false;
         }
-
     }
 
     /* ==========================================
@@ -127,207 +76,125 @@ window.UserLeaderboard = (() => {
     ========================================== */
 
     function renderTopThree() {
-
         const top = leaderboard.slice(0, 3);
+        const set = (id, v) => { if ($(id)) $(id).textContent = v; };
 
-        $("firstUser").textContent =
-            top[0]?.name || "-";
+        set("firstUser",  top[0]?.name || "-");
+        set("firstScore", (top[0]?.productivity || 0) + "%");
 
-        $("firstScore").textContent =
-            (top[0]?.productivity || 0) + "%";
+        set("secondUser",  top[1]?.name || "-");
+        set("secondScore", (top[1]?.productivity || 0) + "%");
 
-        $("secondUser").textContent =
-            top[1]?.name || "-";
-
-        $("secondScore").textContent =
-            (top[1]?.productivity || 0) + "%";
-
-        $("thirdUser").textContent =
-            top[2]?.name || "-";
-
-        $("thirdScore").textContent =
-            (top[2]?.productivity || 0) + "%";
-
+        set("thirdUser",  top[2]?.name || "-");
+        set("thirdScore", (top[2]?.productivity || 0) + "%");
     }
-        /* ==========================================
+
+    /* ==========================================
        LEADERBOARD TABLE
     ========================================== */
 
     function renderTable() {
-
         const tbody = $("leaderboardTableBody");
-
         if (!tbody) return;
 
-        $("leaderboardCount").textContent =
-            leaderboard.length + " Users";
+        if ($("leaderboardCount")) {
+            $("leaderboardCount").textContent = leaderboard.length + " Users";
+        }
 
         if (!leaderboard.length) {
-
             tbody.innerHTML = `
-
                 <tr>
-
-                    <td colspan="6"
-
-                        class="text-center py-5">
-
+                    <td colspan="6" class="text-center py-5 text-muted">
                         No leaderboard data found.
-
                     </td>
-
-                </tr>
-
-            `;
-
+                </tr>`;
             return;
-
         }
 
         tbody.innerHTML = leaderboard.map((user, index) => `
-
             <tr>
-
-                <td>
-
-                    ${index === 0 ? "🥇" :
-                      index === 1 ? "🥈" :
-                      index === 2 ? "🥉" :
-                      "#" + (index + 1)}
-
-                </td>
-
-                <td>
-
-                    ${esc(user.name)}
-
-                </td>
-
-                <td>
-
-                    ${esc(user.email)}
-
-                </td>
-
-                <td>
-
-                    ${user.completedTasks || 0}
-
-                </td>
-
-                <td>
-
-                    ${user.studyHours || 0}
-
-                </td>
-
-                <td>
-
-                    <span class="badge badge-success">
-
-                        ${user.productivity || 0}%
-
-                    </span>
-
-                </td>
-
+                <td>${index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "#" + (index + 1)}</td>
+                <td>${esc(user.name)}</td>
+                <td>${esc(user.email)}</td>
+                <td>${esc(user.completedTasks || 0)}</td>
+                <td>${esc(user.studyHours || 0)}</td>
+                <td><span class="badge badge-success">${esc(user.productivity || 0)}%</span></td>
             </tr>
-
         `).join("");
-
     }
 
     /* ==========================================
        REFRESH
     ========================================== */
 
-    $("btnRefreshLeaderboard")?.addEventListener(
+    async function refresh() {
+        if (busy) return;
+        busy = true;
 
-        "click",
-
-        async () => {
-
-            try {
-
-                if (window.Swal) {
-
-                    Swal.fire({
-
-                        title: "Refreshing...",
-
-                        allowOutsideClick: false,
-
-                        showConfirmButton: false,
-
-                        didOpen: () => Swal.showLoading()
-
-                    });
-
-                }
-
-                await load();
-
-                Swal.close();
-
-                notify(
-
-                    "success",
-
-                    "Leaderboard updated."
-
-                );
-
-            }
-
-            catch (err) {
-
-                Swal.close();
-
-                console.error(err);
-
-                notify(
-
-                    "error",
-
-                    "Unable to refresh leaderboard",
-
-                    err.message
-
-                );
-
-            }
-
+        const btn = $("btnRefreshLeaderboard");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Refreshing...';
         }
 
-    );
+        if (window.Swal) {
+            Swal.fire({
+                title: "Refreshing...",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => Swal.showLoading()
+            });
+        }
+
+        const ok = await load(true);
+
+        if (window.Swal) Swal.close();
+
+        if (ok) {
+            notify("success", "Leaderboard updated.");
+        } else {
+            notify("error", "Unable to refresh leaderboard", "Please try again.");
+        }
+
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh';
+        }
+
+        busy = false;
+    }
 
     /* ==========================================
-       AUTO LOAD
+       INIT  (runs once, after the DOM exists)
     ========================================== */
 
-    document.addEventListener(
+    function init() {
+        if (initialized) return;
+        initialized = true;
 
-        "DOMContentLoaded",
+        // delegation: works even if the button is added or replaced later
+        document.addEventListener("click", (e) => {
+            if (e.target.closest("#btnRefreshLeaderboard")) {
+                e.preventDefault();
+                refresh();
+            }
+        });
 
-        () => {
+        load();
+    }
 
-            load();
-
-        }
-
-    );
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
 
     /* ==========================================
        PUBLIC METHODS
     ========================================== */
 
-    return {
-
-        load,
-
-        refresh: load
-
-    };
+    return { load, refresh };
 
 })();
 </script>

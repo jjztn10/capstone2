@@ -1,44 +1,56 @@
 <script>
 (() => {
+
     "use strict";
 
-    const API = "/userdashboard/api";
+    if (window.MoodPage) return;
+
+    const API = "/userdashboard/api/mood";
     const GREEN = "#2d5a3d";
 
     const $ = (id) => document.getElementById(id);
 
-    // Safe setter: logs the missing ID instead of crashing
-    const setText = (id, value) => {
-        const el = $(id);
-        if (!el) {
-            console.warn(`Element #${id} not found in the page`);
-            return;
-        }
-        el.textContent = value;
+    const MOODS = {
+        happy:      { emoji: "😊", label: "Happy",      color: "#22c55e" },
+        neutral:    { emoji: "😐", label: "Neutral",    color: "#3b82f6" },
+        sad:        { emoji: "😔", label: "Sad",        color: "#f59e0b" },
+        stressed:   { emoji: "😣", label: "Stressed",   color: "#f97316" },
+        frustrated: { emoji: "😤", label: "Frustrated", color: "#dc3545" }
     };
 
-    let studyChart = null;
+    // same bands as the daily check-in popup
+    const moodForStress = (v) =>
+        v <= 2 ? "happy" : v <= 4 ? "neutral" : v <= 6 ? "sad" : v <= 8 ? "stressed" : "frustrated";
+
+    let days = 30;
+    let chart = null;
+
+    /* ---------- helpers ---------- */
 
     const esc = (v) =>
-        String(v ?? "").replace(/[&<>"']/g, (c) =>
-            ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]
-        );
+        String(v ?? "").replace(/[&<>"']/g, (c) => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        })[c]);
 
-    const fmtDate = (v) => {
-        if (!v) return "-";
-        const d = new Date(v);
-        return isNaN(d) ? "-" : d.toLocaleDateString();
+    const set = (id, value) => {
+        const el = $(id);
+        if (el) el.textContent = value;
     };
 
-    async function request(path = "") {
-        const res = await fetch(API + path, {
-            headers: { "Content-Type": "application/json" },
-            credentials: "same-origin",
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-        return data;
+    function fmtDateTime(v) {
+        if (!v) return "-";
+        const d = new Date(v);
+        return isNaN(d)
+            ? "-"
+            : d.toLocaleDateString() + " " +
+              d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
+
+    // local yyyy-mm-dd
+    const ymd = (d) =>
+        d.getFullYear() + "-" +
+        String(d.getMonth() + 1).padStart(2, "0") + "-" +
+        String(d.getDate()).padStart(2, "0");
 
     function notify(icon, title, text = "") {
         if (window.Swal) {
@@ -46,135 +58,203 @@
                 icon, title, text,
                 confirmButtonColor: GREEN,
                 timer: icon === "success" ? 1500 : undefined,
-                timerProgressBar: icon === "success",
+                timerProgressBar: icon === "success"
             });
         }
         alert(title + (text ? "\n" + text : ""));
     }
 
-    async function fetchDashboard() {
-        const data = await request("/dashboard");
-        renderSummary(data.summary || {});
-        renderMood(data.mood || {});
-        renderRecentTasks(data.tasks || []);
-        renderChart(data.chart || {});
+    async function request(path = "", options = {}) {
+        const res = await fetch(API + path, {
+            headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
+            ...options
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(data.error || `Request failed (${res.status})`);
+        }
+        return data;
     }
+
+    /* ---------- load + render ---------- */
 
     async function load() {
         try {
-            await fetchDashboard();
+            const data = await request("?days=" + days);
+            renderSummary(data.summary || {});
+            renderChart(data.chart || []);
+            renderHistory(data.entries || []);
+            return true;
         } catch (err) {
             console.error(err);
-            notify("error", "Unable to load dashboard", err.message);
+            notify("error", "Unable to load mood data", err.message);
+            return false;
         }
     }
 
     function renderSummary(s) {
-        setText("userName", s.name || "User");
-        setText("pendingTasks", s.pending || 0);
-        setText("completedTasks", s.completed || 0);
-        setText("studyHours", Number(s.studyHours || 0).toFixed(1) + " hrs");
-        setText("burnoutRisk", s.burnout || "LOW");
+        const m = MOODS[s.mood];
+
+        set("todayMood", m ? m.emoji : "🙂");
+        set("todayMoodText", m ? m.label : "No Mood Logged");
+        set("todayStress", (Number(s.stress) || 0) + " / 10");
+        set("totalEntries", s.totalEntries || 0);
     }
 
-    function renderMood(mood) {
-        const emojis = {
-            happy: "😊", neutral: "😐", sad: "😔",
-            stressed: "😣", frustrated: "😤",
-        };
-        setText("todayMood", emojis[mood.mood] || "🙂");
-        setText("todayMoodText", mood.label || "No Mood Logged");
-    }
+    /* ---------- stress graph ---------- */
 
-    function badge(status) {
-        switch ((status || "").toLowerCase()) {
-            case "completed": return "success";
-            case "pending": return "warning";
-            default: return "secondary";
+    function renderChart(points) {
+        const canvas = $("stressChart");
+        if (!canvas || typeof Chart === "undefined") {
+            console.warn("Chart.js not loaded or #stressChart missing");
+            return;
         }
+
+        // one slot per day, so days without an entry show as gaps
+        const byDay = {};
+        points.forEach(p => { byDay[p.day] = Number(p.stress); });
+
+        const labels = [];
+        const keys = [];
+        const values = [];
+
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+
+            const key = ymd(d);
+            keys.push(key);
+            labels.push(d.toLocaleDateString([], { month: "short", day: "numeric" }));
+            values.push(key in byDay ? byDay[key] : null);
+        }
+
+        const hasData = values.some(v => v !== null);
+        $("stressChartEmpty")?.classList.toggle("d-none", hasData);
+
+        const colorOf = (v) => MOODS[moodForStress(Math.round(v))].color;
+
+        if (chart) chart.destroy();
+
+        chart = new Chart(canvas, {
+            type: "line",
+            data: {
+                labels,
+                datasets: [{
+                    label: "Stress level",
+                    data: values,
+                    borderColor: GREEN,
+                    backgroundColor: "rgba(45,90,61,.12)",
+                    fill: true,
+                    tension: 0.3,
+                    borderWidth: 3,
+                    spanGaps: true,
+                    pointRadius: days > 30 ? 3 : 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: (ctx) =>
+                        ctx.raw == null ? GREEN : colorOf(ctx.raw),
+                    pointBorderColor: "#fff",
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const v = Math.round(ctx.raw);
+                                const m = MOODS[moodForStress(v)];
+                                return ` Stress ${ctx.raw} / 10  ${m.emoji} ${m.label}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10,
+                        ticks: { stepSize: 1 },
+                        title: { display: true, text: "Stress level" }
+                    },
+                    x: {
+                        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: days > 30 ? 12 : 10 }
+                    }
+                }
+            }
+        });
     }
 
-    function renderRecentTasks(tasks) {
-        const tbody = $("recentTaskTable");
+    /* ---------- history ---------- */
+
+    function renderHistory(entries) {
+        const tbody = $("moodTableBody");
         if (!tbody) return;
 
-        if (!tasks.length) {
+        if (!entries.length) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="4" class="text-center text-muted py-4">
-                        No recent tasks found.
+                    <td colspan="5" class="text-center text-muted py-5">
+                        No mood entries yet.
                     </td>
                 </tr>`;
             return;
         }
 
-        tbody.innerHTML = tasks.map((t) => `
-            <tr>
-                <td>${esc(t.title)}</td>
-                <td>${esc(t.subject)}</td>
-                <td>${fmtDate(t.deadline)}</td>
-                <td><span class="badge badge-${badge(t.status)}">${esc(t.status)}</span></td>
-            </tr>`).join("");
+        tbody.innerHTML = entries.map(e => {
+            const m = MOODS[e.mood];
+            return `
+                <tr>
+                    <td>${fmtDateTime(e.created_at)}</td>
+                    <td>${m ? m.emoji + " " + m.label : esc(e.mood)}</td>
+                    <td>${esc(e.stress_level)} / 10</td>
+                    <td>${esc(e.workload)} / 10</td>
+                    <td>${esc(e.notes || "-")}</td>
+                </tr>`;
+        }).join("");
     }
 
-    function renderChart(chart) {
-        const canvas = $("studyChart");
-        if (!canvas || typeof Chart === "undefined") {
-            console.warn("Chart.js not loaded or #studyChart missing");
-            return;
-        }
-        if (studyChart) studyChart.destroy();
+    async function refresh() {
+        const ok = await load();
+        if (ok) notify("success", "Mood Updated");
+    }
 
-        studyChart = new Chart(canvas, {
-            type: "line",
-            data: {
-                labels: chart.labels || [],
-                datasets: [{
-                    label: "Study Minutes",
-                    data: chart.data || [],
-                    borderColor: GREEN,
-                    backgroundColor: "rgba(45,90,61,.15)",
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointRadius: 4,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } },
-            },
+    /* ---------- init ---------- */
+
+    function init() {
+        $("btnRefreshMood")?.addEventListener("click", refresh);
+
+        // 7 / 30 / 90 day buttons
+        $("moodRange")?.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-days]");
+            if (!btn) return;
+
+            days = Number(btn.dataset.days) || 30;
+
+            $("moodRange").querySelectorAll("button").forEach(b =>
+                b.classList.toggle("active", b === btn)
+            );
+
+            load();
         });
-    }
 
-    $("btnRefreshDashboard")?.addEventListener("click", async () => {
-        if (window.Swal) {
-            Swal.fire({
-                title: "Refreshing Dashboard...",
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                didOpen: () => Swal.showLoading(),
-            });
-        }
-        try {
-            await fetchDashboard();
-            if (window.Swal) Swal.close();
-            notify("success", "Dashboard Refreshed");
-        } catch (err) {
-            console.error(err);
-            if (window.Swal) Swal.close();
-            notify("error", "Refresh Failed", err.message);
-        }
-    });
+        // the daily popup just saved an entry: update everything
+        document.addEventListener("mood:saved", load);
 
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", load);
-    } else {
         load();
     }
 
-    window.UserDashboard = { load };
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+
+    window.MoodPage = { load };
+
 })();
 </script>

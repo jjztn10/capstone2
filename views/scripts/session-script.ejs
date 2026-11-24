@@ -16,9 +16,10 @@
    Every element is optional: whatever isn't on the page is skipped.
    Defaults (no attributes) = the normal user page.
 
-   User mode also LOCKS NAVIGATION while a session is running:
-   links are blocked, back button is trapped, and refresh/close asks
-   for confirmation. Clicking Stop Session removes the lock.
+   User mode: a task must be chosen before a session can start, and
+   navigation is LOCKED while a session is running (links blocked, back
+   button trapped, refresh/close asks for confirmation). Stop Session
+   removes the lock.
 ========================================================== */
 (() => {
 
@@ -56,10 +57,12 @@
     ========================================== */
 
     let sessions = [];
+    let tasks = [];
     let timer = null;
     let startedAt = null;
     let sessionRunning = false;
     let currentSessionId = null;
+    let currentTaskId = null;
     let busy = false;
     let initialized = false;
     let backTrapped = false;
@@ -194,8 +197,13 @@
     function setButtons() {
         const start = $("btnStartSession");
         const stop = $("btnStopSession");
-        if (start) start.disabled = !cfg.tracking || sessionRunning || busy;
+        const sel = $("sessionTask");
+
+        const hasTask = !!(sel && sel.value);
+
+        if (start) start.disabled = !cfg.tracking || sessionRunning || busy || !hasTask;
         if (stop) stop.disabled = !cfg.tracking || !sessionRunning || busy;
+        if (sel) sel.disabled = !cfg.tracking || sessionRunning || busy;
     }
 
     function updateTimer() {
@@ -216,6 +224,54 @@
             clearInterval(timer);
             timer = null;
         }
+    }
+
+    /* ==========================================
+       TASKS  (user mode only)
+    ========================================== */
+
+    async function loadTasks() {
+        if (!cfg.tracking || !$("sessionTask")) return;
+
+        try {
+            const data = await request("/tasks");
+            tasks = data.tasks || [];
+            renderTasks();
+        } catch (err) {
+            console.error(err);
+            notify("error", "Unable to load tasks", err.message);
+        }
+    }
+
+    function renderTasks() {
+        const sel = $("sessionTask");
+        if (!sel) return;
+
+        const keep = currentTaskId || sel.value;
+
+        sel.innerHTML =
+            `<option value="">${tasks.length ? "-- Choose a task --" : "No pending tasks. Add one in My Tasks"}</option>` +
+            tasks.map(t => `
+                <option value="${esc(t.id)}">
+                    ${esc(t.title)}${t.subject ? " (" + esc(t.subject) + ")" : ""}
+                </option>`).join("");
+
+        sel.value = keep || "";
+        setButtons();
+    }
+
+    // "Working on: ..." label while a session is running
+    function showCurrentTask() {
+        const label = $("currentTaskName");
+        if (!label) return;
+
+        const running = sessions.find(s => !s.ended_at);
+        const task = tasks.find(t => t.id === currentTaskId);
+        const name = task ? task.title : (running?.task_title || "");
+
+        const show = sessionRunning && !!name;
+        label.textContent = show ? "Working on: " + name : "";
+        label.classList.toggle("d-none", !show);
     }
 
     /* ==========================================
@@ -261,7 +317,7 @@
 
         // colspan follows the real number of header columns
         const cols = tbody.closest("table")?.querySelectorAll("thead th").length
-            || (cfg.showUser ? 6 : 5);
+            || (cfg.showUser ? 7 : 6);
 
         if (!sessions.length) {
             tbody.innerHTML = `
@@ -279,6 +335,7 @@
                     ? `<td>${esc(s.user_name || s.user_email || s.uid || "-")}</td>`
                     : ""}
                 <td>${formatDate(s.session_date)}</td>
+                <td>${esc(s.task_title || "-")}</td>
                 <td>${formatTime(s.started_at)}</td>
                 <td>${formatTime(s.ended_at)}</td>
                 <td>${s.ended_at ? mins(s.duration_minutes) : "-"}</td>
@@ -301,24 +358,31 @@
         if (!active) {
             sessionRunning = false;
             currentSessionId = null;
+            currentTaskId = null;
             startedAt = null;
             stopTimer();
             updateTimer();
             disableLock();
+            showCurrentTask();
             setButtons();
             return;
         }
 
         sessionRunning = true;
         currentSessionId = active.session_id;
+        currentTaskId = active.task_id || null;
         startedAt = new Date(active.started_at).getTime();
+
+        if ($("sessionTask") && currentTaskId) $("sessionTask").value = currentTaskId;
 
         startTimer();
         enableLock();
+        showCurrentTask();
         setButtons();
     }
 
     async function initialize() {
+        await loadTasks();
         await load();
         restoreActiveSession();
     }
@@ -330,11 +394,22 @@
     async function startSession() {
         if (!cfg.tracking || sessionRunning || busy) return;
 
+        const taskId = $("sessionTask")?.value;
+
+        if (!taskId) {
+            notify("warning", "Choose a task first", "Pick the task you'll work on before starting.");
+            return;
+        }
+
         busy = true;
         setButtons();
 
         try {
-            const data = await request("/start", { method: "POST" });
+            const data = await request("/start", {
+                method: "POST",
+                body: JSON.stringify({ task_id: taskId })
+            });
+
             currentSessionId = data.session_id;
 
             await load();
@@ -370,13 +445,18 @@
             stopTimer();
             sessionRunning = false;       // this unlocks navigation
             currentSessionId = null;
+            currentTaskId = null;
             startedAt = null;
             updateTimer();
             disableLock();
 
+            // make the user pick a task again for the next session
+            if ($("sessionTask")) $("sessionTask").value = "";
+
             notify("success", "Study session completed.");
 
-            await load();
+            await Promise.all([load(), loadTasks()]);
+            showCurrentTask();
             document.dispatchEvent(new CustomEvent("sessions:changed"));
         } catch (err) {
             console.error(err);
@@ -402,6 +482,7 @@
             });
         }
 
+        await loadTasks();
         const ok = await load();
         restoreActiveSession();
 
@@ -422,6 +503,7 @@
         $("btnStartSession")?.addEventListener("click", startSession);
         $("btnStopSession")?.addEventListener("click", stopSession);
         $("btnRefreshSessions")?.addEventListener("click", refresh);
+        $("sessionTask")?.addEventListener("change", setButtons);
 
         if (cfg.tracking) {
             document.addEventListener("click", onLinkClick, true);   // capture: runs before other handlers
@@ -454,4 +536,3 @@
     window.UserSessions = window.SessionApp;   // keeps old calls working
 
 })();
-</script>
