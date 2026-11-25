@@ -11,9 +11,6 @@ const VALID_MOODS = ["happy", "neutral", "sad", "stressed", "frustrated"];
    HELPERS
 ========================================================== */
 
-// Reads mood_entries' structure once: primary key (name + whether it is
-// AUTO_INCREMENT) and the list of columns, so the queries adapt to the
-// real table instead of guessed names.
 let meta = null;
 
 async function getMeta() {
@@ -72,7 +69,37 @@ router.get("/mood", (req, res) => {
 });
 
 /* ==========================================================
-   DAILY CHECK-IN STATUS  (used by the login popup)
+   DAILY CHECK-IN STATUS  (used by the popup)
+   answered:        has the user logged a mood today?
+   day:             server's current date (yyyy-mm-dd)
+   secondsToMidnight: time until the day changes (server clock)
+========================================================== */
+
+router.get("/api/mood/today", async (req, res) => {
+    try {
+        const uid = getUid(req);
+        const today = await getTodayEntry(uid);
+
+        const t = await Query(`
+            SELECT
+                DATE_FORMAT(CURDATE(), '%Y-%m-%d') AS day,
+                TIMESTAMPDIFF(SECOND, NOW(), DATE_ADD(CURDATE(), INTERVAL 1 DAY)) AS secs
+        `);
+
+        res.set("Cache-Control", "no-store");
+        res.json({
+            answered: !!today,
+            day: t[0].day,
+            secondsToMidnight: Math.max(1, Number(t[0].secs) || 60)
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+/* ==========================================================
+   GET MOOD DATA (history + stress graph)
 ========================================================== */
 
 router.get("/api/mood", async (req, res) => {
@@ -92,17 +119,17 @@ router.get("/api/mood", async (req, res) => {
         `, [uid]);
 
         // one point per day (average, in case a day has more than one entry)
-        // one point per day (average, in case a day has more than one entry)
-const chart = await Query(`
-    SELECT
-        DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
-        ROUND(AVG(stress_level), 1) AS stress
-    FROM mood_entries
-    WHERE uid = ?
-      AND created_at >= DATE_SUB(CURDATE(), INTERVAL ${days - 1} DAY)
-    GROUP BY day
-    ORDER BY day
-`, [uid]);
+        const chart = await Query(`
+            SELECT
+                DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
+                ROUND(AVG(stress_level), 1) AS stress
+            FROM mood_entries
+            WHERE uid = ?
+              AND created_at >= DATE_SUB(CURDATE(), INTERVAL ${days - 1} DAY)
+            GROUP BY day
+            ORDER BY day
+        `, [uid]);
+
         const count = await Query(`
             SELECT COUNT(*) AS total
             FROM mood_entries
@@ -111,48 +138,10 @@ const chart = await Query(`
 
         const today = await getTodayEntry(uid);
 
+        res.set("Cache-Control", "no-store");
         res.json({
             entries,
             chart,
-            summary: {
-                mood: today ? today.mood : null,
-                stress: today ? today.stress_level : 0,
-                totalEntries: Number(count[0]?.total || 0)
-            }
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-/* ==========================================================
-   GET MOOD DATA
-========================================================== */
-
-router.get("/api/mood", async (req, res) => {
-    try {
-        const uid = getUid(req);
-        const { pk } = await getMeta();
-
-        const entries = await Query(`
-            SELECT \`${pk}\` AS mood_id, mood, stress_level, workload, notes, created_at
-            FROM mood_entries
-            WHERE uid = ?
-            ORDER BY created_at DESC
-            LIMIT 100
-        `, [uid]);
-
-        const count = await Query(`
-            SELECT COUNT(*) AS total
-            FROM mood_entries
-            WHERE uid = ?
-        `, [uid]);
-
-        const today = await getTodayEntry(uid);
-
-        res.json({
-            entries,
             summary: {
                 mood: today ? today.mood : null,
                 stress: today ? today.stress_level : 0,
@@ -192,7 +181,6 @@ router.post("/api/mood", async (req, res) => {
             return res.json({ success: true, alreadyLogged: true });
         }
 
-        // build the INSERT from what the table really has
         const cols = [];
         const marks = [];
         const vals = [];
@@ -208,7 +196,7 @@ router.post("/api/mood", async (req, res) => {
             marks.push(sql);
         };
 
-        if (!auto) addValue(pk, crypto.randomUUID());   // no AUTO_INCREMENT: supply the id
+        if (!auto) addValue(pk, crypto.randomUUID());
 
         addValue("uid", uid);
         addValue("mood", mood);
@@ -217,7 +205,6 @@ router.post("/api/mood", async (req, res) => {
         addValue("notes", String(notes || "").slice(0, 500));
         addSql("created_at", "NOW()");
 
-        // the table's own "which day" column, when it has one
         if (columns.has("local_day")) addSql("local_day", "CURDATE()");
 
         await Query(`

@@ -83,6 +83,36 @@ window.UserTasks = (() => {
         return confirm("Are you sure you want to add this task?");
     }
 
+    // Generic confirm popup (falls back to the browser confirm if Swal is missing)
+    async function confirmAction(options = {}) {
+        const {
+            icon = "question",
+            title = "Are you sure?",
+            text = "",
+            confirmText = "Yes",
+            confirmColor = GREEN
+        } = options;
+
+        if (window.Swal) {
+            const result = await Swal.fire({
+                icon,
+                title,
+                text,
+                showCancelButton: true,
+                confirmButtonColor: confirmColor,
+                cancelButtonColor: "#6c757d",
+                confirmButtonText: confirmText,
+                cancelButtonText: "Cancel",
+                reverseButtons: true,
+                focusCancel: true,          // Enter won't accidentally confirm
+                allowOutsideClick: false
+            });
+            return result.isConfirmed === true;
+        }
+
+        return window.confirm(text ? title + "\n" + text : title);
+    }
+
     /* ======================================================
        LOAD TASKS
     ====================================================== */
@@ -295,12 +325,20 @@ window.UserTasks = (() => {
     }
 
     /* ======================================================
-       ROW ACTIONS
+       ROW ACTIONS (each one asks first)
     ====================================================== */
 
-    function editTask(id) {
+    async function editTask(id) {
         const task = tasks.find(x => String(x.task_id) === String(id));
         if (!task) return;
+
+        const ok = await confirmAction({
+            icon: "question",
+            title: "Edit this task?",
+            text: `Do you want to edit "${task.title}"?`,
+            confirmText: "Yes, edit it"
+        });
+        if (!ok) return;
 
         $("taskId").value = task.task_id;
         $("taskTitle").value = task.title || "";
@@ -314,6 +352,16 @@ window.UserTasks = (() => {
     }
 
     async function completeTask(id) {
+        const task = tasks.find(x => String(x.task_id) === String(id));
+
+        const ok = await confirmAction({
+            icon: "question",
+            title: "Mark as done?",
+            text: `Are you sure "${task?.title || "this task"}" is already done?`,
+            confirmText: "Yes, it's done"
+        });
+        if (!ok) return;
+
         try {
             await request("/" + id + "/complete", { method: "PUT" });
             notify("success", "Task Completed");
@@ -325,24 +373,16 @@ window.UserTasks = (() => {
     }
 
     async function deleteTask(id) {
-        let confirmed = true;
+        const task = tasks.find(x => String(x.task_id) === String(id));
 
-        if (window.Swal) {
-            const result = await Swal.fire({
-                icon: "warning",
-                title: "Delete Task?",
-                text: "This action cannot be undone.",
-                showCancelButton: true,
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: "Delete",
-            });
-            confirmed = result.isConfirmed;
-        } else {
-            confirmed = confirm("Delete this task? This cannot be undone.");
-        }
-
-        if (!confirmed) return;
+        const ok = await confirmAction({
+            icon: "warning",
+            title: "Delete this task?",
+            text: `"${task?.title || "This task"}" will be deleted. This action cannot be undone.`,
+            confirmText: "Yes, delete it",
+            confirmColor: "#d33"
+        });
+        if (!ok) return;
 
         try {
             await request("/" + id, { method: "DELETE" });

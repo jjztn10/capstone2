@@ -1,0 +1,155 @@
+<!-- RECOMMENDED ASSIGNEE (paste into the admin overview or admin tasks page) -->
+<div class="card shadow mb-4" id="allocCard">
+    <div class="card-header">
+        <strong><i class="fas fa-user-check" style="color:#2d5a3d"></i> Recommended assignee</strong>
+    </div>
+
+    <div class="card-body">
+        <div class="form-row align-items-end">
+
+            <div class="form-group col-md-3">
+                <label for="allocSubject" class="small font-weight-bold">Subject</label>
+                <input type="text" id="allocSubject" class="form-control" maxlength="120" placeholder="e.g. Math">
+            </div>
+
+            <div class="form-group col-md-2">
+                <label for="allocPriority" class="small font-weight-bold">Priority</label>
+                <select id="allocPriority" class="form-control">
+                    <option>Low</option>
+                    <option selected>Medium</option>
+                    <option>High</option>
+                </select>
+            </div>
+
+            <div class="form-group col-md-2">
+                <label for="allocEffort" class="small font-weight-bold">Effort</label>
+                <select id="allocEffort" class="form-control">
+                    <option value="1">Very light</option>
+                    <option value="2">Light</option>
+                    <option value="3" selected>Medium</option>
+                    <option value="4">Heavy</option>
+                    <option value="5">Very heavy</option>
+                </select>
+            </div>
+
+            <div class="form-group col-md-3">
+                <label for="allocDeadline" class="small font-weight-bold">Deadline</label>
+                <input type="date" id="allocDeadline" class="form-control">
+            </div>
+
+            <div class="form-group col-md-2">
+                <button type="button" id="btnRecommend" class="btn btn-success btn-block">
+                    <i class="fas fa-magic"></i> Recommend
+                </button>
+            </div>
+
+        </div>
+
+        <div id="allocResult" class="text-muted">
+            Describe the task, then click Recommend to rank the team.
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    "use strict";
+
+    const BASE = "/admindashboard";          // your admin route prefix
+
+    const $ = (id) => document.getElementById(id);
+
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+    const barClass = (n) => n >= 70 ? "bg-success" : n >= 50 ? "bg-warning" : "bg-danger";
+
+    function render(d) {
+        const list = d.ranked || [];
+
+        if (!list.length) {
+            $("allocResult").textContent = "No users found.";
+            return;
+        }
+
+        const top = list[0];
+
+        $("allocResult").innerHTML = `
+            <div class="alert alert-success py-2">
+                Best match: <strong>${esc(top.name)}</strong> (${top.fit}% fit)
+                ${top.lateRisk != null ? ` &middot; chance of being late: ${Math.round(top.lateRisk * 100)}%` : ""}
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th style="min-width:150px">Fit</th>
+                            <th>Open</th>
+                            <th>Stress (7d)</th>
+                            <th>On time</th>
+                            <th>Late risk</th>
+                            <th>Why</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${list.map((u, i) => `
+                            <tr>
+                                <td><strong>${i === 0 ? "★ " : ""}${esc(u.name)}</strong></td>
+                                <td>
+                                    <div class="progress" style="height:14px">
+                                        <div class="progress-bar ${barClass(u.fit)}" style="width:${u.fit}%">${u.fit}%</div>
+                                    </div>
+                                </td>
+                                <td>${u.openTasks}</td>
+                                <td>${u.stress ?? "-"}</td>
+                                <td>${u.onTimeRate == null ? "-" : u.onTimeRate + "%"}</td>
+                                <td>${u.lateRisk == null ? "-" : Math.round(u.lateRisk * 100) + "%"}</td>
+                                <td class="small">
+                                    ${u.reasons.map(r => `<span class="text-success">+ ${esc(r)}</span>`).join("<br>")}
+                                    ${u.warnings.map(w => `<br><span class="text-danger">- ${esc(w)}</span>`).join("")}
+                                </td>
+                            </tr>`).join("")}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="small text-muted mt-2">
+                Fit = 35% current workload + 25% low stress + 25% on-time history + 15% subject experience.
+            </div>`;
+    }
+
+    async function recommend() {
+        const btn = $("btnRecommend");
+        btn.disabled = true;
+        $("allocResult").textContent = "Ranking...";
+
+        try {
+            const res = await fetch(BASE + "/api/team/recommend", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    subject: $("allocSubject").value.trim(),
+                    priority: $("allocPriority").value,
+                    effort: Number($("allocEffort").value),
+                    deadline: $("allocDeadline").value || null
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "Failed (" + res.status + ")");
+
+            render(data);
+        } catch (e) {
+            console.error(e);
+            $("allocResult").innerHTML = `<span class="text-danger">${esc(e.message)}</span>`;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    $("btnRecommend")?.addEventListener("click", recommend);
+})();
+</script>

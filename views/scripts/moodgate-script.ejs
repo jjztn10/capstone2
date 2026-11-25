@@ -2,9 +2,10 @@
 /* ==========================================================
    MOOD GATE — forced daily mood check-in (user pages only).
 
-   Asks once per day. Cannot be dismissed: no close button,
-   Esc and outside clicks do nothing. It goes away only after
-   the mood is saved.
+   Asks once per day and again automatically when the day
+   changes (midnight, server clock). Cannot be dismissed: no
+   close button, Esc and outside clicks do nothing. It goes
+   away only after the mood is saved.
 
    The faces are display only. The stress slider (1-10) picks
    the mood: 1-2 happy, 3-4 neutral, 5-6 sad, 7-8 stressed,
@@ -31,12 +32,18 @@
     let overlay = null;
     let saving = false;
 
+    // day-change tracking
+    let knownDay = null;     // server date we last saw
+    let nextResetAt = 0;     // timestamp (ms) when the day changes
+    let resetTimer = null;
+
     /* ---------- request ---------- */
 
     async function request(path = "", options = {}) {
         const res = await fetch(API + path, {
             headers: { "Content-Type": "application/json" },
             credentials: "same-origin",
+            cache: "no-store",
             ...options
         });
 
@@ -73,7 +80,6 @@
             .mg-card h2 { margin: 0 0 6px; font-size: 1.5rem; color: #1b3a29; font-weight: 700; }
             .mg-sub { margin: 0 0 18px; color: #6b7280; font-size: .92rem; }
 
-            /* faces: display only, not clickable */
             .mg-moods {
                 display: grid; grid-template-columns: repeat(5, 1fr);
                 gap: 8px; margin-bottom: 18px;
@@ -100,14 +106,14 @@
             .mg-row label { display: flex; justify-content: space-between; margin-bottom: 4px; font-weight: 600; color: #374151; font-size: .9rem; }
             .mg-row input[type=range] { width: 100%; accent-color: #2d5a3d; }
             .mg-scale {
-    display: flex; justify-content: space-between;
-    margin-top: 2px;
-}
-.mg-scale span {
-    width: 16px; text-align: center;      /* matches the slider thumb width, so numbers line up */
-    font-size: .75rem; color: #9ca3af;
-}
-.mg-scale span.on { color: #2d5a3d; font-weight: 700; }
+                display: flex; justify-content: space-between;
+                margin-top: 2px;
+            }
+            .mg-scale span {
+                width: 16px; text-align: center;
+                font-size: .75rem; color: #9ca3af;
+            }
+            .mg-scale span.on { color: #2d5a3d; font-weight: 700; }
             .mg-hint { margin: 4px 0 0; font-size: .8rem; color: #2d5a3d; font-weight: 600; }
             .mg-card textarea {
                 width: 100%; resize: none; border: 1px solid #d1d5db;
@@ -154,8 +160,8 @@
                     <label for="mgStress">Stress level <b><span id="mgStressVal">5</span> / 10</b></label>
                     <input type="range" id="mgStress" min="1" max="10" step="1" value="5">
                     <div class="mg-scale" id="mgScale">
-    ${Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join("")}
-</div>
+                        ${Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join("")}
+                    </div>
                     <p class="mg-hint" id="mgStressHint"></p>
                 </div>
 
@@ -181,7 +187,6 @@
         const q = (sel) => overlay.querySelector(sel);
         const stress = q("#mgStress");
 
-        // slider -> lights up the matching face
         const sync = () => {
             const v = Number(stress.value);
             const m = moodFor(v);
@@ -192,6 +197,10 @@
             overlay.querySelectorAll(".mg-mood").forEach(el => {
                 el.classList.toggle("active", el.dataset.mood === m.key);
             });
+
+            overlay.querySelectorAll("#mgScale span").forEach((el, i) => {
+                el.classList.toggle("on", i + 1 === v);
+            });
         };
 
         stress.addEventListener("input", sync);
@@ -200,7 +209,6 @@
 
         sync();
 
-        // keep keyboard focus inside the popup
         document.addEventListener("focusin", trapFocus);
 
         q(".mg-card").focus();
@@ -258,23 +266,59 @@
         }
     }
 
+    /* ---------- day change (midnight reset) ---------- */
+
+    function scheduleReset(seconds) {
+        // +2s so we land safely after the day has changed
+        const ms = (Number(seconds) || 60) * 1000 + 2000;
+        nextResetAt = Date.now() + ms;
+
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(tick, ms);
+    }
+
+    // runs at midnight, every 30s, and when the tab wakes up
+    function tick() {
+        if (Date.now() >= nextResetAt) check();
+    }
+
     /* ---------- start ---------- */
 
     async function check() {
+        if (overlay || saving) return;   // popup already open
+
         try {
             const data = await request("/today");
+
+            scheduleReset(data.secondsToMidnight);
+
+            // the day changed since we last looked: tell the Mood page
+            if (knownDay && data.day && data.day !== knownDay) {
+                document.dispatchEvent(new CustomEvent("mood:newday"));
+            }
+            knownDay = data.day || knownDay;
+
             if (data.answered) return;          // already answered today
 
             injectStyles();
             build();
         } catch (e) {
-            // never lock people out because of a failed check
+            // never lock people out because of a failed check; retry in 1 min
             console.warn("Mood check skipped:", e.message);
+            scheduleReset(60 - 2);
         }
     }
 
     function init() {
         check();
+
+        // safety net for sleeping laptops / throttled background tabs
+        setInterval(tick, 30000);
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") tick();
+        });
+        window.addEventListener("focus", tick);
     }
 
     if (document.readyState === "loading") {

@@ -1,0 +1,139 @@
+<!-- FORECAST & RISK (paste under the "Do this first" card on the tasks page) -->
+<div class="card shadow mb-4" id="forecastCard">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong><i class="fas fa-chart-line" style="color:#2d5a3d"></i> Forecast &amp; risk</strong>
+        <span id="fcLevel" class="badge badge-secondary"></span>
+    </div>
+
+    <div class="card-body">
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+                <h6 class="font-weight-bold">Stress forecast (next 3 days)</h6>
+                <div id="fcStress" class="mb-2 text-muted">Loading...</div>
+                <div id="fcModel" class="small text-muted"></div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <h6 class="font-weight-bold">Workload due in the next 7 days</h6>
+                <div class="progress" style="height:16px">
+                    <div id="fcWeekBar" class="progress-bar bg-success" style="width:0%"></div>
+                </div>
+                <div id="fcWeekText" class="small text-muted mt-1"></div>
+            </div>
+
+        </div>
+
+        <h6 class="font-weight-bold mt-2">Tasks at risk of being late</h6>
+        <ul id="fcRisks" class="list-unstyled mb-0 text-muted"></ul>
+    </div>
+</div>
+
+<script>
+(() => {
+    "use strict";
+
+    const $ = (id) => document.getElementById(id);
+
+    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+    // 1 (calm) = green ... 10 = red
+    const heat = (v) => `hsl(${Math.round(120 - (v - 1) / 9 * 120)},65%,62%)`;
+
+    const LEVEL = {
+        low:    { text: "Low risk",    cls: "badge-success" },
+        medium: { text: "Medium risk", cls: "badge-warning" },
+        high:   { text: "High risk",   cls: "badge-danger" }
+    };
+
+    const TREND = { up: "↑ rising", down: "↓ falling", stable: "→ steady" };
+    const AHEAD = ["", "Tomorrow", "In 2 days", "In 3 days"];
+
+    let busy = false;
+
+    function renderStress(s) {
+        if (!s) {
+            $("fcStress").textContent = "Log your mood for a few more days to see a forecast.";
+            $("fcModel").textContent = "";
+            $("fcLevel").textContent = "";
+            return;
+        }
+
+        const lv = LEVEL[s.level] || LEVEL.low;
+        $("fcLevel").textContent = "Burnout " + lv.text.toLowerCase();
+        $("fcLevel").className = "badge " + lv.cls;
+
+        $("fcStress").innerHTML =
+            s.predicted.map(p => `
+                <span class="d-inline-block text-center mr-2 mb-1">
+                    <span class="badge" style="background:${heat(p.value)};color:#111;font-size:.9rem">${esc(p.value)}</span>
+                    <div class="small text-muted">${AHEAD[p.ahead] || "+" + p.ahead + "d"}</div>
+                </span>`).join("") +
+            `<div class="small mt-1">Trend: <strong>${TREND[s.trend] || ""}</strong></div>`;
+
+        $("fcModel").textContent = s.mae == null
+            ? `Linear regression on ${s.samples} days.`
+            : `Linear regression on ${s.samples} days. Average error ${s.mae} points ` +
+              `(guessing "same as last entry" would be off by ${s.naiveMae}).`;
+    }
+
+    function renderWeek(w) {
+        const pct = Math.min(100, w.percent);
+        const bar = $("fcWeekBar");
+
+        bar.style.width = pct + "%";
+        bar.className = "progress-bar " + (w.percent >= 100 ? "bg-danger" : w.percent >= 70 ? "bg-warning" : "bg-success");
+        bar.textContent = w.percent + "%";
+
+        $("fcWeekText").textContent =
+            `${w.dueTasks} task${w.dueTasks === 1 ? "" : "s"} due, ${w.points} effort points ` +
+            `vs about ${w.capacity} you can handle.`;
+    }
+
+    function renderRisks(list) {
+        $("fcRisks").innerHTML = list.length
+            ? list.slice(0, 6).map(r => `
+                <li class="mb-2">
+                    <span class="badge ${r.level === "high" ? "badge-danger" : r.level === "medium" ? "badge-warning" : "badge-success"}">
+                        ${Math.round(r.risk * 100)}%
+                    </span>
+                    <strong class="text-dark">${esc(r.title)}</strong>
+                    <div class="small">${esc(r.reasons.join(" · "))}</div>
+                </li>`).join("")
+            : `<li>No open tasks with a deadline.</li>`;
+    }
+
+    async function load() {
+        if (!$("forecastCard") || busy) return;
+        busy = true;
+
+        try {
+            const res = await fetch("/userdashboard/api/forecast", {
+                credentials: "same-origin",
+                cache: "no-store"
+            });
+            const d = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(d.error || "Failed (" + res.status + ")");
+
+            renderStress(d.stress);
+            renderWeek(d.week);
+            renderRisks(d.risks || []);
+        } catch (e) {
+            console.warn("Forecast failed:", e.message);
+            $("fcStress").textContent = "Could not load the forecast.";
+        } finally {
+            busy = false;
+        }
+    }
+
+    document.addEventListener("tasks:changed", load);
+    document.addEventListener("mood:saved", load);
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", load);
+    } else {
+        load();
+    }
+})();
+</script>

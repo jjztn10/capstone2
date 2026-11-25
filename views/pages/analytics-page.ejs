@@ -1,261 +1,104 @@
-<div class="container-fluid">
+<%- include("../components/page-theme") %>
 
-    <!-- ==========================================
-         PAGE HEADER
-    =========================================== -->
+<div class="pg-page">
 
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-
-        <div>
-
-            <h1 class="h3 mb-1 text-gray-800">
-                Analytics
-            </h1>
-
-            <p class="text-muted mb-0">
-                View your productivity and wellness trends.
-            </p>
-
+    <!-- HERO -->
+    <div class="pg-hero">
+        <div class="pg-hero-left">
+            <div class="pg-hero-icon"><i class="fas fa-chart-line"></i></div>
+            <div>
+                <div class="pg-eyebrow"><i class="fas fa-bolt"></i> Insights</div>
+                <h1 class="pg-title">Your <span>Analytics</span></h1>
+                <p class="pg-sub">View your productivity and wellness trends.</p>
+            </div>
         </div>
-
-        <button
-            id="btnRefreshAnalytics"
-            class="btn btn-success">
-
-            <i class="fas fa-sync-alt"></i>
-
-            Refresh
-
-        </button>
-
+        <div class="pg-hero-right">
+            <span class="pg-date"><i class="far fa-calendar-alt"></i> <span data-today></span></span>
+            <button id="btnRefreshAnalytics" class="btn pg-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
     </div>
 
-    <!-- ==========================================
-         SUMMARY CARDS
-    =========================================== -->
-
-    <div class="row">
-
-        <div class="col-xl-3 col-md-6 mb-4">
-
-            <div class="card shadow border-left-primary h-100">
-
-                <div class="card-body">
-
-                    <div class="text-xs text-primary text-uppercase font-weight-bold">
-
-                        Productivity Score
-
-                    </div>
-
-                    <div
-                        id="productivityScore"
-                        class="h3 font-weight-bold">
-
-                        0%
-
-                    </div>
-
+    <!-- SUMMARY -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="pg-stat blue">
+                <div>
+                    <div class="pg-label">Productivity Score</div>
+                    <span class="pg-value" id="productivityScore">0%</span>
                 </div>
-
+                <i class="fas fa-rocket pg-ico"></i>
             </div>
-
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-
-            <div class="card shadow border-left-success h-100">
-
-                <div class="card-body">
-
-                    <div class="text-xs text-success text-uppercase font-weight-bold">
-
-                        Study Hours
-
-                    </div>
-
-                    <div
-                        id="analyticsStudyHours"
-                        class="h3 font-weight-bold">
-
-                        0 hrs
-
-                    </div>
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="pg-stat green">
+                <div>
+                    <div class="pg-label">Study Hours</div>
+                    <span class="pg-value" id="analyticsStudyHours">0 hrs</span>
                 </div>
-
+                <i class="fas fa-book-open pg-ico"></i>
             </div>
-
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-
-            <div class="card shadow border-left-warning h-100">
-
-                <div class="card-body">
-
-                    <div class="text-xs text-warning text-uppercase font-weight-bold">
-
-                        Tasks Completed
-
-                    </div>
-
-                    <div
-                        id="analyticsCompletedTasks"
-                        class="h3 font-weight-bold">
-
-                        0
-
-                    </div>
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="pg-stat amber">
+                <div>
+                    <div class="pg-label">Tasks Completed</div>
+                    <span class="pg-value" id="analyticsCompletedTasks">0</span>
                 </div>
-
+                <i class="fas fa-check-circle pg-ico"></i>
             </div>
-
         </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-
-            <div class="card shadow border-left-danger h-100">
-
-                <div class="card-body">
-
-                    <div class="text-xs text-danger text-uppercase font-weight-bold">
-
-                        Average Stress
-
-                    </div>
-
-                    <div
-                        id="analyticsStress"
-                        class="h3 font-weight-bold">
-
-                        0 / 10
-
-                    </div>
-
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="pg-stat red">
+                <div>
+                    <div class="pg-label">Average Stress</div>
+                    <span class="pg-value" id="analyticsStress">0 / 10</span>
                 </div>
-
+                <i class="fas fa-fire pg-ico"></i>
             </div>
-
         </div>
-
     </div>
 
-    <!-- ==========================================
-         CHARTS
-    =========================================== -->
-
+    <!-- CHARTS -->
     <div class="row">
-
-        <div class="col-lg-6 mb-4">
-
-            <div class="card shadow">
-
-                <div class="card-header">
-
-                    <strong>
-
-                        Weekly Study Hours
-
-                    </strong>
-
+        <div class="col-lg-6">
+            <div class="pg-card">
+                <div class="pg-card-head"><h5>Weekly Study Hours</h5></div>
+                <div class="pg-card-body">
+                    <div class="pg-chart"><canvas id="studyHoursChart"></canvas></div>
                 </div>
-
-                <div class="card-body">
-
-                    <div style="position: relative; height: 300px;">
-    <canvas id="studyHoursChart"></canvas>
-</div>
-
-                </div>
-
             </div>
-
         </div>
 
-        <div class="col-lg-6 mb-4">
-
-            <div class="card shadow">
-
-                <div class="card-header">
-
-                    <strong>
-
-                        Task Completion
-
-                    </strong>
-
+        <div class="col-lg-6">
+            <div class="pg-card">
+                <div class="pg-card-head"><h5>Task Completion</h5></div>
+                <div class="pg-card-body">
+                    <div class="pg-chart"><canvas id="taskChart"></canvas></div>
                 </div>
-
-                <div class="card-body">
-
-                    <div style="position: relative; height: 300px;">
-    <canvas id="taskChart"></canvas>
-</div>
-
-                </div>
-
             </div>
-
         </div>
-
     </div>
 
     <div class="row">
-
-        <div class="col-lg-6 mb-4">
-
-            <div class="card shadow">
-
-                <div class="card-header">
-
-                    <strong>
-
-                        Mood Trend
-
-                    </strong>
-
+        <div class="col-lg-6">
+            <div class="pg-card">
+                <div class="pg-card-head"><h5>Mood Trend</h5></div>
+                <div class="pg-card-body">
+                    <div class="pg-chart"><canvas id="moodChart"></canvas></div>
                 </div>
-
-                <div class="card-body">
-
-                    <div style="position: relative; height: 300px;">
-    <canvas id="moodChart"></canvas>
-</div>
-
-                </div>
-
             </div>
-
         </div>
 
-        <div class="col-lg-6 mb-4">
-
-            <div class="card shadow">
-
-                <div class="card-header">
-
-                    <strong>
-
-                        Workload Trend
-
-                    </strong>
-
+        <div class="col-lg-6">
+            <div class="pg-card">
+                <div class="pg-card-head"><h5>Workload Trend</h5></div>
+                <div class="pg-card-body">
+                    <div class="pg-chart"><canvas id="workloadChart"></canvas></div>
                 </div>
-
-                <div class="card-body">
-
-                    <<div style="position: relative; height: 300px;">
-    <canvas id="workloadChart"></canvas>
-</div>
-
-                </div>
-
             </div>
-
         </div>
-
     </div>
 
 </div>

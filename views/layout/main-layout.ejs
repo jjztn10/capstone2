@@ -23,10 +23,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/startbootstrap-sb-admin-2@4.1.4/css/sb-admin-2.min.css">
 
     <%
-        const lt = (typeof layoutType !== "undefined") ? layoutType : "";
-        const ps = (typeof pageScript !== "undefined") ? pageScript : "";
-        const pst = (typeof pageStyle !== "undefined") ? pageStyle : "";
-        const cp = (typeof currentPath !== "undefined") ? currentPath : "";
+        const lt  = (typeof layoutType  !== "undefined") ? layoutType  : "";
+        const ps  = (typeof pageScript  !== "undefined") ? pageScript  : "";
+        const pst = (typeof pageStyle   !== "undefined") ? pageStyle   : "";
+        const cp  = (typeof currentPath !== "undefined") ? currentPath : "";
     %>
 
     <!-- ==========================================
@@ -57,6 +57,11 @@
     =========================================== -->
     <% if (lt === "user") { %>
         <link rel="stylesheet" href="/stylesheets/user/dashboard.css">
+
+        <!-- keep the scroll-to-top arrow clear of the assistant button -->
+        <style>
+            a.scroll-to-top { bottom: 90px; }
+        </style>
     <% } %>
 
     <!-- Optional page CSS (skips a file already loaded above) -->
@@ -114,20 +119,32 @@
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <!-- Chart.js: admin dashboard, user dashboard, analytics, mood -->
-<% if (/(^|\/)(admindashboard|dashboard|analytics|mood)-script$/.test(ps)) { %>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<% } %>
-    <!-- Page Script -->
-<% if (ps) { %>
-    <% try { %>
-        <%- include("../scripts/" + ps) %>
-    <% } catch (e) { console.error("Page script not found:", ps); } %>
-<% } %>
+    <!-- Chart.js: user dashboard, analytics, mood
+         (admin dashboard page loads its own copy, so it is not loaded twice) -->
+    <% if (/(^|\/)(dashboard|analytics|mood)-script$/.test(ps)) { %>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <% } %>
 
-    <!-- Daily mood check-in (every user page, once a day, cannot be dismissed) -->
+    <!-- Page Script -->
+    <% if (ps) { %>
+        <% try { %>
+            <%- include("../scripts/" + ps) %>
+        <% } catch (e) { console.error("Page script not found:", ps, e.message); } %>
+    <% } %>
+
+    <!-- User-only scripts -->
     <% if (lt === "user") { %>
-        <%- include("../scripts/moodgate-script") %>
+
+        <!-- Daily mood check-in (once a day, cannot be dismissed, resets at midnight) -->
+        <% try { %>
+            <%- include("../scripts/moodgate-script") %>
+        <% } catch (e) { console.error("moodgate-script not found:", e.message); } %>
+
+        <!-- Chat assistant: "What should I work on today?" -->
+        <% try { %>
+            <%- include("../scripts/assistant-script") %>
+        <% } catch (e) { console.error("assistant-script not found:", e.message); } %>
+
     <% } %>
 
 </body>

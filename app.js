@@ -25,6 +25,12 @@ const analyticsRoutes = require("./routes/analytics");
 const leaderboardRoutes = require("./routes/leaderboard");
 const profileRoutes = require("./routes/profile");
 
+// Smart features: focus list, assistant, team heatmap, anomalies
+const {
+    userRouter: smartUserRouter,
+    adminRouter: smartAdminRouter
+} = require("./routes/smart");
+
 // ==========================================
 // APP INITIALIZATION
 // ==========================================
@@ -85,6 +91,7 @@ app.use((req, res, next) => {
 console.log("ENV FILE:", path.resolve(__dirname, ".env"));
 console.log("SESSION_SECRET loaded:", Boolean(process.env.SESSION_SECRET));
 console.log("MONGODB_URL loaded:", Boolean(process.env.MONGODB_URL));
+console.log("ANTHROPIC_API_KEY loaded:", Boolean(process.env.ANTHROPIC_API_KEY));
 
 // ==========================================
 // DATABASE CONNECTION TEST
@@ -105,17 +112,17 @@ const adminDashboardRouter = require("./routes/admindashboard");
 const adminLeaderboardRouter = require("./routes/adminleaderboard");
 
 // Validate routers
-if (typeof indexRouter !== "function") {
-    throw new Error("routes/index.js must export an Express router.");
-}
+const mustBeRouter = (router, file) => {
+    if (typeof router !== "function") {
+        throw new Error(`${file} must export an Express router.`);
+    }
+};
 
-if (typeof adminDashboardRouter !== "function") {
-    throw new Error("routes/admindashboard.js must export an Express router.");
-}
-
-if (typeof adminLeaderboardRouter !== "function") {
-    throw new Error("routes/adminleaderboard.js must export an Express router.");
-}
+mustBeRouter(indexRouter, "routes/index.js");
+mustBeRouter(adminDashboardRouter, "routes/admindashboard.js");
+mustBeRouter(adminLeaderboardRouter, "routes/adminleaderboard.js");
+mustBeRouter(smartUserRouter, "routes/smart.js (userRouter)");
+mustBeRouter(smartAdminRouter, "routes/smart.js (adminRouter)");
 
 console.log("dashboardRoutes:", typeof dashboardRoutes);
 console.log("tasksRoutes:", typeof tasksRoutes);
@@ -127,7 +134,12 @@ console.log("profileRoutes:", typeof profileRoutes);
 
 // Mount routes
 app.use("/", indexRouter);
+
+// Smart admin API is mounted BEFORE the admin dashboard router so a
+// catch-all or auth redirect in that router can't swallow /api/team/*
+app.use("/admindashboard", smartAdminRouter);
 app.use("/admindashboard", adminDashboardRouter);
+
 app.use("/userdashboard", dashboardRoutes);
 app.use("/userdashboard", tasksRoutes);
 app.use("/userdashboard", sessionRoutes);
@@ -135,6 +147,7 @@ app.use("/userdashboard", moodRoutes);
 app.use("/userdashboard", analyticsRoutes);
 app.use("/userdashboard", leaderboardRoutes);
 app.use("/userdashboard", profileRoutes);
+app.use("/userdashboard", smartUserRouter);
 
 app.use("/adminleaderboard", adminLeaderboardRouter);
 

@@ -1,0 +1,228 @@
+<script>
+/* ==========================================================
+   SMARTWORK ASSISTANT (user pages only)
+
+   Floating chat button, bottom-right. Sends the question to
+   POST /userdashboard/api/assistant, which adds the user's
+   ranked tasks and today's stress as context on the server.
+   The API key never reaches the browser.
+========================================================== */
+(() => {
+
+    "use strict";
+
+    if (window.SmartAssistant) return;
+
+    const API = "/userdashboard/api/assistant";
+    const MAX_HISTORY = 12;          // messages kept and sent back to the server
+
+    const history = [];
+    let sending = false;
+
+    /* ---------- styles ---------- */
+
+    const css = document.createElement("style");
+    css.id = "saStyles";
+    css.textContent = `
+        #saFab {
+            position: fixed; right: 22px; bottom: 22px; z-index: 9000;
+            width: 56px; height: 56px; border: 0; border-radius: 50%;
+            background: #2d5a3d; color: #fff; font-size: 22px; line-height: 1;
+            box-shadow: 0 8px 24px rgba(0,0,0,.3); cursor: pointer;
+            transition: transform .15s ease, background .15s ease;
+        }
+        #saFab:hover { background: #234a31; transform: scale(1.06); }
+        #saFab:focus-visible { outline: 3px solid rgba(52,179,107,.5); outline-offset: 2px; }
+
+        #saPanel {
+            position: fixed; right: 22px; bottom: 90px; z-index: 9000;
+            width: 360px; max-width: calc(100vw - 32px);
+            height: 460px; max-height: calc(100vh - 120px);
+            display: none; flex-direction: column;
+            background: #fff; border-radius: 16px; overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,.3);
+            font-family: inherit;
+        }
+        #saPanel.open { display: flex; }
+
+        #saHead {
+            background: linear-gradient(135deg, #14301f, #2d5a3d);
+            color: #fff; padding: 14px 16px; font-weight: 700;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        #saHead small { display: block; font-weight: 400; opacity: .8; font-size: .72rem; }
+        #saHead button {
+            background: none; border: 0; color: #fff;
+            font-size: 22px; line-height: 1; cursor: pointer; opacity: .9;
+        }
+        #saHead button:hover { opacity: 1; }
+
+        #saMsgs { flex: 1; overflow-y: auto; padding: 14px; background: #f6f8f6; }
+
+        .sa-m {
+            max-width: 85%; margin-bottom: 10px; padding: 9px 12px;
+            border-radius: 12px; font-size: .88rem; line-height: 1.4;
+            white-space: pre-wrap; word-wrap: break-word;
+        }
+        .sa-m.bot { background: #fff; border: 1px solid #e3e8e4; color: #1f2d26; }
+        .sa-m.me  { background: #2d5a3d; color: #fff; margin-left: auto; }
+        .sa-m.err { background: #fde8e8; border: 1px solid #f5c2c2; color: #a12a2a; }
+
+        #saChips { padding: 8px 12px 0; display: flex; gap: 6px; flex-wrap: wrap; background: #fff; }
+        #saChips button {
+            border: 1px solid #cfe0d5; background: #fff; color: #2d5a3d;
+            border-radius: 999px; padding: 4px 10px; font-size: .78rem; cursor: pointer;
+        }
+        #saChips button:hover { background: #e8f3ec; }
+
+        #saForm { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #eee; background: #fff; }
+        #saInput {
+            flex: 1; border: 1px solid #d9dfd7; border-radius: 10px;
+            padding: 8px 10px; font-size: .9rem; min-width: 0;
+        }
+        #saInput:focus { outline: none; border-color: #2d5a3d; box-shadow: 0 0 0 3px rgba(45,90,61,.15); }
+        #saSend {
+            border: 0; background: #2d5a3d; color: #fff;
+            border-radius: 10px; padding: 0 14px; font-weight: 600; cursor: pointer;
+        }
+        #saSend:hover { background: #234a31; }
+        #saSend:disabled { opacity: .5; cursor: not-allowed; }
+
+        @media (max-width: 480px) {
+            #saPanel { right: 16px; bottom: 84px; height: 70vh; }
+            #saFab   { right: 16px; bottom: 16px; }
+        }
+    `;
+    document.head.appendChild(css);
+
+    /* ---------- markup ---------- */
+
+    const root = document.createElement("div");
+    root.id = "saRoot";
+    root.innerHTML = `
+        <button id="saFab" type="button" aria-label="Open assistant" aria-expanded="false">💬</button>
+
+        <div id="saPanel" role="dialog" aria-label="SmartWork assistant">
+            <div id="saHead">
+                <div>
+                    SmartWork Assistant
+                    <small>Knows your tasks and today's mood</small>
+                </div>
+                <button type="button" id="saClose" aria-label="Close assistant">&times;</button>
+            </div>
+
+            <div id="saMsgs" aria-live="polite"></div>
+
+            <div id="saChips">
+                <button type="button">What should I work on today?</button>
+                <button type="button">Plan a lighter day</button>
+            </div>
+
+            <div id="saForm">
+                <input id="saInput" type="text" maxlength="500"
+                       placeholder="Ask about your tasks..." autocomplete="off">
+                <button type="button" id="saSend">Send</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(root);
+
+    const $ = (id) => document.getElementById(id);
+
+    /* ---------- helpers ---------- */
+
+    // textContent only: replies can never inject HTML
+    function add(text, who) {
+        const el = document.createElement("div");
+        el.className = "sa-m " + who;
+        el.textContent = text;
+        $("saMsgs").appendChild(el);
+        $("saMsgs").scrollTop = $("saMsgs").scrollHeight;
+        return el;
+    }
+
+    function setOpen(open) {
+        $("saPanel").classList.toggle("open", open);
+        $("saFab").setAttribute("aria-expanded", String(open));
+
+        if (open) {
+            if (!$("saMsgs").children.length) {
+                add("Hi! I can see your tasks and today's mood. Ask me what to work on.", "bot");
+            }
+            $("saInput").focus();
+        }
+    }
+
+    /* ---------- send ---------- */
+
+    async function send(text) {
+        text = String(text || "").trim();
+        if (!text || sending) return;
+
+        sending = true;
+        $("saInput").value = "";
+        $("saSend").disabled = true;
+
+        add(text, "me");
+        const wait = add("Thinking...", "bot");
+
+        try {
+            const res = await fetch(API, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text, history })
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+
+            const reply = String(data.reply || "").trim() || "Sorry, I have no answer right now.";
+            wait.textContent = reply;
+
+            history.push({ role: "user", content: text }, { role: "assistant", content: reply });
+            if (history.length > MAX_HISTORY) history.splice(0, history.length - MAX_HISTORY);
+
+        } catch (e) {
+            console.warn("Assistant failed:", e.message);
+            wait.className = "sa-m err";
+            wait.textContent = e.message || "Something went wrong. Please try again.";
+        } finally {
+            sending = false;
+            $("saSend").disabled = false;
+            $("saMsgs").scrollTop = $("saMsgs").scrollHeight;
+            $("saInput").focus();
+        }
+    }
+
+    /* ---------- events ---------- */
+
+    $("saFab").addEventListener("click", () => setOpen(!$("saPanel").classList.contains("open")));
+    $("saClose").addEventListener("click", () => setOpen(false));
+    $("saSend").addEventListener("click", () => send($("saInput").value));
+
+    $("saInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            send($("saInput").value);
+        }
+    });
+
+    $("saChips").addEventListener("click", (e) => {
+        const btn = e.target.closest("button");
+        if (btn) send(btn.textContent);
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && $("saPanel").classList.contains("open")) setOpen(false);
+    });
+
+    window.SmartAssistant = {
+        open: () => setOpen(true),
+        close: () => setOpen(false),
+        ask: send
+    };
+
+})();
+</script>

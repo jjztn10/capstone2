@@ -1,91 +1,101 @@
 /* ==========================================================
-   TASK MODAL
+   TASKS PAGE: DESIGN FIX
+   Paste at the END of public/stylesheets/tasks.css
+   (selectors use the element IDs from the script, so they
+   work with your existing page markup)
 ========================================================== */
 
-#taskModal .modal-content{
-    border:none !important;
-    border-radius:18px !important;
-    overflow:hidden;
-    box-shadow:0 25px 60px rgba(0,0,0,.25);
-}
+/* ---------- SUMMARY NUMBERS ---------- */
 
-/* HEADER */
-
-#taskModal .modal-header{
-    background:linear-gradient(135deg,#14301f,#2d5a3d) !important;
-    border:none !important;
-    color:#fff !important;
-    padding:22px 28px;
-}
-
-#taskModal .modal-title{
-    color:#fff !important;
-    font-size:1.4rem;
-    font-weight:700;
-}
-
-#taskModal .close{
-    color:#fff !important;
-    opacity:1;
-    text-shadow:none;
-}
-
-#taskModal .close:hover{
-    opacity:.8;
-}
-
-/* BODY */
-
-#taskModal .modal-body{
-    padding:28px;
-    background:#fff;
-}
-
-#taskModal label{
+#totalTasks,
+#pendingCount,
+#completedCount,
+#overdueCount{
+    display:block;
+    margin-top:6px;
+    font-size:2.1rem !important;
+    font-weight:800 !important;
+    line-height:1.1;
     color:#14301f;
+}
+
+#pendingCount{   color:#c98a00; }
+#completedCount{ color:#2d5a3d; }
+#overdueCount{   color:#dc3545; }
+
+/* ---------- REFRESH BUTTON (was dark text on dark green) ---------- */
+
+#btnRefreshTasks{
+    background:#fff !important;
+    color:#2d5a3d !important;
+    border:1.5px solid #2d5a3d !important;
+    border-radius:10px;
     font-weight:600;
-    margin-bottom:8px;
 }
 
-#taskModal .form-control{
-    border-radius:12px;
-    border:1px solid #d9dfd7;
-    min-height:48px;
-    box-shadow:none;
+#btnRefreshTasks:hover{
+    background:#eaf3ed !important;
+    color:#14301f !important;
 }
 
-#taskModal textarea.form-control{
-    min-height:120px;
-}
+#btnRefreshTasks i{ color:#2d5a3d !important; }
 
-#taskModal .form-control:focus{
-    border-color:#2d5a3d;
-    box-shadow:0 0 0 .2rem rgba(45,90,61,.15);
-}
+/* ---------- ADD TASK BUTTON ---------- */
 
-/* FOOTER */
-
-#taskModal .modal-footer{
-    border:none;
-    background:#fafafa;
-    padding:18px 28px;
-}
-
-#taskModal .btn-secondary{
-    background:#9096a3;
-    border:none;
-}
-
-#taskModal .btn-secondary:hover{
-    background:#7c8492;
-}
-
-#btnSaveTask{
+#btnAddTask{
     background:#2d5a3d !important;
-    border:none !important;
+    border:1.5px solid #2d5a3d !important;
     color:#fff !important;
+    border-radius:10px;
+    font-weight:600;
 }
 
-#btnSaveTask:hover{
-    background:#1b3d2b !important;
+#btnAddTask:hover{ background:#1b3d2b !important; }
+
+/* ---------- PRIORITY PILLS (were plain text) ---------- */
+
+#taskTableBody .badge[class*="priority-"]{
+    display:inline-block;
+    padding:.4em .85em !important;
+    border-radius:999px !important;
+    font-size:.75rem !important;
+    font-weight:700 !important;
+    letter-spacing:.03em;
 }
+
+#taskTableBody .badge.priority-high{
+    background:#fde8ea !important;
+    color:#b4232f !important;
+}
+
+#taskTableBody .badge.priority-medium{
+    background:#fff3d1 !important;
+    color:#8a5d00 !important;
+}
+
+#taskTableBody .badge.priority-low{
+    background:#e3efe6 !important;
+    color:#2d5a3d !important;
+}
+
+/* ---------- STATUS PILLS (match the priority pills) ---------- */
+
+#taskTableBody .badge[class*="badge-"]{
+    display:inline-block;
+    padding:.4em .85em !important;
+    border-radius:999px !important;
+    font-size:.75rem !important;
+    font-weight:700 !important;
+}
+
+/* ---------- ROW ACTION BUTTONS ---------- */
+
+#taskTableBody .btn-sm{
+    width:34px;
+    height:34px;
+    padding:0;
+    border-radius:10px;
+    margin-left:4px;
+}
+
+#taskTableBody tr:hover{ background:#f4f8f5; }

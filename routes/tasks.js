@@ -16,7 +16,7 @@ const PRIORITY_TO_SCORE = { Low: 25, Medium: 50, High: 75 };
 // UI label -> DB enum value ("Overdue" is calculated, never stored)
 const STATUS_TO_DB = {
     "Pending": "pending",
-    "In Progress": "in_progress",   // needs the enum change, see notes
+    "In Progress": "in_progress",   // needs the enum change (see SQL notes)
     "Completed": "completed",
     "Overdue": "pending"
 };
@@ -57,8 +57,20 @@ const fail = (res, err) => {
     res.status(500).json({ error: err.message });
 };
 
+// Every API route needs a logged-in user. Returns the uid, or sends 401.
+function requireUid(req, res) {
+    const uid = getUid(req);
+    if (uid === undefined || uid === null || uid === "") {
+        res.status(401).json({ error: "Please log in again." });
+        return null;
+    }
+    return uid;
+}
+
 /* ==========================================================
    TASKS PAGE
+   pageStyle "tasks.css" must exist in your static folder
+   (e.g. public/css/tasks.css) or the browser shows a 404.
 ========================================================== */
 
 router.get("/tasks", (req, res) => {
@@ -66,39 +78,44 @@ router.get("/tasks", (req, res) => {
         layout: "layout/main-layout",
         layoutType: "user",
         title: "Tasks",
-        pageStyle: "tasks.css",
+        // pageStyle: "tasks.css",   <- delete this line
         pageScript: "tasks-script",
         currentPath: req.originalUrl,
         user: req.session?.user || null
     });
 });
-
 /* ==========================================================
    GET ALL TASKS
 ========================================================== */
 
 router.get("/api/tasks", async (req, res) => {
     try {
-        const uid = getUid(req);
-console.log("TASK uid =", uid, typeof uid);
+        const uid = requireUid(req, res);
+        if (uid === null) return;
+
+        // tasks.status / tasks.deadline are qualified on purpose: inside
+        // ORDER BY an unqualified "status" would mean the computed alias.
         const tasks = await Query(`
             SELECT
-                id AS task_id,
-                title,
-                subject,
-                description,
+                tasks.id AS task_id,
+                tasks.title,
+                tasks.subject,
+                tasks.description,
                 ${PRIORITY_LABEL_SQL} AS priority,
-                DATE_FORMAT(deadline, '%Y-%m-%d') AS deadline,
+                DATE_FORMAT(tasks.deadline, '%Y-%m-%d') AS deadline,
                 CASE
-                    WHEN status = 'completed' THEN 'Completed'
-                    WHEN deadline IS NOT NULL
-                         AND DATE(deadline) < CURDATE() THEN 'Overdue'
-                    WHEN status = 'in_progress' THEN 'In Progress'
+                    WHEN tasks.status = 'completed' THEN 'Completed'
+                    WHEN tasks.deadline IS NOT NULL
+                         AND DATE(tasks.deadline) < CURDATE() THEN 'Overdue'
+                    WHEN tasks.status = 'in_progress' THEN 'In Progress'
                     ELSE 'Pending'
                 END AS status
             FROM tasks
-            WHERE uid = ?
-            ORDER BY status = 'completed', deadline IS NULL, deadline ASC, created_at DESC
+            WHERE tasks.uid = ?
+            ORDER BY (tasks.status = 'completed'),
+                     (tasks.deadline IS NULL),
+                     tasks.deadline ASC,
+                     tasks.created_at DESC
         `, [uid]);
 
         res.json({ tasks });
@@ -113,7 +130,8 @@ console.log("TASK uid =", uid, typeof uid);
 
 router.post("/api/tasks", async (req, res) => {
     try {
-        const uid = getUid(req);
+        const uid = requireUid(req, res);
+        if (uid === null) return;
 
         const { data, error } = clean(req.body);
         if (error) return res.status(400).json({ error });
@@ -142,12 +160,13 @@ router.post("/api/tasks", async (req, res) => {
 });
 
 /* ==========================================================
-   COMPLETE TASK  (must come before /api/tasks/:id)
+   COMPLETE TASK
 ========================================================== */
 
 router.put("/api/tasks/:id/complete", async (req, res) => {
     try {
-        const uid = getUid(req);
+        const uid = requireUid(req, res);
+        if (uid === null) return;
 
         await Query(`
             UPDATE tasks
@@ -169,7 +188,8 @@ router.put("/api/tasks/:id/complete", async (req, res) => {
 
 router.put("/api/tasks/:id", async (req, res) => {
     try {
-        const uid = getUid(req);
+        const uid = requireUid(req, res);
+        if (uid === null) return;
 
         const { data, error } = clean(req.body);
         if (error) return res.status(400).json({ error });
@@ -207,7 +227,8 @@ router.put("/api/tasks/:id", async (req, res) => {
 
 router.delete("/api/tasks/:id", async (req, res) => {
     try {
-        const uid = getUid(req);
+        const uid = requireUid(req, res);
+        if (uid === null) return;
 
         await Query(`
             DELETE FROM tasks

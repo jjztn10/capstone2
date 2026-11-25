@@ -1,6 +1,7 @@
 <%# SMARTWORK DASHBOARD OVERVIEW (Admin + User).
     Locals: layoutType ("admin" | "user"), user, stats
-    Optional overrides: overviewStats, overviewActions, overviewCharts, welcomeMessage %>
+    Optional overrides: overviewStats, overviewActions, overviewCharts, welcomeMessage
+    Smart cards: user -> forecast-card; admin -> team-insights-card + admin-allocation-card %>
 
 <%
 /* ------------------------------------------------
@@ -139,6 +140,30 @@ const oCharts    = (typeof overviewCharts  !== "undefined" && overviewCharts)  ?
         </div>
 
     </div>
+
+    <!-- ==========================================
+         SMART INSIGHTS
+         user  : stress forecast, overdue risk, next-7-days load
+         admin : team heatmap, anomalies, recommended assignee
+         (a missing partial is logged instead of crashing the page)
+    =========================================== -->
+    <% if (oType === "user") { %>
+
+        <% try { %>
+            <%- include("forecast-card") %>
+        <% } catch (e) { console.error("forecast-card not found:", e.message); } %>
+
+    <% } else { %>
+
+        <% try { %>
+            <%- include("team-insights-card") %>
+        <% } catch (e) { console.error("team-insights-card not found:", e.message); } %>
+
+        <% try { %>
+            <%- include("admin-allocation-card") %>
+        <% } catch (e) { console.error("admin-allocation-card not found:", e.message); } %>
+
+    <% } %>
 
     <!-- ==========================================
          CHARTS

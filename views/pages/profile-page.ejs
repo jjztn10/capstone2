@@ -1,112 +1,68 @@
-<div class="container-fluid">
+<%- include("../components/page-theme") %>
 
-    <!-- ==========================================
-         PAGE HEADER
-    =========================================== -->
+<div class="pg-page">
 
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-
-        <div>
-
-            <h1 class="h3 mb-1 text-gray-800">
-                My Profile
-            </h1>
-
-            <p class="text-muted mb-0">
-                Manage your SmartWork account information.
-            </p>
-
+    <!-- HERO -->
+    <div class="pg-hero">
+        <div class="pg-hero-left">
+            <div class="pg-hero-icon"><i class="fas fa-user"></i></div>
+            <div>
+                <div class="pg-eyebrow"><i class="fas fa-id-badge"></i> Account</div>
+                <h1 class="pg-title">My <span>Profile</span></h1>
+                <p class="pg-sub">Manage your SmartWork account information.</p>
+            </div>
         </div>
-
-        <button
-            id="btnRefreshProfile"
-            class="btn btn-success">
-
-            <i class="fas fa-sync-alt"></i>
-
-            Refresh
-
-        </button>
-
+        <div class="pg-hero-right">
+            <span class="pg-date"><i class="far fa-calendar-alt"></i> <span data-today></span></span>
+            <button id="btnRefreshProfile" class="btn pg-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
     </div>
 
-    <!-- ==========================================
-         PROFILE CARD
-    =========================================== -->
+    <!-- PROFILE CARD -->
+    <div class="pg-card">
+        <div class="pg-card-head">
+            <h5>Account Details</h5>
+        </div>
 
-    <div class="card shadow mb-4">
-
-        <div class="card-body">
-
+        <div class="pg-card-body">
             <div class="row">
 
                 <div class="col-lg-3 text-center mb-4">
-
                     <img
                         src="https://ui-avatars.com/api/?background=2d5a3d&color=fff&size=200&name=User"
                         id="profileAvatar"
-                        class="rounded-circle img-fluid shadow"
-                        style="width:160px;height:160px;object-fit:cover;">
-
+                        class="pg-avatar"
+                        alt="Profile picture">
                 </div>
 
                 <div class="col-lg-9">
-
                     <div class="row">
 
                         <div class="col-md-6 mb-3">
-
-                            <label>Name</label>
-
-                            <input
-                                id="profileName"
-                                class="form-control"
-                                readonly>
-
+                            <label for="profileName">Name</label>
+                            <input id="profileName" class="form-control" readonly>
                         </div>
 
                         <div class="col-md-6 mb-3">
-
-                            <label>Email</label>
-
-                            <input
-                                id="profileEmail"
-                                class="form-control"
-                                readonly>
-
+                            <label for="profileEmail">Email</label>
+                            <input id="profileEmail" class="form-control" readonly>
                         </div>
 
                         <div class="col-md-4 mb-3">
-
-                            <label>Study Streak</label>
-
-                            <input
-                                id="profileStreak"
-                                class="form-control"
-                                readonly>
-
+                            <label for="profileStreak">Study Streak</label>
+                            <input id="profileStreak" class="form-control" readonly>
                         </div>
 
                         <div class="col-md-4 mb-3">
-
-                            <label>Total Points</label>
-
-                            <input
-                                id="profileTotalPoints"
-                                class="form-control"
-                                readonly>
-
+                            <label for="profileTotalPoints">Total Points</label>
+                            <input id="profileTotalPoints" class="form-control" readonly>
                         </div>
 
                         <div class="col-md-4 mb-3">
-
-                            <label>Weekly Points</label>
-
-                            <input
-                                id="profileWeeklyPoints"
-                                class="form-control"
-                                readonly>
-
+                            <label for="profileWeeklyPoints">Weekly Points</label>
+                            <input id="profileWeeklyPoints" class="form-control" readonly>
                         </div>
 
                     </div>
@@ -114,114 +70,52 @@
                     <hr>
 
                     <div class="d-flex flex-wrap">
-
-                        <button
-                            id="btnEditProfile"
-                            class="btn btn-success mr-2 mb-2">
-
-                            <i class="fas fa-edit"></i>
-
-                            Edit Profile
-
+                        <button id="btnEditProfile" class="btn pg-btn pg-btn-add mr-2 mb-2">
+                            <i class="fas fa-edit"></i> Edit Profile
                         </button>
 
-                        <button
-                            id="btnSaveProfile"
-                            class="btn btn-primary mr-2 mb-2 d-none">
-
-                            <i class="fas fa-save"></i>
-
-                            Save
-
+                        <button id="btnSaveProfile" class="btn pg-btn pg-btn-blue mr-2 mb-2 d-none">
+                            <i class="fas fa-save"></i> Save
                         </button>
 
-                        <button
-                            id="btnCancelProfile"
-                            class="btn btn-secondary mb-2 d-none">
-
-                            <i class="fas fa-times"></i>
-
-                            Cancel
-
+                        <button id="btnCancelProfile" class="btn pg-btn pg-btn-ghost mb-2 d-none">
+                            <i class="fas fa-times"></i> Cancel
                         </button>
-
                     </div>
-
                 </div>
 
             </div>
-
         </div>
-
     </div>
 
-    <!-- ==========================================
-         CHANGE PASSWORD
-    =========================================== -->
-
-    <div class="card shadow">
-
-        <div class="card-header">
-
-            <strong>
-
-                Change Password
-
-            </strong>
-
+    <!-- CHANGE PASSWORD -->
+    <div class="pg-card">
+        <div class="pg-card-head">
+            <h5>Change Password</h5>
         </div>
 
-        <div class="card-body">
-
+        <div class="pg-card-body">
             <div class="row">
-
-                <div class="col-md-4">
-
-                    <label>Current Password</label>
-
-                    <input
-                        id="currentPassword"
-                        type="password"
-                        class="form-control">
-
+                <div class="col-md-4 mb-3">
+                    <label for="currentPassword">Current Password</label>
+                    <input id="currentPassword" type="password" class="form-control">
                 </div>
 
-                <div class="col-md-4">
-
-                    <label>New Password</label>
-
-                    <input
-                        id="newPassword"
-                        type="password"
-                        class="form-control">
-
+                <div class="col-md-4 mb-3">
+                    <label for="newPassword">New Password</label>
+                    <input id="newPassword" type="password" class="form-control">
                 </div>
 
-                <div class="col-md-4">
-
-                    <label>Confirm Password</label>
-
-                    <input
-                        id="confirmPassword"
-                        type="password"
-                        class="form-control">
-
+                <div class="col-md-4 mb-3">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input id="confirmPassword" type="password" class="form-control">
                 </div>
-
             </div>
 
-            <button
-                id="btnChangePassword"
-                class="btn btn-danger mt-3">
-
-                <i class="fas fa-key"></i>
-
-                Change Password
-
+            <button id="btnChangePassword" class="btn pg-btn pg-btn-danger mt-2">
+                <i class="fas fa-key"></i> Change Password
             </button>
-
         </div>
-
     </div>
 
 </div>

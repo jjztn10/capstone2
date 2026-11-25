@@ -1,0 +1,219 @@
+<%# views/components/page-theme.ejs : shared dashboard-style theme. Included at the top of each page. %>
+
+<style>
+/* ==========================================================
+   SHARED PAGE THEME (matches the user dashboard)
+========================================================== */
+
+/* ---------- PAGE WRAPPER: pull everything up ---------- */
+body#page-top .pg-page{ margin-top:-12px; }
+/* .admin-section adds its own padding, which pushed the Sessions page too low */
+body#page-top .admin-section.pg-page{
+    padding:0 !important;
+    margin-top:-12px !important;
+}
+
+/* ---------- HERO ---------- */
+body#page-top .pg-hero{
+    position:relative;
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between;
+    gap:16px;
+    padding:22px 28px;
+    margin-bottom:22px;
+    border-radius:18px;
+    border-left:6px solid #1f6b3f;
+    background:
+        radial-gradient(circle at 92% 15%, rgba(34,165,90,.16), transparent 38%),
+        #fff;
+    box-shadow:0 8px 28px rgba(20,48,31,.08);
+}
+body#page-top .pg-hero-left{ display:flex; align-items:center; gap:20px; }
+body#page-top .pg-hero-icon{
+    width:56px; height:56px; flex:0 0 56px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:16px;
+    background:linear-gradient(135deg,#22a55a,#1f6b3f);
+    color:#fff; font-size:1.5rem;
+    box-shadow:0 8px 18px rgba(31,107,63,.35);
+}
+body#page-top .pg-eyebrow{
+    font-size:.72rem; font-weight:700; letter-spacing:.14em;
+    text-transform:uppercase; color:#22a55a; margin-bottom:2px;
+}
+body#page-top .pg-title{ margin:0; font-size:1.9rem; font-weight:800; color:#14301f; line-height:1.15; }
+body#page-top .pg-title span{ color:#22a55a; }
+body#page-top .pg-sub{ margin:4px 0 0; color:#6b7a70; font-size:.95rem; }
+
+body#page-top .pg-hero-right{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+body#page-top .pg-date{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 18px; border-radius:999px;
+    background:#e9f4ec; color:#1f5233; font-weight:600; font-size:.9rem;
+}
+
+/* ---------- BUTTONS ---------- */
+body#page-top .pg-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:12px 22px; border-radius:12px;
+    border:none !important; color:#fff !important;
+    font-weight:700; font-size:.95rem;
+    background:linear-gradient(135deg,#2d5a3d,#1b3d2b) !important;
+    box-shadow:0 8px 18px rgba(27,61,43,.28);
+    transition:transform .15s ease, box-shadow .15s ease;
+}
+body#page-top .pg-btn:hover{ transform:translateY(-1px); box-shadow:0 12px 22px rgba(27,61,43,.34); }
+body#page-top .pg-btn.pg-btn-add{
+    background:linear-gradient(135deg,#22a55a,#1f8f4d) !important;
+    box-shadow:0 8px 18px rgba(34,165,90,.32);
+}
+body#page-top .pg-btn.pg-btn-blue{
+    background:linear-gradient(135deg,#3b6fe0,#2a52be) !important;
+    box-shadow:0 8px 18px rgba(59,111,224,.3);
+}
+body#page-top .pg-btn.pg-btn-danger{
+    background:linear-gradient(135deg,#e5484d,#c4323a) !important;
+    box-shadow:0 8px 18px rgba(229,72,77,.3);
+}
+body#page-top .pg-btn.pg-btn-ghost{
+    background:#fff !important; color:#4b5a50 !important;
+    border:1.5px solid #d9dfd7 !important; box-shadow:none;
+}
+body#page-top .pg-btn.pg-btn-sm{ padding:9px 14px; border-radius:10px; font-size:.85rem; }
+
+/* ---------- STAT CARDS ---------- */
+body#page-top .pg-stat{
+    display:flex; align-items:center; justify-content:space-between;
+    height:100%;
+    padding:22px 26px;
+    border-radius:16px;
+    background:#fff;
+    border-left:6px solid var(--c);
+    box-shadow:0 6px 22px rgba(20,48,31,.07);
+}
+body#page-top .pg-stat.blue{  --c:#3b6fe0; }
+body#page-top .pg-stat.amber{ --c:#f0a010; }
+body#page-top .pg-stat.green{ --c:#22a55a; }
+body#page-top .pg-stat.red{   --c:#e5484d; }
+body#page-top .pg-stat .pg-label{
+    font-size:.78rem; font-weight:800; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--c);
+}
+body#page-top .pg-stat .pg-value{
+    display:block; margin-top:8px;
+    font-size:2.2rem; font-weight:800; line-height:1.05; color:#14301f;
+}
+body#page-top .pg-stat .pg-value.sm{ font-size:1.5rem; }
+body#page-top .pg-stat .pg-ico{ font-size:2.1rem; color:var(--c); opacity:.28; }
+
+/* ---------- CARDS ---------- */
+body#page-top .pg-card{
+    border-radius:16px; background:#fff;
+    box-shadow:0 6px 22px rgba(20,48,31,.07);
+    overflow:hidden; margin-bottom:26px;
+}
+body#page-top .pg-card-head{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;
+    padding:18px 28px; border-bottom:1px solid #e8ece6;
+}
+body#page-top .pg-card-head h5,
+body#page-top .pg-card-head h6{ margin:0; font-weight:800; font-size:1.02rem; color:#1f5233; }
+body#page-top .pg-card-body{ padding:24px 28px 28px; }
+body#page-top .pg-card-body.flush{ padding:0; }
+
+/* ---------- FORMS ---------- */
+body#page-top .pg-page label{ color:#14301f; font-weight:600; margin-bottom:8px; }
+body#page-top .pg-page .form-control{
+    height:46px; border-radius:12px;
+    border:1px solid #d9dfd7; background:#fff; box-shadow:none;
+}
+body#page-top .pg-page .form-control:focus{
+    border-color:#22a55a; box-shadow:0 0 0 .2rem rgba(34,165,90,.15);
+}
+body#page-top .pg-page .form-control[readonly]{ background:#f6faf7; color:#4b5a50; }
+
+/* ---------- TABLES ---------- */
+body#page-top .pg-table{ margin:0; }
+body#page-top .pg-table thead th{
+    background:#eef5f0 !important; color:#1f5233 !important;
+    border:none !important; padding:14px 18px;
+    font-size:.74rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase;
+}
+body#page-top .pg-table tbody td{
+    padding:16px 18px; vertical-align:middle;
+    border-top:1px solid #eef1ec; color:#4b5a50;
+}
+body#page-top .pg-table tbody tr:first-child td{ border-top:none; }
+body#page-top .pg-table tbody tr:hover{ background:#f6faf7; }
+body#page-top .pg-table tbody td strong{ color:#14301f; }
+
+/* any badge rendered by the page scripts becomes a pill */
+body#page-top .pg-page .badge{
+    padding:.5em 1em; border-radius:999px;
+    font-size:.74rem; font-weight:700; letter-spacing:.03em;
+}
+body#page-top .pg-page .badge-success{   background:#e3f6ea !important; color:#1a7f45 !important; }
+body#page-top .pg-page .badge-warning{   background:#fff3d1 !important; color:#8a5d00 !important; }
+body#page-top .pg-page .badge-danger{    background:#fde8ea !important; color:#b4232f !important; }
+body#page-top .pg-page .badge-primary{   background:#e3ecff !important; color:#2a52be !important; }
+body#page-top .pg-page .badge-info{      background:#e0f3f8 !important; color:#1b6b80 !important; }
+body#page-top .pg-page .badge-secondary{ background:#eceff1 !important; color:#5b6670 !important; }
+
+/* ---------- RANGE BUTTONS (mood chart) ---------- */
+body#page-top .pg-range .btn{
+    border:1.5px solid #cfe3d5; color:#2d5a3d; background:#fff;
+    font-weight:600; padding:7px 16px;
+}
+body#page-top .pg-range .btn:first-child{ border-radius:10px 0 0 10px; }
+body#page-top .pg-range .btn:last-child{  border-radius:0 10px 10px 0; }
+body#page-top .pg-range .btn.active,
+body#page-top .pg-range .btn:hover{
+    background:#22a55a; border-color:#22a55a; color:#fff;
+}
+
+/* ---------- TIMER (sessions) ---------- */
+body#page-top .pg-timer{
+    font-size:4.2rem; font-weight:800; letter-spacing:.04em;
+    color:#14301f; margin:10px 0 0; line-height:1.1;
+    font-variant-numeric:tabular-nums;
+}
+
+/* ---------- PODIUM (leaderboard) ---------- */
+body#page-top .pg-podium{
+    height:100%; text-align:center;
+    padding:26px 22px;
+    border-radius:16px; background:#fff;
+    border-top:6px solid var(--c);
+    box-shadow:0 6px 22px rgba(20,48,31,.07);
+}
+body#page-top .pg-podium.gold{   --c:#f0a010; }
+body#page-top .pg-podium.silver{ --c:#9aa5b1; }
+body#page-top .pg-podium.bronze{ --c:#c9783a; }
+body#page-top .pg-podium .pg-medal{
+    font-size:.78rem; font-weight:800; letter-spacing:.1em;
+    text-transform:uppercase; color:var(--c); margin-bottom:10px;
+}
+body#page-top .pg-podium .pg-medal-icon{ font-size:2.4rem; display:block; margin-bottom:6px; }
+body#page-top .pg-podium h3{ font-weight:800; color:#14301f; margin:6px 0; font-size:1.5rem; }
+body#page-top .pg-podium h5{ font-weight:700; color:#6b7a70; margin:0; font-size:1rem; }
+
+/* ---------- PROFILE ---------- */
+body#page-top .pg-avatar{
+    width:160px; height:160px; object-fit:cover; border-radius:50%;
+    border:5px solid #e3f2e8; box-shadow:0 10px 26px rgba(31,107,63,.25);
+}
+
+/* ---------- CHART BOX ---------- */
+body#page-top .pg-chart{ position:relative; height:300px; }
+</style>
+
+<script>
+    // Fill any date pill on the page
+    document.addEventListener("DOMContentLoaded", function () {
+        var text = new Date().toLocaleDateString(undefined, {
+            weekday: "long", year: "numeric", month: "long", day: "numeric"
+        });
+        document.querySelectorAll("[data-today]").forEach(function (el) {
+            el.textContent = text;
+        });
+    });
+</script>
