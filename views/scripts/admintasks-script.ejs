@@ -280,8 +280,10 @@
     const changed = () =>
       document.dispatchEvent(new CustomEvent("tasks:changed"));
 
-    /* ---------- modal ---------- */
-    async function openTaskModal(task) {
+    /* ---------- edit modal (there is no "Add Task" on the admin side) ---------- */
+    async function openEditModal(task) {
+      if (!task) return;
+
       // make sure dropdown data exists even if the section was never loaded
       if (!ready) {
         try {
@@ -290,26 +292,18 @@
           return notify("error", "Could not load task data", esc(err.message));
         }
       }
-      if (!meta.users.length) {
-        return notify(
-          "warning",
-          "No users yet",
-          "Create a user first, then assign the task to them.",
-        );
-      }
 
-      $("taskModalTitle").textContent = task ? "Edit Task" : "Add Task";
-      $("taskId").value = task ? task.id : "";
-      $("taskTitle").value = task ? task.title || "" : "";
-      $("taskDescription").value = task ? task.description || "" : "";
-      $("taskSubject").value = task ? task.subject || "" : "";
-      $("taskUser").value = task ? task.uid : "";
-      $("taskPriority").value = task ? task.priority : "Medium";
-      if (task) $("taskStatus").value = task.status;
-      else if (meta.statuses.length) $("taskStatus").value = meta.statuses[0];
-      $("taskDeadline").value = task && task.deadline ? task.deadline : "";
-      $("taskHours").value = task ? task.estimated_hours : 1;
-      $("taskWeight").value = task ? task.weight : 1;
+      $("taskModalTitle").textContent = "Edit Task";
+      $("taskId").value = task.id;
+      $("taskTitle").value = task.title || "";
+      $("taskDescription").value = task.description || "";
+      $("taskSubject").value = task.subject || "";
+      $("taskUser").value = task.uid;
+      $("taskPriority").value = task.priority;
+      $("taskStatus").value = task.status;
+      $("taskDeadline").value = task.deadline || "";
+      $("taskHours").value = task.estimated_hours;
+      $("taskWeight").value = task.weight;
       modalAction("taskModal", "show");
     }
 
@@ -337,13 +331,15 @@
       }
     });
 
-    /* ---------- save (add / edit) ---------- */
+    /* ---------- save (edit only) ---------- */
     document.addEventListener("submit", async (e) => {
       if (e.target.id !== "taskForm") return;
       e.preventDefault();
       if (saving) return;
 
       const id = $("taskId").value;
+      if (!id) return; // creating tasks is not allowed from the admin side
+
       const payload = {
         title: $("taskTitle").value.trim(),
         description: $("taskDescription").value,
@@ -367,8 +363,8 @@
       if (btn) btn.disabled = true;
 
       try {
-        await request(id ? "/" + encodeURIComponent(id) : "", {
-          method: id ? "PUT" : "POST",
+        await request("/" + encodeURIComponent(id), {
+          method: "PUT",
           body: JSON.stringify(payload),
         });
         modalAction("taskModal", "hide");
@@ -378,7 +374,7 @@
           console.error(err);
         }
         changed();
-        notify("success", id ? "Task updated!" : "Task created!");
+        notify("success", "Task updated!");
       } catch (err) {
         notify("error", "Could not save task", esc(err.message));
       } finally {
@@ -389,8 +385,6 @@
 
     /* ---------- clicks ---------- */
     document.addEventListener("click", async (e) => {
-      if (e.target.closest("#btnAddTask")) return openTaskModal(null);
-
       if (e.target.closest("#btnSearchTask")) {
         page = 1;
         return render();
@@ -418,7 +412,7 @@
       const edit = e.target.closest(".btn-edit-task");
       if (edit) {
         const task = tasks.find((t) => t.id === edit.dataset.id);
-        if (task) openTaskModal(task);
+        if (task) openEditModal(task);
         return;
       }
 

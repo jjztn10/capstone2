@@ -1,15 +1,17 @@
 <section id="mood" class="admin-section">
-  <div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-      <h2 class="h3 mb-1 text-gray-800">
-        <i class="fas fa-smile mr-2"></i>Mood Analytics
-      </h2>
-      <p class="text-muted mb-0">
-        Monitor student well-being and study-related sentiment.
-      </p>
+
+  <!-- PAGE HEADER -->
+  <div class="sw-page-header">
+    <div class="sw-header-left">
+      <div class="sw-header-icon"><i class="fas fa-smile"></i></div>
+      <div>
+        <h2>Mood Analytics</h2>
+        <p>Monitor student well-being and study-related sentiment.</p>
+      </div>
     </div>
-    <div class="d-flex align-items-center">
-      <select id="moodRange" class="form-control mr-2" style="width: auto">
+
+    <div class="sw-header-actions">
+      <select id="moodRange" class="form-control">
         <option value="7">Last 7 days</option>
         <option value="30" selected>Last 30 days</option>
         <option value="90">Last 90 days</option>
@@ -20,104 +22,93 @@
     </div>
   </div>
 
-  <!-- SUMMARY CARDS -->
+  <!-- SUMMARY CARDS: Happy, Neutral, Sad, Stressed, Burnout Risk -->
   <div class="row">
-    <div class="col-xl-3 col-md-6 mb-4">
+
+    <!-- HAPPY -->
+    <div class="col-xl col-md-4 col-sm-6 mb-4">
       <div class="card border-left-success shadow h-100 py-2">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div
-                class="text-xs font-weight-bold text-success text-uppercase mb-1"
-              >
-                Happy
-              </div>
-              <div class="h4 font-weight-bold text-gray-800" id="moodHappy">
-                0
-              </div>
+              <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Happy</div>
+              <div class="h4 mb-0 font-weight-bold text-gray-800" id="moodHappy">0</div>
             </div>
-            <div class="col-auto">
-              <i class="fas fa-laugh fa-2x text-gray-300"></i>
-            </div>
+            <div class="col-auto"><i class="fas fa-laugh fa-2x text-gray-300"></i></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
+    <!-- NEUTRAL -->
+    <div class="col-xl col-md-4 col-sm-6 mb-4">
       <div class="card border-left-primary shadow h-100 py-2">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div
-                class="text-xs font-weight-bold text-primary text-uppercase mb-1"
-              >
-                Neutral
-              </div>
-              <div class="h4 font-weight-bold text-gray-800" id="moodNeutral">
-                0
-              </div>
+              <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Neutral</div>
+              <div class="h4 mb-0 font-weight-bold text-gray-800" id="moodNeutral">0</div>
             </div>
-            <div class="col-auto">
-              <i class="fas fa-meh fa-2x text-gray-300"></i>
-            </div>
+            <div class="col-auto"><i class="fas fa-meh fa-2x text-gray-300"></i></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
+    <!-- SAD -->
+    <div class="col-xl col-md-4 col-sm-6 mb-4">
+      <div class="card border-left-info shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Sad</div>
+              <div class="h4 mb-0 font-weight-bold text-gray-800" id="moodSad">0</div>
+            </div>
+            <div class="col-auto"><i class="fas fa-sad-tear fa-2x text-gray-300"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STRESSED -->
+    <div class="col-xl col-md-6 col-sm-6 mb-4">
       <div class="card border-left-warning shadow h-100 py-2">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div
-                class="text-xs font-weight-bold text-warning text-uppercase mb-1"
-              >
-                Stressed
-              </div>
-              <div class="h4 font-weight-bold text-gray-800" id="moodStressed">
-                0
-              </div>
+              <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Stressed</div>
+              <div class="h4 mb-0 font-weight-bold text-gray-800" id="moodStressed">0</div>
             </div>
-            <div class="col-auto">
-              <i class="fas fa-frown fa-2x text-gray-300"></i>
-            </div>
+            <div class="col-auto"><i class="fas fa-frown fa-2x text-gray-300"></i></div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
+    <!-- BURNOUT RISK -->
+    <div class="col-xl col-md-6 col-sm-12 mb-4">
       <div class="card border-left-danger shadow h-100 py-2">
         <div class="card-body">
           <div class="row no-gutters align-items-center">
             <div class="col mr-2">
-              <div
-                class="text-xs font-weight-bold text-danger text-uppercase mb-1"
-              >
-                Burnout Risk
-              </div>
-              <div class="h4 font-weight-bold text-gray-800" id="moodBurnout">
-                0
-              </div>
+              <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Burnout Risk</div>
+              <div class="h4 mb-0 font-weight-bold text-gray-800" id="moodBurnout">0</div>
               <small class="text-muted">students flagged</small>
             </div>
-            <div class="col-auto">
-              <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-            </div>
+            <div class="col-auto"><i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i></div>
           </div>
         </div>
       </div>
     </div>
+
   </div>
 
   <!-- CHARTS -->
   <div class="row">
     <div class="col-lg-8 mb-4">
-      <div class="card shadow">
+      <div class="card shadow h-100">
         <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">Mood Trend</h6>
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-chart-area mr-2"></i>Mood Trend</h6>
         </div>
         <div class="card-body">
           <div style="position: relative; height: 300px">
@@ -125,13 +116,7 @@
             <div
               id="moodTrendEmpty"
               class="d-none position-absolute text-center text-muted"
-              style="
-                inset: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
-            >
+              style="inset: 0; display: flex; align-items: center; justify-content: center">
               No mood data for this period.
             </div>
           </div>
@@ -140,9 +125,9 @@
     </div>
 
     <div class="col-lg-4 mb-4">
-      <div class="card shadow">
+      <div class="card shadow h-100">
         <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">Mood Distribution</h6>
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-chart-pie mr-2"></i>Mood Distribution</h6>
         </div>
         <div class="card-body">
           <div style="position: relative; height: 300px">
@@ -150,13 +135,7 @@
             <div
               id="moodPieEmpty"
               class="d-none position-absolute text-center text-muted"
-              style="
-                inset: 0;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
-            >
+              style="inset: 0; display: flex; align-items: center; justify-content: center">
               No mood data for this period.
             </div>
           </div>
@@ -168,13 +147,13 @@
   <!-- LOGS + INSIGHTS -->
   <div class="row">
     <div class="col-lg-8 mb-4">
-      <div class="card shadow">
+      <div class="card shadow h-100">
         <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">Recent Mood Logs</h6>
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-list-ul mr-2"></i>Recent Mood Logs</h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
           <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+            <table class="table table-bordered table-hover mb-0">
               <thead class="thead-light">
                 <tr>
                   <th>Date</th>
@@ -187,9 +166,7 @@
               </thead>
               <tbody id="moodTableBody">
                 <tr>
-                  <td colspan="6" class="text-center text-muted py-4">
-                    Loading...
-                  </td>
+                  <td colspan="6" class="text-center text-muted py-4">Loading...</td>
                 </tr>
               </tbody>
             </table>
@@ -199,9 +176,9 @@
     </div>
 
     <div class="col-lg-4 mb-4">
-      <div class="card shadow">
+      <div class="card shadow h-100">
         <div class="card-header py-3">
-          <h6 class="m-0 font-weight-bold text-primary">AI Insights</h6>
+          <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-lightbulb mr-2"></i>AI Insights</h6>
         </div>
         <div class="card-body" id="moodInsights">
           <div class="text-muted">Loading insights...</div>
@@ -209,4 +186,5 @@
       </div>
     </div>
   </div>
+
 </section>

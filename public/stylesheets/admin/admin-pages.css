@@ -1,0 +1,353 @@
+/* =========================================================
+   SMARTWORK ADMIN PAGES – shared theme (matches Dashboard)
+   Load this AFTER sb-admin-2 / bootstrap / your dashboard css.
+========================================================= */
+
+:root {
+  --sw-green: #2d5a3d;
+  --sw-green-2: #1f7a4d;
+  --sw-dark: #153629;
+  --sw-light: #e9f3eb;
+  --sw-text: #26332b;
+  --sw-muted: #77827a;
+  --sw-border: #e4e9e5;
+  --sw-shadow: 0 6px 20px rgba(21, 54, 41, 0.08);
+}
+
+/* ---------- PAGE HEADER (replaces the plain gray title) ---------- */
+.sw-page-header {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+  border-left: 5px solid var(--sw-green);
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  box-shadow: var(--sw-shadow);
+}
+
+.sw-page-header::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(45, 90, 61, 0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.sw-header-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
+}
+
+.sw-header-icon {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 15px;
+  font-size: 22px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--sw-green), var(--sw-green-2));
+  box-shadow: 0 6px 14px rgba(45, 90, 61, 0.3);
+}
+
+.sw-page-header h2 {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--sw-dark);
+  margin: 0 0 4px;
+}
+
+.sw-page-header p {
+  margin: 0;
+  color: var(--sw-muted);
+  font-size: 14px;
+}
+
+.sw-header-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.sw-header-actions .form-control {
+  width: auto;
+  border-radius: 10px;
+}
+
+/* ---------- CARDS ---------- */
+.admin-section .card {
+  border: 1px solid var(--sw-border);
+  border-radius: 14px;
+  box-shadow: var(--sw-shadow) !important;
+  overflow: hidden;
+}
+
+.admin-section .card.border-left-primary,
+.admin-section .card.border-left-success,
+.admin-section .card.border-left-info,
+.admin-section .card.border-left-warning,
+.admin-section .card.border-left-danger {
+  border-top: 1px solid var(--sw-border);
+  border-right: 1px solid var(--sw-border);
+  border-bottom: 1px solid var(--sw-border);
+}
+
+.admin-section .card-header {
+  background: #f8faf8;
+  border-bottom: 1px solid var(--sw-border);
+  padding: 16px 22px;
+}
+
+.admin-section .card-header h6 {
+  font-size: 15px;
+}
+
+.admin-section .card-footer {
+  background: #fff !important;
+  border-top: 1px solid var(--sw-border);
+  padding: 14px 22px;
+}
+
+.admin-section .card-body .h3,
+.admin-section .card-body .h4 {
+  color: var(--sw-dark) !important;
+}
+
+/* ---------- TABLES ---------- */
+.admin-section .table {
+  color: var(--sw-text);
+  margin-bottom: 0;
+}
+
+.admin-section .table-bordered,
+.admin-section .table-bordered td,
+.admin-section .table-bordered th {
+  border-left: 0;
+  border-right: 0;
+}
+
+.admin-section .table-bordered {
+  border-top: 0;
+}
+
+.admin-section .table thead th,
+.admin-section .thead-light th {
+  background: #f4f7f5;
+  color: #5b6a61;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 14px 16px;
+  border-top: 0;
+  border-bottom: 1px solid var(--sw-border);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.admin-section .table tbody td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  font-size: 14px;
+  border-top: 0;
+  border-bottom: 1px solid #edf0ed;
+}
+
+.admin-section .table-hover tbody tr:hover {
+  background: #f6faf7;
+}
+
+/* ---------- BUTTONS ---------- */
+.admin-section .btn,
+.modal .btn {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.admin-section .btn-sm {
+  border-radius: 8px;
+}
+
+.admin-section .btn-primary,
+.modal .btn-primary {
+  background: var(--sw-green);
+  border-color: var(--sw-green);
+  color: #fff;
+}
+
+.admin-section .btn-primary:hover,
+.admin-section .btn-primary:focus,
+.modal .btn-primary:hover {
+  background: var(--sw-dark);
+  border-color: var(--sw-dark);
+}
+
+.admin-section .btn-outline-primary {
+  color: var(--sw-green);
+  border-color: var(--sw-green);
+  background: #fff;
+}
+
+.admin-section .btn-outline-primary:hover {
+  background: var(--sw-green);
+  color: #fff;
+}
+
+.admin-section .btn-success,
+.modal .btn-success {
+  background: var(--sw-green-2);
+  border-color: var(--sw-green-2);
+}
+
+.admin-section .btn-success:hover,
+.modal .btn-success:hover {
+  background: var(--sw-dark);
+  border-color: var(--sw-dark);
+}
+
+.admin-section .btn-outline-success {
+  color: var(--sw-green-2);
+  border-color: var(--sw-green-2);
+}
+
+.admin-section .btn-outline-success:hover {
+  background: var(--sw-green-2);
+  color: #fff;
+}
+
+/* ---------- FORMS ---------- */
+.admin-section .form-control,
+.modal .form-control,
+.modal .custom-select {
+  border: 1px solid var(--sw-border);
+  border-radius: 10px;
+  background-color: #f9fbf9;
+  min-height: 40px;
+}
+
+.admin-section .form-control:focus,
+.modal .form-control:focus {
+  border-color: var(--sw-green);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(45, 90, 61, 0.15);
+}
+
+.admin-section .input-group-text,
+.modal .input-group-text {
+  background: var(--sw-light);
+  border: 1px solid var(--sw-border);
+  color: var(--sw-green);
+  border-radius: 10px 0 0 10px;
+}
+
+.modal .input-group > .form-control:not(:last-child) {
+  border-radius: 10px 0 0 10px;
+}
+
+.modal .input-group-append .btn {
+  border-radius: 0 10px 10px 0;
+}
+
+.admin-section label,
+.modal label {
+  font-weight: 600;
+  color: var(--sw-text);
+  font-size: 13px;
+}
+
+/* ---------- PAGINATION & BADGES ---------- */
+.admin-section .page-link {
+  color: var(--sw-green);
+  border-color: var(--sw-border);
+}
+
+.admin-section .page-item.active .page-link {
+  background: var(--sw-green);
+  border-color: var(--sw-green);
+  color: #fff;
+}
+
+.admin-section .badge-primary {
+  background: var(--sw-green);
+  border-radius: 999px;
+}
+
+/* ---------- MODALS (they get moved to <body>, so no .admin-section) ---------- */
+.modal-content {
+  border: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(21, 54, 41, 0.3);
+}
+
+.modal-header.bg-primary,
+.modal-header.bg-success {
+  background: linear-gradient(135deg, var(--sw-dark), var(--sw-green)) !important;
+  border-bottom: 0;
+  padding: 18px 24px;
+}
+
+.modal-header .modal-title {
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 22px 24px;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--sw-border);
+  padding: 14px 24px;
+}
+
+.modal .card {
+  border-radius: 12px;
+  border: 1px solid var(--sw-border);
+  border-left-width: 4px;
+}
+
+.modal .card-header {
+  background: #f8faf8 !important;
+}
+
+/* ---------- LEADERBOARD: align with the same look ---------- */
+#adminLeaderboard .leaderboard-header {
+  background: #fff;
+  border-left: 5px solid var(--lb-green, #2d5a3d);
+  border-radius: 16px;
+  padding: 22px 26px;
+  box-shadow: var(--sw-shadow);
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 650px) {
+  .sw-page-header {
+    padding: 18px;
+  }
+  .sw-header-actions,
+  .sw-header-actions .btn,
+  .sw-header-actions .form-control {
+    width: 100%;
+  }
+  .sw-page-header h2 {
+    font-size: 22px;
+  }
+}

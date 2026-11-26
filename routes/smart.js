@@ -7,14 +7,29 @@ const userRouter = express.Router();
 const adminRouter = express.Router();
 
 /* ---------- settings: adjust to your schema ---------- */
-const USERS_SQL = `SELECT uid, name FROM users WHERE role = 'user'`;
+// Every row in `users` is a regular user (admins live in master_users)
+const USERS_SQL = `SELECT uid, name FROM users`;
 const CAPACITY = 20;          // workload points that equal 100%
 const STRESS_Z = 2;           // |z| needed to flag stress
 const PRODUCTIVITY_Z = 1.5;   // |z| needed to flag productivity
 
+function fail(res, err) {
+    console.error(err);
+    const status = err.status || 500;
+    res.status(status).json({
+        error: status === 500 ? "Something went wrong. Please try again." : err.message
+    });
+}
+
+/* Admin check: accepts every shape the login saves.
+   (app.js already blocks non-admins from /admindashboard.) */
 function requireAdmin(req, res, next) {
-    const role = String(req.session?.user?.role || "").toLowerCase();
-    if (role !== "admin") return res.status(403).json({ error: "Admin only." });
+    const s = req.session || {};
+    const role = String(s.roleName || s.user?.role || s.role || "").toLowerCase();
+
+    if (!s.userId || (role !== "admin" && s.isAdmin !== true)) {
+        return res.status(403).json({ error: "Admin only." });
+    }
     next();
 }
 
@@ -44,8 +59,7 @@ userRouter.get("/api/focus", async (req, res) => {
         res.set("Cache-Control", "no-store");
         res.json(await focusFor(getUid(req)));
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        fail(res, err);
     }
 });
 
@@ -63,6 +77,14 @@ function limited(uid) {
     hits.set(uid, list);
     return list.length > 15;
 }
+
+// Drop stale entries so the map doesn't grow forever
+setInterval(() => {
+    const now = Date.now();
+    for (const [uid, list] of hits) {
+        if (!list.some(t => now - t < 60000)) hits.delete(uid);
+    }
+}, 5 * 60 * 1000).unref();
 
 function contextText(f) {
     const line = (t, i) =>
@@ -134,7 +156,7 @@ userRouter.post("/api/assistant", async (req, res) => {
 
         if (process.env.ANTHROPIC_API_KEY) {
             try {
-                reply = await askClaude(f, req.body?.history || [], message);
+                reply = await askClaude(f, Array.isArray(req.body?.history) ? req.body.history : [], message);
             } catch (e) {
                 console.error("Assistant AI error:", e.message);
             }
@@ -142,8 +164,7 @@ userRouter.post("/api/assistant", async (req, res) => {
 
         res.json({ reply: reply || offlineReply(f), ai: !!reply });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        fail(res, err);
     }
 });
 
@@ -192,8 +213,7 @@ adminRouter.get("/api/team/heatmap", requireAdmin, async (req, res) => {
         res.set("Cache-Control", "no-store");
         res.json({ rows });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        fail(res, err);
     }
 });
 
@@ -271,8 +291,7 @@ adminRouter.get("/api/team/anomalies", requireAdmin, async (req, res) => {
         res.set("Cache-Control", "no-store");
         res.json({ anomalies, notes });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        fail(res, err);
     }
 });
 

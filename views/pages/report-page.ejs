@@ -1,0 +1,235 @@
+<%# ADMIN REPORTS SECTION
+    Saved as report-page.ejs in the same folder as the admin dashboard view.
+    The dashboard view wraps it in <section id="reportsSection">. Data comes from GET /admindashboard/api/reports %>
+
+<div class="reports-page">
+
+    <!-- Title + filters -->
+    <div class="rp-card rp-toolbar">
+        <div>
+            <h2 class="rp-title"><i class="fas fa-chart-pie"></i> Reports</h2>
+            <p class="rp-sub">Team productivity summary for the selected dates.</p>
+        </div>
+
+        <form id="rpFilter" class="rp-filter">
+            <label>From <input type="date" id="rpFrom" required></label>
+            <label>To <input type="date" id="rpTo" required></label>
+            <button type="submit" class="rp-btn rp-btn-primary"><i class="fas fa-filter"></i> Generate</button>
+            <button type="button" id="rpCsv" class="rp-btn"><i class="fas fa-file-csv"></i> CSV</button>
+            <button type="button" id="rpPrint" class="rp-btn"><i class="fas fa-print"></i> Print</button>
+        </form>
+    </div>
+
+    <div id="rpMsg" class="rp-msg d-none"></div>
+
+    <!-- Summary cards -->
+    <div class="rp-stats">
+        <div class="rp-stat"><span>Total Users</span><strong id="rpUsers">-</strong></div>
+        <div class="rp-stat"><span>Tasks Completed</span><strong id="rpDone">-</strong></div>
+        <div class="rp-stat"><span>Completion Rate</span><strong id="rpRate">-</strong></div>
+        <div class="rp-stat"><span>Work Hours</span><strong id="rpHours">-</strong></div>
+        <div class="rp-stat"><span>Average Mood</span><strong id="rpMood">-</strong></div>
+    </div>
+
+    <!-- Per-user table -->
+    <div class="rp-card">
+        <h3 class="rp-h3">Per-user report</h3>
+        <div class="rp-table-wrap">
+            <table class="rp-table" id="rpTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th class="num">Tasks</th>
+                        <th class="num">Completed</th>
+                        <th class="num">Rate</th>
+                        <th class="num">Work hrs</th>
+                        <th class="num">Avg mood</th>
+                    </tr>
+                </thead>
+                <tbody id="rpBody">
+                    <tr><td colspan="8" class="rp-empty">Choose dates and press Generate.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    #reportsSection { --rp-green: #1f8a56; --rp-dark: #153a2a; --rp-border: #d3e4da; --rp-muted: #62786d; }
+    #reportsSection .rp-card { background: #fff; border: 1px solid var(--rp-border); border-radius: 16px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 6px 18px rgba(20, 90, 50, .06); }
+    #reportsSection .rp-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; border-left: 5px solid var(--rp-green); }
+    #reportsSection .rp-title { margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--rp-dark); }
+    #reportsSection .rp-title i { color: var(--rp-green); margin-right: 6px; }
+    #reportsSection .rp-sub { margin: 4px 0 0; color: var(--rp-muted); }
+    #reportsSection .rp-h3 { margin: 0 0 .8rem; font-size: 1.05rem; font-weight: 700; color: var(--rp-dark); }
+    #reportsSection .rp-filter { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; }
+    #reportsSection .rp-filter label { display: flex; flex-direction: column; font-size: .78rem; font-weight: 700; color: var(--rp-muted); margin: 0; }
+    #reportsSection .rp-filter input { height: 40px; padding: 0 10px; border: 1px solid var(--rp-border); border-radius: 10px; background: #f3f9f5; }
+    #reportsSection .rp-btn { height: 40px; padding: 0 14px; border: 1px solid var(--rp-border); border-radius: 10px; background: #fff; color: var(--rp-dark); font-weight: 700; cursor: pointer; }
+    #reportsSection .rp-btn:hover { background: #eef7f1; }
+    #reportsSection .rp-btn-primary { background: var(--rp-green); border-color: var(--rp-green); color: #fff; }
+    #reportsSection .rp-btn-primary:hover { background: #17714a; }
+    #reportsSection .rp-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    #reportsSection .rp-stat { background: #fff; border: 1px solid var(--rp-border); border-radius: 14px; padding: 1rem 1.1rem; box-shadow: 0 6px 18px rgba(20, 90, 50, .06); }
+    #reportsSection .rp-stat span { display: block; font-size: .75rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--rp-muted); }
+    #reportsSection .rp-stat strong { display: block; margin-top: 4px; font-size: 1.8rem; color: var(--rp-green); }
+    #reportsSection .rp-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    #reportsSection .rp-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+    #reportsSection .rp-table th { background: var(--rp-dark); color: #fff; padding: .65rem .8rem; font-size: .8rem; text-align: left; white-space: nowrap; }
+    #reportsSection .rp-table td { padding: .65rem .8rem; border-bottom: 1px solid var(--rp-border); }
+    #reportsSection .rp-table .num { text-align: right; }
+    #reportsSection .rp-table tbody tr:hover { background: #f3f9f5; }
+    #reportsSection .rp-empty { text-align: center; color: var(--rp-muted); padding: 1.5rem; }
+    #reportsSection .rp-msg { padding: .7rem 1rem; border-radius: 10px; margin-bottom: 1rem; background: #fdecea; color: #a12622; }
+    @media (max-width: 767.98px) {
+        #reportsSection .rp-filter { width: 100%; }
+        #reportsSection .rp-filter label { flex: 1 1 130px; }
+        #reportsSection .rp-btn { flex: 1 1 auto; }
+        #reportsSection .rp-stat strong { font-size: 1.5rem; }
+    }
+</style>
+
+<script>
+(function () {
+    var root = document.getElementById("reportsSection");
+    if (!root) return;
+
+    var API = "/admindashboard/api/reports";
+    var rows = [];
+    var range = {};
+
+    var $ = function (id) { return document.getElementById(id); };
+
+    function esc(v) {
+        return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+    }
+
+    function ymd(d) {
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        return d.getFullYear() + "-" + m + "-" + day;
+    }
+
+    function hrs(min) { return (min / 60).toFixed(1); }
+
+    function showError(msg) {
+        var box = $("rpMsg");
+        box.textContent = msg || "";
+        box.classList.toggle("d-none", !msg);
+    }
+
+    function render(data) {
+        var s = data.summary;
+        rows = data.users;
+        range = data.range;
+
+        $("rpUsers").textContent = s.totalUsers;
+        $("rpDone").textContent = s.tasksDone + " / " + s.tasksTotal;
+        $("rpRate").textContent = s.completionRate + "%";
+        $("rpHours").textContent = hrs(s.workMinutes);
+        $("rpMood").textContent = s.avgMood === null ? "-" : s.avgMood + " / 5";
+
+        var body = $("rpBody");
+        if (!rows.length) {
+            body.innerHTML = '<tr><td colspan="8" class="rp-empty">No data for this period.</td></tr>';
+            return;
+        }
+
+        body.innerHTML = rows.map(function (u, i) {
+            var rate = u.tasksTotal ? Math.round((u.tasksDone / u.tasksTotal) * 100) + "%" : "-";
+            return "<tr>" +
+                "<td>" + (i + 1) + "</td>" +
+                "<td>" + esc(u.name) + "</td>" +
+                "<td>" + esc(u.email) + "</td>" +
+                '<td class="num">' + u.tasksTotal + "</td>" +
+                '<td class="num">' + u.tasksDone + "</td>" +
+                '<td class="num">' + rate + "</td>" +
+                '<td class="num">' + hrs(u.workMinutes) + "</td>" +
+                '<td class="num">' + (u.avgMood === null ? "-" : u.avgMood) + "</td>" +
+                "</tr>";
+        }).join("");
+    }
+
+    function load() {
+        var from = $("rpFrom").value;
+        var to = $("rpTo").value;
+        showError("");
+        $("rpBody").innerHTML = '<tr><td colspan="8" class="rp-empty">Loading...</td></tr>';
+
+        fetch(API + "?from=" + encodeURIComponent(from) + "&to=" + encodeURIComponent(to), {
+            headers: { Accept: "application/json" },
+            credentials: "same-origin"
+        })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, body: j }; }); })
+            .then(function (res) {
+                if (!res.ok || !res.body.success) throw new Error(res.body.message || "Request failed.");
+                render(res.body);
+            })
+            .catch(function (err) {
+                $("rpBody").innerHTML = '<tr><td colspan="8" class="rp-empty">Could not load the report.</td></tr>';
+                showError(err.message);
+            });
+    }
+
+    function downloadCsv() {
+        if (!rows.length) { showError("Generate a report first."); return; }
+        var q = function (v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; };
+        var lines = [["Name", "Email", "Tasks", "Completed", "Work hours", "Avg mood"].map(q).join(",")];
+        rows.forEach(function (u) {
+            lines.push([u.name, u.email, u.tasksTotal, u.tasksDone, hrs(u.workMinutes), u.avgMood == null ? "" : u.avgMood].map(q).join(","));
+        });
+        var blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "smartwork-report-" + range.from + "-to-" + range.to + ".csv";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(a.href);
+    }
+
+    function printReport() {
+        if (!rows.length) { showError("Generate a report first."); return; }
+        var w = window.open("", "_blank");
+        if (!w) { showError("Allow pop-ups to print."); return; }
+        var trs = rows.map(function (u, i) {
+            return "<tr><td>" + (i + 1) + "</td><td>" + esc(u.name) + "</td><td>" + esc(u.email) + "</td><td>" +
+                u.tasksTotal + "</td><td>" + u.tasksDone + "</td><td>" + hrs(u.workMinutes) + "</td><td>" +
+                (u.avgMood == null ? "-" : u.avgMood) + "</td></tr>";
+        }).join("");
+        w.document.write(
+            "<html><head><title>SmartWork Report</title><style>" +
+            "body{font-family:Arial,sans-serif;padding:24px;color:#17302a}h1{margin:0 0 4px}" +
+            "table{width:100%;border-collapse:collapse;margin-top:16px}" +
+            "th{background:#153a2a;color:#fff;text-align:left}th,td{padding:8px;border:1px solid #d3e4da;font-size:13px}" +
+            "</style></head><body><h1>SmartWork Report</h1><div>" + esc(range.from) + " to " + esc(range.to) + "</div>" +
+            "<table><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Tasks</th><th>Completed</th><th>Work hrs</th><th>Avg mood</th></tr></thead><tbody>" +
+            trs + "</tbody></table></body></html>"
+        );
+        w.document.close();
+        w.focus();
+        w.print();
+    }
+
+    // Default range: last 30 days
+    var now = new Date();
+    var ago = new Date(Date.now() - 29 * 86400000);
+    $("rpFrom").value = ymd(ago);
+    $("rpTo").value = ymd(now);
+
+    $("rpFilter").addEventListener("submit", function (e) { e.preventDefault(); load(); });
+    $("rpCsv").addEventListener("click", downloadCsv);
+    $("rpPrint").addEventListener("click", printReport);
+
+    // The dashboard script calls this when the Reports menu is opened or refreshed
+    window.AdminReports = { load: function () { load(); return Promise.resolve(); } };
+
+    // If the dashboard already opened this section before this script ran, load now
+    if (!root.classList.contains("d-none")) load();
+})();
+</script>

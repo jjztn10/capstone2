@@ -1,0 +1,268 @@
+/* =====================================================
+   SMARTWORK RESPONSIVE STYLES
+   Phones, tablets, laptops, desktops, large monitors.
+   Load this file LAST so it can override the others.
+
+   Breakpoints (desktop-first, max-width):
+     1399px  small desktops / laptops
+     1199px  tablets landscape / small laptops
+      991px  tablets portrait
+      767px  large phones / small tablets
+      575px  phones
+      399px  small phones
+   Large screens (min-width):
+     1600px  large monitors
+     2200px  2K / 4K monitors
+===================================================== */
+
+/* ---------- Base safety (all sizes) ---------- */
+html { -webkit-text-size-adjust: 100%; }
+
+img,
+video,
+canvas,
+svg { max-width: 100%; }
+
+img { height: auto; }
+
+#wrapper,
+#content-wrapper { max-width: 100%; }
+
+/* lets flex children shrink instead of forcing sideways scroll */
+#content-wrapper,
+#content,
+main.container-fluid { min-width: 0; }
+
+main.container-fluid { overflow-x: hidden; }
+
+.table-responsive { -webkit-overflow-scrolling: touch; }
+
+/* SweetAlert2 popups never wider than the screen */
+.swal2-popup { max-width: 92vw; }
+
+/* =====================================================
+   LARGE MONITORS
+===================================================== */
+@media (min-width: 1600px) {
+  main.container-fluid {
+    max-width: 1560px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 2200px) {
+  html { font-size: 18px; }
+
+  main.container-fluid { max-width: 1900px; }
+}
+
+@media (min-width: 3000px) {
+  html { font-size: 22px; }
+
+  main.container-fluid { max-width: 2400px; }
+}
+
+/* =====================================================
+   SMALL DESKTOPS / LAPTOPS  (<= 1399px)
+===================================================== */
+@media (max-width: 1399.98px) {
+  main.container-fluid {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .admin-header { padding: 1.1rem 1.4rem; }
+}
+
+/* =====================================================
+   TABLETS LANDSCAPE / SMALL LAPTOPS  (<= 1199px)
+===================================================== */
+@media (max-width: 1199.98px) {
+  .admin-header-content h1 { font-size: 1.6rem; }
+
+  .admin-header-content p { font-size: 0.95rem; }
+
+  /* long tables scroll sideways inside their card */
+  .card-body,
+  .table-wrapper,
+  .table-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* =====================================================
+   TABLETS PORTRAIT  (<= 991px)
+===================================================== */
+@media (max-width: 991.98px) {
+  main.container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .admin-header {
+    gap: 12px;
+    padding: 1rem 1.2rem;
+    border-radius: 16px;
+  }
+
+  .admin-header-content h1 { font-size: 1.4rem; }
+
+  /* chart containers keep a sensible height */
+  canvas { max-height: 320px; }
+
+  .modal-dialog { margin: 1rem auto; }
+}
+
+/* =====================================================
+   LARGE PHONES / SMALL TABLETS  (<= 767px)
+===================================================== */
+@media (max-width: 767.98px) {
+  main.container-fluid {
+    padding: 0.75rem 0.75rem 1.25rem !important;
+  }
+
+  /* Header: title on top, profile underneath */
+  .admin-header {
+    flex-wrap: wrap;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+  }
+
+  .admin-header-title { flex: 1 1 100%; gap: 12px; }
+
+  .admin-header-right {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .admin-header-icon { transform: scale(0.85); transform-origin: left center; }
+
+  .admin-header-content h1 { font-size: 1.2rem; line-height: 1.2; }
+
+  .admin-header-content p { font-size: 0.85rem; margin-bottom: 0; }
+
+  .profile-info h6 { font-size: 0.9rem; }
+
+  /* Headings and text */
+  h1, .h1 { font-size: 1.5rem; }
+  h2, .h2 { font-size: 1.3rem; }
+  h3, .h3 { font-size: 1.15rem; }
+
+  /* Cards and spacing */
+  .card { border-radius: 14px; }
+  .card-body { padding: 1rem; }
+
+  /* Forms are easy to tap (16px stops iOS zooming on focus) */
+  .form-control,
+  .custom-select,
+  select,
+  textarea,
+  input { font-size: 16px; }
+
+  .btn { min-height: 42px; }
+
+  /* Tables */
+  .table { font-size: 0.85rem; }
+  .table th,
+  .table td { padding: 0.55rem 0.6rem; white-space: nowrap; }
+
+  /* Modals */
+  .modal-dialog { margin: 0.5rem; max-width: calc(100% - 1rem); }
+  .modal-body { padding: 1rem; }
+
+  /* Floating buttons */
+  a.scroll-to-top { right: 12px; width: 2.5rem; height: 2.5rem; }
+
+  /* Footer */
+  .sticky-footer { padding: 1rem 0; }
+}
+
+/* =====================================================
+   PHONES  (<= 575px)
+===================================================== */
+@media (max-width: 575.98px) {
+  main.container-fluid { padding: 0.5rem 0.5rem 1rem !important; }
+
+  .admin-header-content h1 { font-size: 1.1rem; }
+
+  .admin-header-content p { display: none; }
+
+  /* make Bootstrap columns stack */
+  .row > [class*="col-"] { flex: 0 0 100%; max-width: 100%; }
+
+  /* buttons and button groups go full width */
+  .btn-block-mobile,
+  .card-body .btn { width: 100%; }
+
+  .btn-group,
+  .btn-toolbar { flex-wrap: wrap; gap: 6px; }
+
+  /* date / filter controls stack */
+  .form-inline { flex-direction: column; align-items: stretch; }
+  .form-inline .form-control { width: 100%; margin-bottom: 8px; }
+
+  .modal-dialog { margin: 0.25rem; }
+
+  .swal2-popup { width: 94vw !important; padding: 1rem !important; }
+}
+
+/* =====================================================
+   SMALL PHONES  (<= 399px)
+===================================================== */
+@media (max-width: 399.98px) {
+  html { font-size: 14px; }
+
+  /* only the avatar on very small screens */
+  .profile-info { display: none; }
+
+  .admin-header { padding: 0.75rem; }
+
+  .card-body { padding: 0.8rem; }
+}
+
+/* =====================================================
+   PHONES IN LANDSCAPE (short screens)
+===================================================== */
+@media (max-height: 480px) and (orientation: landscape) {
+  .admin-header { padding: 0.6rem 1rem; }
+
+  .admin-header-content p { display: none; }
+
+  .modal-dialog { margin: 0.5rem auto; }
+
+  .modal-content { max-height: 92vh; overflow-y: auto; }
+}
+
+/* =====================================================
+   TOUCH DEVICES (bigger tap targets, no sticky hover)
+===================================================== */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link,
+  .dropdown-item,
+  .btn,
+  .page-link { min-height: 42px; display: flex; align-items: center; }
+
+  .btn:hover { transform: none; }
+}
+
+/* =====================================================
+   NOTCHED PHONES (safe areas)
+===================================================== */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* =====================================================
+   PRINT
+===================================================== */
+@media print {
+  .sidebar,
+  .scroll-to-top,
+  .admin-header-right,
+  .sticky-footer { display: none !important; }
+
+  #content-wrapper { width: 100% !important; margin: 0 !important; }
+}

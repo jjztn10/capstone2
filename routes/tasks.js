@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const router = express.Router();
 
 const { Query } = require("../database/db-helper");
-const { getUid } = require("../middleware/current-user");
+const { getUid, apiError } = require("../middleware/current-user");
 
 /* ==========================================================
    HELPERS
@@ -52,25 +52,35 @@ function clean(body = {}) {
     };
 }
 
-const fail = (res, err) => {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-};
-
 // Every API route needs a logged-in user. Returns the uid, or sends 401.
 function requireUid(req, res) {
-    const uid = getUid(req);
-    if (uid === undefined || uid === null || uid === "") {
+    try {
+        return getUid(req);
+    } catch (err) {
         res.status(401).json({ error: "Please log in again." });
         return null;
     }
-    return uid;
+}
+
+// The smart panels (on-time rate, productivity) need tasks.completed_at.
+// Fill it only if that column exists, so nothing breaks if it doesn't.
+let hasCompletedAt = null;
+async function supportsCompletedAt() {
+    if (hasCompletedAt === null) {
+        const rows = await Query(`
+            SELECT COUNT(*) AS n
+            FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'tasks'
+              AND COLUMN_NAME = 'completed_at'
+        `);
+        hasCompletedAt = Number(rows[0]?.n || 0) > 0;
+    }
+    return hasCompletedAt;
 }
 
 /* ==========================================================
    TASKS PAGE
-   pageStyle "tasks.css" must exist in your static folder
-   (e.g. public/css/tasks.css) or the browser shows a 404.
 ========================================================== */
 
 router.get("/tasks", (req, res) => {
@@ -78,12 +88,12 @@ router.get("/tasks", (req, res) => {
         layout: "layout/main-layout",
         layoutType: "user",
         title: "Tasks",
-        // pageStyle: "tasks.css",   <- delete this line
         pageScript: "tasks-script",
         currentPath: req.originalUrl,
         user: req.session?.user || null
     });
 });
+
 /* ==========================================================
    GET ALL TASKS
 ========================================================== */
@@ -118,9 +128,10 @@ router.get("/api/tasks", async (req, res) => {
                      tasks.created_at DESC
         `, [uid]);
 
+        res.set("Cache-Control", "no-store");
         res.json({ tasks });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -155,7 +166,7 @@ router.post("/api/tasks", async (req, res) => {
 
         res.status(201).json({ success: true, task_id: id });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -168,15 +179,23 @@ router.put("/api/tasks/:id/complete", async (req, res) => {
         const uid = requireUid(req, res);
         if (uid === null) return;
 
-        await Query(`
+        const stamp = (await supportsCompletedAt())
+            ? ", completed_at = COALESCE(completed_at, NOW())"
+            : "";
+
+        const result = await Query(`
             UPDATE tasks
-            SET status = 'completed'
+            SET status = 'completed'${stamp}
             WHERE id = ? AND uid = ?
         `, [req.params.id, uid]);
 
+        if (!result.affectedRows) {
+            return res.status(404).json({ error: "Task not found." });
+        }
+
         res.json({ success: true });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -194,30 +213,41 @@ router.put("/api/tasks/:id", async (req, res) => {
         const { data, error } = clean(req.body);
         if (error) return res.status(400).json({ error });
 
-        await Query(`
-            UPDATE tasks
-            SET title = ?,
-                subject = ?,
-                description = ?,
-                priority_score = IF(? = (${PRIORITY_LABEL_SQL}), priority_score, ?),
-                status = ?,
-                deadline = ?
-            WHERE id = ? AND uid = ?
-        `, [
+        const stamped = await supportsCompletedAt();
+        const stampSql = stamped
+            ? `, completed_at = IF(? = 'completed', COALESCE(completed_at, NOW()), NULL)`
+            : "";
+
+        const params = [
             data.title,
             data.subject,
             data.description,
             data.priority,
             data.score,
             data.status,
-            data.deadline,
-            req.params.id,
-            uid
-        ]);
+            data.deadline
+        ];
+        if (stamped) params.push(data.status);
+        params.push(req.params.id, uid);
+
+        const result = await Query(`
+            UPDATE tasks
+            SET title = ?,
+                subject = ?,
+                description = ?,
+                priority_score = IF(? = (${PRIORITY_LABEL_SQL}), priority_score, ?),
+                status = ?,
+                deadline = ?${stampSql}
+            WHERE id = ? AND uid = ?
+        `, params);
+
+        if (!result.affectedRows) {
+            return res.status(404).json({ error: "Task not found." });
+        }
 
         res.json({ success: true });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -230,14 +260,18 @@ router.delete("/api/tasks/:id", async (req, res) => {
         const uid = requireUid(req, res);
         if (uid === null) return;
 
-        await Query(`
+        const result = await Query(`
             DELETE FROM tasks
             WHERE id = ? AND uid = ?
         `, [req.params.id, uid]);
 
+        if (!result.affectedRows) {
+            return res.status(404).json({ error: "Task not found." });
+        }
+
         res.json({ success: true });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 

@@ -4,7 +4,6 @@
 
     const API = "/admindashboard/api";
     const $ = (id) => document.getElementById(id);
-    const q = (sel) => document.querySelector(sel);
 
     const SECTIONS = {
       overview: "overviewSection",
@@ -13,15 +12,7 @@
       mood: "moodSection",
       sessions: "sessionsSection",
       leaderboard: "leaderboardSection",
-    };
-
-    const LABELS = {
-      dashboard: "overview",
-      users: "users",
-      "task management": "tasks",
-      "mood analytics": "mood",
-      "work sessions": "sessions",
-      leaderboard: "leaderboard",
+      reports: "reportsSection",
     };
 
     const GREEN = "#2d5a3d";
@@ -177,34 +168,46 @@
       );
     }
 
-    /* ---------- users (handled by the users script) ---------- */
+    /* ---------- sections handled by their own scripts ---------- */
     async function loadUsers() {
       if (window.AdminUsers) await window.AdminUsers.load();
       else console.warn("Users script is not loaded.");
     }
 
-    /* ---------- tasks (handled by the tasks script) ---------- */
     async function loadTasks() {
       if (window.AdminTasks) await window.AdminTasks.load();
       else console.warn("Tasks script is not loaded.");
     }
 
-    /* ---------- mood (handled by the mood script) ---------- */
     async function loadMood() {
       if (window.AdminMood) await window.AdminMood.load();
       else console.warn("Mood script is not loaded.");
     }
 
-    /* ---------- sessions (handled by the sessions script) ---------- */
     async function loadSessions() {
       if (window.AdminSessions) await window.AdminSessions.load();
       else console.warn("Sessions script is not loaded.");
+    }
+
+    // report-page.ejs registers window.AdminReports
+    async function loadReports() {
+      // wait up to 2 seconds in case report-page.ejs is included further down the page
+      for (let i = 0; i < 20 && !window.AdminReports; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      if (window.AdminReports) await window.AdminReports.load();
+      else
+        console.warn(
+          "Reports script is not loaded. Is report-page.ejs included in the admin dashboard view?",
+        );
     }
 
     // users / tasks / sessions scripts fire these after add / edit / delete
     ["users:changed", "tasks:changed", "sessions:changed"].forEach((evt) =>
       document.addEventListener(evt, async () => {
         loaded.overview = false;
+        loaded.reports = false; // report numbers are out of date now
         // deleting a user also deletes their tasks, mood entries and sessions
         if (evt === "users:changed") {
           loaded.tasks = false;
@@ -221,12 +224,14 @@
         }
       }),
     );
+
     const loaders = {
       overview: loadOverview,
       users: loadUsers,
       tasks: loadTasks,
       mood: loadMood,
       sessions: loadSessions,
+      reports: loadReports,
 
       leaderboard: () => {
         if (
@@ -239,7 +244,9 @@
         return Promise.resolve();
       },
     };
+
     /* ---------- navigation ---------- */
+    // returns true when the section loaded fine, false when it failed
     async function showSection(name, force) {
       if (!SECTIONS[name]) {
         name = "overview";
@@ -253,6 +260,8 @@
         }
       });
 
+      let ok = true;
+
       if (force || !loaded[name]) {
         try {
           const loader = loaders[name];
@@ -263,6 +272,7 @@
 
           loaded[name] = true;
         } catch (err) {
+          ok = false;
           console.error(err);
 
           notify("error", "Could not load data", esc(err.message));
@@ -275,28 +285,22 @@
         top: 0,
         behavior: "smooth",
       });
+
+      return ok;
     }
 
     /* ---------- sidebar clicks ---------- */
-
     document.addEventListener("click", async (e) => {
       const link = e.target.closest("#accordionSidebar .nav-link");
 
       if (!link) return;
 
-      /* ------------------------------------
-       NORMAL PAGE LINKS
-       Let the browser navigate.
-    ------------------------------------ */
-
+      // Normal page links: let the browser navigate
       if (!link.dataset.target) {
         return;
       }
 
-      /* ------------------------------------
-       DASHBOARD SECTION LINKS
-    ------------------------------------ */
-
+      // Dashboard section links
       e.preventDefault();
 
       document
@@ -333,16 +337,19 @@
       });
 
       try {
-        await showSection(currentSection, true);
+        const ok = await showSection(currentSection, true);
 
-        Swal.close();
+        // when it failed, showSection already showed the error message
+        if (ok) {
+          Swal.close();
 
-        Swal.fire({
-          icon: "success",
-          title: "Dashboard Refreshed",
-          timer: 1200,
-          showConfirmButton: false,
-        });
+          Swal.fire({
+            icon: "success",
+            title: "Dashboard Refreshed",
+            timer: 1200,
+            showConfirmButton: false,
+          });
+        }
       } catch (err) {
         Swal.close();
 
@@ -353,6 +360,7 @@
         });
       }
     });
+
     // opens the modal over whatever section is showing
     $("quickAddUser")?.addEventListener("click", () => {
       const el = $("addUserModal");
@@ -370,11 +378,12 @@
     );
 
     const start = location.hash.replace("#", "");
-    showSection(SECTIONS[start] ? start : "overview", true);
+    const first = SECTIONS[start] ? start : "overview";
+
+    showSection(first, true);
+
     const currentLink = document.querySelector(
-      '#accordionSidebar .nav-link[data-target="' +
-        SECTIONS[SECTIONS[start] ? start : "overview"] +
-        '"]',
+      '#accordionSidebar .nav-link[data-target="' + SECTIONS[first] + '"]',
     );
 
     if (currentLink) {

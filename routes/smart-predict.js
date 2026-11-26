@@ -1,17 +1,24 @@
 const express = require("express");
 const { Query } = require("../database/db-helper");
-const { getUid } = require("../middleware/current-user");
+const { getUid, apiError } = require("../middleware/current-user");
 const E = require("../services/predict-engine");
 
 const userRouter = express.Router();
 const adminRouter = express.Router();
 
 /* ---------- settings: adjust to your schema ---------- */
-const USERS_SQL = `SELECT uid, name FROM users WHERE role = 'user'`;
+// Every row in `users` is a regular user (admins live in master_users)
+const USERS_SQL = `SELECT uid, name FROM users`;
 
+/* Admin check: accepts every shape the login saves.
+   (app.js already blocks non-admins from /admindashboard.) */
 function requireAdmin(req, res, next) {
-    const role = String(req.session?.user?.role || "").toLowerCase();
-    if (role !== "admin") return res.status(403).json({ error: "Admin only." });
+    const s = req.session || {};
+    const role = String(s.roleName || s.user?.role || s.role || "").toLowerCase();
+
+    if (!s.userId || (role !== "admin" && s.isAdmin !== true)) {
+        return res.status(403).json({ error: "Admin only." });
+    }
     next();
 }
 
@@ -61,7 +68,8 @@ userRouter.get("/api/forecast", async (req, res) => {
         const risks = open
             .map(t => ({ t, r: E.overdueRisk(t, { open, onTimeRate: rate, stress }) }))
             .filter(x => x.r)
-            .map(({ t, r }) => ({ task_id: t.task_id, title: t.title, ...r }))
+            // the tasks table's key is `id` (task_id only exists as an alias elsewhere)
+            .map(({ t, r }) => ({ task_id: t.id ?? t.task_id, title: t.title, ...r }))
             .sort((a, b) => b.risk - a.risk);
 
         res.set("Cache-Control", "no-store");
@@ -72,8 +80,7 @@ userRouter.get("/api/forecast", async (req, res) => {
             onTimeRate: rate == null ? null : Number(rate.toFixed(2))
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 
@@ -177,8 +184,7 @@ adminRouter.post("/api/team/recommend", requireAdmin, async (req, res) => {
         res.set("Cache-Control", "no-store");
         res.json({ recommended: ranked[0] || null, ranked });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 

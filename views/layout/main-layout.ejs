@@ -25,8 +25,30 @@
     <%
         const lt  = (typeof layoutType  !== "undefined") ? layoutType  : "";
         const ps  = (typeof pageScript  !== "undefined") ? pageScript  : "";
-        const pst = (typeof pageStyle   !== "undefined") ? pageStyle   : "";
         const cp  = (typeof currentPath !== "undefined") ? currentPath : "";
+
+        // Page CSS: admin pages keep their files in /stylesheets/admin/,
+        // so "admin-dashboard.css" becomes "admin/admin-dashboard.css".
+        let pst = (typeof pageStyle !== "undefined" && pageStyle) ? String(pageStyle) : "";
+        if (pst && lt === "admin" && pst.indexOf("/") === -1) {
+            pst = "admin/" + pst;
+        }
+
+        // Files already linked above, so they are never linked twice
+        const alreadyLoaded = [
+            "user/dashboard.css",
+            "admin/admin-layout.css",
+            "admin/admin-navigation.css",
+            "admin/admin-cards.css",
+            "admin/admin-tables.css",
+            "admin/admin-forms.css",
+            "admin/admin-modals.css",
+            "admin/admin-charts.css",
+            "admin/admin-components.css",
+            "admin/admin-responsive.css",
+            "admin/admin-theme.css",
+            "admin/admin-pages.css"
+        ];
     %>
 
     <!-- ==========================================
@@ -50,6 +72,9 @@
         <link rel="stylesheet" href="/stylesheets/admin/admin-components.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-responsive.css">
         <link rel="stylesheet" href="/stylesheets/admin/admin-theme.css">
+
+        <!-- Shared look for Users / Tasks / Mood / Sessions / Leaderboard pages -->
+        <link rel="stylesheet" href="/stylesheets/admin/admin-pages.css">
     <% } %>
 
     <!-- ==========================================
@@ -64,10 +89,13 @@
         </style>
     <% } %>
 
-    <!-- Optional page CSS (skips a file already loaded above) -->
-    <% if (pst && pst !== "user/dashboard.css") { %>
+    <!-- Optional page CSS (skips any file already loaded above) -->
+    <% if (pst && alreadyLoaded.indexOf(pst) === -1) { %>
         <link rel="stylesheet" href="/stylesheets/<%= pst %>">
     <% } %>
+
+    <!-- Responsive styles (phones, tablets, laptops, monitors) - keep LAST -->
+    <link rel="stylesheet" href="/stylesheets/responsive.css">
 
 </head>
 
@@ -94,9 +122,14 @@
                 </main>
             </div>
 
-            <% if (lt === "admin") { %>
-                <%- include("../components/footer") %>
-            <% } %>
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; SmartWork <%= new Date().getFullYear() %></span>
+                    </div>
+                </div>
+            </footer>
 
         </div>
 
@@ -124,6 +157,8 @@
     <% if (/(^|\/)(dashboard|analytics|mood)-script$/.test(ps)) { %>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <% } %>
+
+    <%- include("../scripts/main-script.ejs") %>
 
     <!-- Page Script -->
     <% if (ps) { %>

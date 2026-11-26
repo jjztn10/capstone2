@@ -1,128 +1,234 @@
 <!-- TEAM WORKLOAD VS STRESS + ANOMALIES (admin overview) -->
-<div class="card shadow mb-4" id="teamInsights">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <strong><i class="fas fa-fire" style="color:#2d5a3d"></i> Team workload vs stress</strong>
-        <button class="btn btn-sm btn-success" id="btnTeamRefresh" type="button">
-            <i class="fas fa-sync-alt"></i> Refresh
-        </button>
+<div class="admin-section" id="teamInsightsWrap">
+  <div class="card shadow mb-4" id="teamInsights">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+      <div>
+        <strong class="text-dark">
+          <i class="fas fa-fire mr-2" style="color: #2d5a3d"></i>Team workload vs stress
+        </strong>
+        <div class="small text-muted">How busy and how stressed each person is compared with their own normal.</div>
+      </div>
+      <button class="btn btn-sm btn-primary shadow-sm mt-2 mt-md-0" id="btnTeamRefresh" type="button">
+        <i class="fas fa-sync-alt mr-2"></i>Refresh
+      </button>
     </div>
 
     <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-sm mb-0">
-                <thead>
-                    <tr>
-                        <th>User</th>
-                        <th>Open</th>
-                        <th>Overdue</th>
-                        <th style="min-width:140px">Workload</th>
-                        <th>Stress (7d)</th>
-                        <th>Last 7 days</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="teamBody">
-                    <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
-                </tbody>
-            </table>
-        </div>
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>User</th>
+              <th>Open</th>
+              <th>Overdue</th>
+              <th style="min-width: 140px">Workload</th>
+              <th>Stress (7d)</th>
+              <th>Last 7 days</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="teamBody">
+            <tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-        <hr>
+      <hr />
 
-        <h6 class="font-weight-bold mb-2">Unusual changes (z-score vs each person's own normal)</h6>
-        <div id="anomalyList" class="text-muted">Loading...</div>
-        <div id="anomalyNotes" class="small text-muted mt-2"></div>
+      <h6 class="font-weight-bold mb-2">
+        <i class="fas fa-bolt mr-2 text-warning"></i>Unusual changes
+        <small class="text-muted font-weight-normal">(z-score vs each person's own normal)</small>
+      </h6>
+      <div id="anomalyList" class="text-muted">Loading...</div>
+      <div id="anomalyNotes" class="small text-muted mt-2"></div>
     </div>
+  </div>
 </div>
 
 <script>
-(() => {
+  (() => {
     "use strict";
 
-    const BASE = "/admindashboard";          // your admin route prefix
+    const wrap = document.getElementById("teamInsightsWrap");
+    if (!wrap || wrap.dataset.initialized === "true") return;
+    wrap.dataset.initialized = "true";
+
+    const BASE = "/admindashboard"; // your admin route prefix
+    const GREEN = "#2d5a3d";
 
     const $ = (id) => document.getElementById(id);
 
-    const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c =>
+    const esc = (v) =>
+      String(v ?? "").replace(/[&<>"']/g, (c) =>
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
     // 1 (calm) = green ... 10 = red
-    const heat = (v) => v == null ? "#e5e7eb" : `hsl(${Math.round(120 - (v - 1) / 9 * 120)},65%,62%)`;
+    const heat = (v) =>
+      v == null ? "#e5e7eb" : `hsl(${Math.round(120 - ((v - 1) / 9) * 120)},65%,62%)`;
 
     const STATUS = {
-        overloaded: '<span class="badge badge-danger">Overloaded</span>',
-        watch:      '<span class="badge badge-warning">Watch</span>',
-        ok:         '<span class="badge badge-success">OK</span>'
+      overloaded: '<span class="badge badge-danger">Overloaded</span>',
+      watch: '<span class="badge badge-warning">Watch</span>',
+      ok: '<span class="badge badge-success">OK</span>',
     };
 
     async function get(path) {
-        const res = await fetch(BASE + path, { credentials: "same-origin", cache: "no-store" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || "Request failed (" + res.status + ")");
-        return data;
+      const res = await fetch(BASE + path, {
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const err = new Error(data.error || "Request failed (" + res.status + ")");
+        err.status = res.status;
+        throw err;
+      }
+      return data;
+    }
+
+    function friendly(err) {
+      if (err.status === 403) {
+        return "Your session is not recognised as an admin by the team API (403). Sign out and sign in again with an admin account.";
+      }
+      if (err.status === 404) {
+        return "The team API route was not found (404). Check that it is mounted under " + BASE + "/api/team.";
+      }
+      return err.message;
     }
 
     function renderHeatmap(rows) {
-        if (!rows.length) {
-            $("teamBody").innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No users.</td></tr>`;
-            return;
-        }
+      if (!rows.length) {
+        $("teamBody").innerHTML =
+          '<tr><td colspan="7" class="text-center text-muted py-4">No users.</td></tr>';
+        return;
+      }
 
-        $("teamBody").innerHTML = rows.map(r => `
-            <tr>
-                <td><strong>${esc(r.name)}</strong></td>
-                <td>${r.openTasks}</td>
-                <td>${r.overdue}</td>
-                <td>
-                    <div class="progress" style="height:14px" title="${r.workload}%">
-                        <div class="progress-bar ${r.workload >= 70 ? "bg-danger" : r.workload >= 40 ? "bg-warning" : "bg-success"}"
-                             style="width:${r.workload}%">${r.workload}%</div>
-                    </div>
-                </td>
-                <td><span class="badge" style="background:${heat(r.stress)};color:#111">${r.stress ?? "-"}</span></td>
-                <td style="white-space:nowrap">
-                    ${r.days.map(v => `<span title="${v ?? "no entry"}" style="display:inline-block;width:18px;height:18px;margin-right:2px;border-radius:4px;background:${heat(v)}"></span>`).join("")}
-                </td>
-                <td>${STATUS[r.status] || ""}</td>
-            </tr>`).join("");
+      $("teamBody").innerHTML = rows
+        .map(
+          (r) => `
+        <tr>
+          <td><strong>${esc(r.name)}</strong></td>
+          <td>${esc(r.openTasks)}</td>
+          <td>${esc(r.overdue)}</td>
+          <td>
+            <div class="progress" style="height:14px" title="${esc(r.workload)}%">
+              <div class="progress-bar ${r.workload >= 70 ? "bg-danger" : r.workload >= 40 ? "bg-warning" : "bg-success"}"
+                   style="width:${Math.min(100, Number(r.workload) || 0)}%">${esc(r.workload)}%</div>
+            </div>
+          </td>
+          <td><span class="badge" style="background:${heat(r.stress)};color:#111">${r.stress ?? "-"}</span></td>
+          <td style="white-space:nowrap">
+            ${(r.days || [])
+              .map(
+                (v) =>
+                  `<span title="${v ?? "no entry"}" style="display:inline-block;width:18px;height:18px;margin-right:2px;border-radius:4px;background:${heat(v)}"></span>`
+              )
+              .join("")}
+          </td>
+          <td>${STATUS[r.status] || ""}</td>
+        </tr>`
+        )
+        .join("");
     }
 
     function renderAnomalies(d) {
-        const list = d.anomalies || [];
+      const list = d.anomalies || [];
 
-        $("anomalyList").innerHTML = list.length
-            ? list.map(a => `
-                <div class="mb-2">
-                    <span class="badge ${a.type === "stress"
-                        ? (a.direction === "up" ? "badge-danger" : "badge-info")
-                        : (a.direction === "down" ? "badge-warning" : "badge-success")}">
-                        ${a.type === "stress" ? "Stress" : "Productivity"} ${a.direction === "up" ? "↑" : "↓"}
-                    </span>
-                    <strong>${esc(a.name)}</strong>: ${esc(a.message)}
-                    <span class="text-muted small">(z = ${esc(a.z)})</span>
-                </div>`).join("")
-            : "No unusual changes detected. Everyone is close to their own normal.";
+      $("anomalyList").innerHTML = list.length
+        ? list
+            .map(
+              (a) => `
+          <div class="mb-2">
+            <span class="badge ${
+              a.type === "stress"
+                ? a.direction === "up" ? "badge-danger" : "badge-info"
+                : a.direction === "down" ? "badge-warning" : "badge-success"
+            }">
+              ${a.type === "stress" ? "Stress" : "Productivity"} ${a.direction === "up" ? "↑" : "↓"}
+            </span>
+            <strong>${esc(a.name)}</strong>: ${esc(a.message)}
+            <span class="text-muted small">(z = ${esc(a.z)})</span>
+          </div>`
+            )
+            .join("")
+        : "No unusual changes detected. Everyone is close to their own normal.";
 
-        $("anomalyNotes").textContent = (d.notes || []).join(" ");
+      $("anomalyNotes").textContent = (d.notes || []).join(" ");
     }
 
-    async function loadTeam() {
-        try {
-            const [h, a] = await Promise.all([get("/api/team/heatmap"), get("/api/team/anomalies")]);
-            renderHeatmap(h.rows || []);
-            renderAnomalies(a);
-        } catch (e) {
-            console.error(e);
-            $("teamBody").innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${esc(e.message)}</td></tr>`;
-            $("anomalyList").textContent = "";
+    // loadTeam(false) = quiet (page open); loadTeam(true) = Refresh button with popups
+    async function loadTeam(showPopup = false) {
+      const btn = $("btnTeamRefresh");
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+      }
+
+      if (showPopup && window.Swal) {
+        Swal.fire({
+          title: "Refreshing Team Insights",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => Swal.showLoading(),
+        });
+      }
+
+      try {
+        const [h, a] = await Promise.all([get("/api/team/heatmap"), get("/api/team/anomalies")]);
+        renderHeatmap(h.rows || []);
+        renderAnomalies(a);
+
+        if (showPopup && window.Swal) {
+          Swal.close();
+          Swal.fire({
+            icon: "success",
+            title: "Team Insights Refreshed",
+            timer: 1500,
+            showConfirmButton: false,
+          });
         }
+      } catch (e) {
+        console.error(e);
+        const msg = friendly(e);
+
+        $("teamBody").innerHTML =
+          `<tr><td colspan="7" class="text-center text-danger py-4">${esc(msg)}</td></tr>`;
+        $("anomalyList").textContent = "";
+
+        if (showPopup && window.Swal) {
+          Swal.fire({
+            icon: "error",
+            title: "Unable to load team insights",
+            text: msg,
+            confirmButtonColor: GREEN,
+          });
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh';
+        }
+      }
     }
 
-    $("btnTeamRefresh")?.addEventListener("click", loadTeam);
+    $("btnTeamRefresh")?.addEventListener("click", () => loadTeam(true));
 
-    // reload when the admin dashboard's own refresh button is used
-    $("btnRefreshDashboard")?.addEventListener("click", loadTeam);
+    // reload quietly when the dashboard's own refresh button is used
+    document.addEventListener("click", (e) => {
+      if (e.target.closest("#btnRefreshDashboard")) loadTeam(false);
+    });
 
-    loadTeam();
-})();
+    // reload quietly when tasks or users change
+    ["tasks:changed", "users:changed"].forEach((n) =>
+      document.addEventListener(n, () => loadTeam(false))
+    );
+
+    window.AdminTeamInsights = { load: loadTeam };
+
+    loadTeam(false);
+  })();
 </script>

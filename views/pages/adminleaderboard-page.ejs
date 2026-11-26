@@ -1,22 +1,26 @@
-<div id="adminLeaderboard" class="sw-leaderboard">
-  <!-- HEADER -->
-  <div class="leaderboard-header">
-    <div>
-      <h2><i class="fas fa-trophy"></i> Leaderboard</h2>
-      <p>Track user productivity, achievements, and rankings.</p>
+<div id="adminLeaderboard" class="sw-leaderboard admin-section">
+
+  <!-- PAGE HEADER -->
+  <div class="sw-page-header">
+    <div class="sw-header-left">
+      <div class="sw-header-icon"><i class="fas fa-trophy"></i></div>
+      <div>
+        <h2>Leaderboard</h2>
+        <p>Track user productivity, achievements, and rankings.</p>
+      </div>
     </div>
 
-    <button id="leaderboardRefresh" class="btn leaderboard-refresh">
-      <i class="fas fa-sync-alt"></i> Refresh
-    </button>
+    <div class="sw-header-actions">
+      <button id="leaderboardRefresh" type="button" class="btn btn-primary shadow">
+        <i class="fas fa-sync-alt mr-2"></i>Refresh
+      </button>
+    </div>
   </div>
 
   <!-- SUMMARY CARDS -->
   <div class="leaderboard-stats">
     <div class="leaderboard-stat-card">
-      <div class="stat-icon users-icon">
-        <i class="fas fa-users"></i>
-      </div>
+      <div class="stat-icon users-icon"><i class="fas fa-users"></i></div>
       <div>
         <span class="stat-label">TOTAL PARTICIPANTS</span>
         <h3 id="lbTotalUsers">0</h3>
@@ -24,9 +28,7 @@
     </div>
 
     <div class="leaderboard-stat-card">
-      <div class="stat-icon score-icon">
-        <i class="fas fa-star"></i>
-      </div>
+      <div class="stat-icon score-icon"><i class="fas fa-star"></i></div>
       <div>
         <span class="stat-label">AVERAGE SCORE</span>
         <h3 id="lbAverageScore">0</h3>
@@ -34,9 +36,7 @@
     </div>
 
     <div class="leaderboard-stat-card">
-      <div class="stat-icon winner-icon">
-        <i class="fas fa-crown"></i>
-      </div>
+      <div class="stat-icon winner-icon"><i class="fas fa-crown"></i></div>
       <div>
         <span class="stat-label">TOP PERFORMER</span>
         <h3 id="lbTopPerformer">---</h3>
@@ -44,9 +44,7 @@
     </div>
 
     <div class="leaderboard-stat-card">
-      <div class="stat-icon points-icon">
-        <i class="fas fa-chart-line"></i>
-      </div>
+      <div class="stat-icon points-icon"><i class="fas fa-chart-line"></i></div>
       <div>
         <span class="stat-label">HIGHEST SCORE</span>
         <h3 id="lbHighestScore">0</h3>
@@ -64,9 +62,7 @@
     <div id="leaderboardPodium" class="leaderboard-podium">
       <!-- SECOND PLACE -->
       <div class="podium-card podium-second">
-        <div class="podium-avatar">
-          <i class="fas fa-user"></i>
-        </div>
+        <div class="podium-avatar"><i class="fas fa-user"></i></div>
         <span class="podium-rank">2ND PLACE</span>
         <h4 id="lbSecondName">---</h4>
         <span class="podium-score" id="lbSecondScore">0 points</span>
@@ -78,9 +74,7 @@
 
       <!-- FIRST PLACE -->
       <div class="podium-card podium-first">
-        <div class="podium-avatar">
-          <i class="fas fa-crown"></i>
-        </div>
+        <div class="podium-avatar"><i class="fas fa-crown"></i></div>
         <span class="podium-rank">1ST PLACE</span>
         <h4 id="lbFirstName">---</h4>
         <span class="podium-score" id="lbFirstScore">0 points</span>
@@ -92,9 +86,7 @@
 
       <!-- THIRD PLACE -->
       <div class="podium-card podium-third">
-        <div class="podium-avatar">
-          <i class="fas fa-user"></i>
-        </div>
+        <div class="podium-avatar"><i class="fas fa-user"></i></div>
         <span class="podium-rank">3RD PLACE</span>
         <h4 id="lbThirdName">---</h4>
         <span class="podium-score" id="lbThirdScore">0 points</span>
@@ -119,19 +111,13 @@
     <div class="leaderboard-search-row">
       <div class="leaderboard-search-box">
         <i class="fas fa-search"></i>
-        <input
-          type="text"
-          id="leaderboardSearch"
-          placeholder="Search by name or email..."
-        />
-        <button type="button" id="leaderboardClearSearch">
+        <input type="text" id="leaderboardSearch" placeholder="Search by name or email..." />
+        <button type="button" id="leaderboardClearSearch" aria-label="Clear search">
           <i class="fas fa-times"></i>
         </button>
       </div>
 
-      <span id="leaderboardResultCount" class="leaderboard-result-count">
-        0 users
-      </span>
+      <span id="leaderboardResultCount" class="leaderboard-result-count">0 users</span>
     </div>
 
     <!-- TABLE -->
@@ -166,8 +152,9 @@
 
 <style>
   /* =========================================================
-   SMARTWORK LEADERBOARD
-========================================================= */
+     SMARTWORK LEADERBOARD
+     (page header comes from the shared .sw-page-header style)
+  ========================================================= */
 
   #adminLeaderboard {
     --lb-green: #2d5a3d;
@@ -179,42 +166,6 @@
 
     color: var(--lb-text);
     width: 100%;
-  }
-
-  /* HEADER */
-
-  #adminLeaderboard .leaderboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 24px;
-  }
-
-  #adminLeaderboard .leaderboard-header h2 {
-    font-size: 27px;
-    font-weight: 800;
-    color: var(--lb-dark);
-    margin: 0 0 6px;
-  }
-
-  #adminLeaderboard .leaderboard-header p {
-    color: var(--lb-muted);
-    margin: 0;
-  }
-
-  #adminLeaderboard .leaderboard-refresh {
-    background: var(--lb-green);
-    color: #fff;
-    border: 0;
-    padding: 11px 18px;
-    border-radius: 9px;
-    font-weight: 600;
-  }
-
-  #adminLeaderboard .leaderboard-refresh:hover {
-    background: var(--lb-dark);
-    color: #fff;
   }
 
   /* SUMMARY CARDS */
@@ -229,14 +180,19 @@
   #adminLeaderboard .leaderboard-stat-card {
     background: #fff;
     border: 1px solid var(--lb-border);
-    border-radius: 12px;
+    border-left: 4px solid var(--lb-green);
+    border-radius: 14px;
     padding: 22px;
     display: flex;
     align-items: center;
     gap: 16px;
     min-height: 125px;
-    box-shadow: 0 4px 12px rgba(25, 50, 35, 0.05);
+    box-shadow: 0 6px 20px rgba(21, 54, 41, 0.08);
   }
+
+  #adminLeaderboard .leaderboard-stat-card:nth-child(2) { border-left-color: #c99a2e; }
+  #adminLeaderboard .leaderboard-stat-card:nth-child(3) { border-left-color: #b88924; }
+  #adminLeaderboard .leaderboard-stat-card:nth-child(4) { border-left-color: #188b77; }
 
   #adminLeaderboard .stat-icon {
     width: 53px;
@@ -249,25 +205,10 @@
     font-size: 22px;
   }
 
-  #adminLeaderboard .users-icon {
-    color: #2d5a3d;
-    background: #e9f3eb;
-  }
-
-  #adminLeaderboard .score-icon {
-    color: #c99a2e;
-    background: #fff5df;
-  }
-
-  #adminLeaderboard .winner-icon {
-    color: #b88924;
-    background: #fff2d2;
-  }
-
-  #adminLeaderboard .points-icon {
-    color: #188b77;
-    background: #e0f4ef;
-  }
+  #adminLeaderboard .users-icon { color: #2d5a3d; background: #e9f3eb; }
+  #adminLeaderboard .score-icon { color: #c99a2e; background: #fff5df; }
+  #adminLeaderboard .winner-icon { color: #b88924; background: #fff2d2; }
+  #adminLeaderboard .points-icon { color: #188b77; background: #e0f4ef; }
 
   #adminLeaderboard .stat-label {
     font-size: 11px;
@@ -293,10 +234,10 @@
   #adminLeaderboard .leaderboard-podium-section {
     background: #fff;
     border: 1px solid var(--lb-border);
-    border-radius: 13px;
+    border-radius: 14px;
     margin-bottom: 25px;
     padding: 24px;
-    box-shadow: 0 4px 12px rgba(25, 50, 35, 0.04);
+    box-shadow: 0 6px 20px rgba(21, 54, 41, 0.08);
   }
 
   #adminLeaderboard .podium-title {
@@ -394,14 +335,8 @@
     gap: 6px;
   }
 
-  #adminLeaderboard .podium-block i {
-    font-size: 23px;
-  }
-
-  #adminLeaderboard .podium-block span {
-    font-size: 30px;
-    font-weight: 900;
-  }
+  #adminLeaderboard .podium-block i { font-size: 23px; }
+  #adminLeaderboard .podium-block span { font-size: 30px; font-weight: 900; }
 
   #adminLeaderboard .podium-block-first {
     height: 155px;
@@ -423,14 +358,15 @@
   #adminLeaderboard .leaderboard-table-card {
     background: #fff;
     border: 1px solid var(--lb-border);
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(25, 50, 35, 0.04);
+    box-shadow: 0 6px 20px rgba(21, 54, 41, 0.08);
   }
 
   #adminLeaderboard .leaderboard-table-header {
     padding: 22px 24px;
     border-bottom: 1px solid var(--lb-border);
+    background: #f8faf8;
   }
 
   #adminLeaderboard .leaderboard-table-header h3 {
@@ -464,11 +400,17 @@
     display: flex;
     align-items: center;
     border: 1px solid var(--lb-border);
-    border-radius: 8px;
+    border-radius: 10px;
     max-width: 420px;
     width: 100%;
     background: #f9fbf9;
     padding: 0 12px;
+  }
+
+  #adminLeaderboard .leaderboard-search-box:focus-within {
+    border-color: var(--lb-green);
+    box-shadow: 0 0 0 3px rgba(45, 90, 61, 0.15);
+    background: #fff;
   }
 
   #adminLeaderboard .leaderboard-search-box > i {
@@ -550,24 +492,11 @@
     color: var(--lb-green);
   }
 
-  #adminLeaderboard .rank-1 {
-    background: #fff1cd;
-    color: #9b7219;
-  }
+  #adminLeaderboard .rank-1 { background: #fff1cd; color: #9b7219; }
+  #adminLeaderboard .rank-2 { background: #e7ece9; color: #66766d; }
+  #adminLeaderboard .rank-3 { background: #f5e7dd; color: #9b6240; }
 
-  #adminLeaderboard .rank-2 {
-    background: #e7ece9;
-    color: #66766d;
-  }
-
-  #adminLeaderboard .rank-3 {
-    background: #f5e7dd;
-    color: #9b6240;
-  }
-
-  #adminLeaderboard .user-cell {
-    min-width: 190px;
-  }
+  #adminLeaderboard .user-cell { min-width: 190px; }
 
   #adminLeaderboard .user-name {
     display: block;
@@ -620,15 +549,6 @@
   }
 
   @media (max-width: 650px) {
-    #adminLeaderboard .leaderboard-header {
-      align-items: flex-start;
-      flex-direction: column;
-    }
-
-    #adminLeaderboard .leaderboard-refresh {
-      width: 100%;
-    }
-
     #adminLeaderboard .leaderboard-stats {
       grid-template-columns: 1fr;
       gap: 12px;
@@ -639,9 +559,7 @@
       padding: 17px;
     }
 
-    #adminLeaderboard .leaderboard-podium-section {
-      padding: 14px;
-    }
+    #adminLeaderboard .leaderboard-podium-section { padding: 14px; }
 
     #adminLeaderboard .leaderboard-podium {
       gap: 7px;
@@ -660,33 +578,15 @@
       font-size: 20px;
     }
 
-    #adminLeaderboard .podium-card h4 {
-      font-size: 12px;
-    }
+    #adminLeaderboard .podium-card h4 { font-size: 12px; }
+    #adminLeaderboard .podium-rank { font-size: 8px; }
+    #adminLeaderboard .podium-score { font-size: 10px; }
 
-    #adminLeaderboard .podium-rank {
-      font-size: 8px;
-    }
+    #adminLeaderboard .podium-block-first { height: 120px; }
+    #adminLeaderboard .podium-block-second { height: 90px; }
+    #adminLeaderboard .podium-block-third { height: 65px; }
 
-    #adminLeaderboard .podium-score {
-      font-size: 10px;
-    }
-
-    #adminLeaderboard .podium-block-first {
-      height: 120px;
-    }
-
-    #adminLeaderboard .podium-block-second {
-      height: 90px;
-    }
-
-    #adminLeaderboard .podium-block-third {
-      height: 65px;
-    }
-
-    #adminLeaderboard .podium-block span {
-      font-size: 23px;
-    }
+    #adminLeaderboard .podium-block span { font-size: 23px; }
 
     #adminLeaderboard .leaderboard-search-row {
       align-items: flex-start;
@@ -694,12 +594,7 @@
       padding: 14px;
     }
 
-    #adminLeaderboard .leaderboard-search-box {
-      max-width: 100%;
-    }
-
-    #adminLeaderboard .leaderboard-table-header {
-      padding: 17px;
-    }
+    #adminLeaderboard .leaderboard-search-box { max-width: 100%; }
+    #adminLeaderboard .leaderboard-table-header { padding: 17px; }
   }
 </style>

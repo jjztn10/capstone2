@@ -3,16 +3,11 @@ const crypto = require("crypto");
 const router = express.Router();
 
 const { Query } = require("../database/db-helper");
-const { getUid } = require("../middleware/current-user");
+const { getUid, apiError } = require("../middleware/current-user");
 
 /* ==========================================================
    HELPERS
 ========================================================== */
-
-const fail = (res, err) => {
-    console.error(err);
-    res.status(err.status || 500).json({ error: err.message });
-};
 
 // Looks up the real primary key of study_sessions once (name + whether
 // it is AUTO_INCREMENT), so the queries don't depend on a guessed name.
@@ -103,9 +98,10 @@ router.get("/api/session", async (req, res) => {
             WHERE uid = ? AND ended_at IS NOT NULL
         `, [uid]);
 
+        res.set("Cache-Control", "no-store");
         res.json({ sessions, summary: summary[0] });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -124,9 +120,10 @@ router.get("/api/session/tasks", async (req, res) => {
             ORDER BY priority_score DESC, deadline ASC
         `, [uid]);
 
+        res.set("Cache-Control", "no-store");
         res.json({ tasks });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -202,7 +199,7 @@ router.post("/api/session/start", async (req, res) => {
 
         res.status(201).json({ success: true, session_id: created[0]?.session_id });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 
@@ -229,7 +226,7 @@ router.put("/api/session/stop", async (req, res) => {
 
         res.json({ success: true });
     } catch (err) {
-        fail(res, err);
+        apiError(res, err);
     }
 });
 

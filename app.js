@@ -17,6 +17,10 @@ const expressLayouts = require("express-ejs-layouts");
 
 const { testConnection } = require("./database/config/db");
 const { initSession } = require("./middleware/session");
+const { requireLogin, requireRole } = require("./middleware/auth");
+
+const authRouter = require("./routes/auth");
+const indexRouter = require("./routes/index");
 const dashboardRoutes = require("./routes/dashboard");
 const tasksRoutes = require("./routes/tasks");
 const sessionRoutes = require("./routes/session");
@@ -24,11 +28,14 @@ const moodRoutes = require("./routes/mood");
 const analyticsRoutes = require("./routes/analytics");
 const leaderboardRoutes = require("./routes/leaderboard");
 const profileRoutes = require("./routes/profile");
+const adminDashboardRouter = require("./routes/admindashboard");
+const adminLeaderboardRouter = require("./routes/adminleaderboard");
+const adminReportsRouter = require("./routes/adminreports");
 
 // Smart features: focus list, assistant, team heatmap, anomalies
 const {
     userRouter: smartUserRouter,
-    adminRouter: smartAdminRouter
+    adminRouter: smartAdminRouter,
 } = require("./routes/smart");
 
 // ==========================================
@@ -59,25 +66,30 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // ==========================================
-// SESSION MIDDLEWARE
-// Use middleware/session.js as the only
-// session configuration source.
-// ==========================================
-initSession(app);
-
-// ==========================================
 // STATIC FILES
+// Before the session so images/css/js requests
+// don't each trigger a session lookup.
 // ==========================================
 app.use(express.static(path.join(__dirname, "public")));
+
+// ==========================================
+// SESSION MIDDLEWARE
+// middleware/session.js is the only session
+// configuration source.
+// ==========================================
+initSession(app);
 
 // ==========================================
 // VIEW LOCALS (available in every EJS view)
 // - currentPath: used by the sidebar for active links
 // - layoutType:  fallback only; values passed to
 //   res.render() override these defaults
+// - roleName / fullname: from the logged-in session
 // ==========================================
 app.use((req, res, next) => {
     res.locals.currentPath = req.originalUrl;
+    res.locals.roleName = req.session?.roleName || "";
+    res.locals.fullname = req.session?.fullname || "";
 
     if (req.path.startsWith("/admin")) {
         res.locals.layoutType = "admin";
@@ -90,7 +102,6 @@ app.use((req, res, next) => {
 
 console.log("ENV FILE:", path.resolve(__dirname, ".env"));
 console.log("SESSION_SECRET loaded:", Boolean(process.env.SESSION_SECRET));
-console.log("MONGODB_URL loaded:", Boolean(process.env.MONGODB_URL));
 console.log("ANTHROPIC_API_KEY loaded:", Boolean(process.env.ANTHROPIC_API_KEY));
 
 // ==========================================
@@ -105,41 +116,65 @@ testConnection()
     });
 
 // ==========================================
-// ROUTES
+// VALIDATE ROUTERS
 // ==========================================
-const indexRouter = require("./routes/index");
-const adminDashboardRouter = require("./routes/admindashboard");
-const adminLeaderboardRouter = require("./routes/adminleaderboard");
-
-// Validate routers
 const mustBeRouter = (router, file) => {
     if (typeof router !== "function") {
         throw new Error(`${file} must export an Express router.`);
     }
 };
 
+mustBeRouter(authRouter, "routes/auth.js");
 mustBeRouter(indexRouter, "routes/index.js");
 mustBeRouter(adminDashboardRouter, "routes/admindashboard.js");
 mustBeRouter(adminLeaderboardRouter, "routes/adminleaderboard.js");
+mustBeRouter(adminReportsRouter, "routes/adminreports.js");
 mustBeRouter(smartUserRouter, "routes/smart.js (userRouter)");
 mustBeRouter(smartAdminRouter, "routes/smart.js (adminRouter)");
 
-console.log("dashboardRoutes:", typeof dashboardRoutes);
-console.log("tasksRoutes:", typeof tasksRoutes);
-console.log("sessionRoutes:", typeof sessionRoutes);
-console.log("moodRoutes:", typeof moodRoutes);
-console.log("analyticsRoutes:", typeof analyticsRoutes);
-console.log("leaderboardRoutes:", typeof leaderboardRoutes);
-console.log("profileRoutes:", typeof profileRoutes);
+// ==========================================
+// PUBLIC ROUTES (no login needed)
+// ==========================================
+app.use("/auth", authRouter);
 
-// Mount routes
+// "/" sends visitors to login, or to their own home if already logged in.
+// Declared before indexRouter so it wins for the exact "/" path.
+app.get("/", (req, res) => {
+    if (!req.session?.userId) return res.redirect("/auth");
+    if (String(req.session.roleName).toLowerCase() === "admin") {
+        return res.redirect("/admindashboard");
+    }
+    return res.redirect("/userdashboard");
+});
 app.use("/", indexRouter);
 
-// Smart admin API is mounted BEFORE the admin dashboard router so a
-// catch-all or auth redirect in that router can't swallow /api/team/*
-app.use("/admindashboard", smartAdminRouter);
-app.use("/admindashboard", adminDashboardRouter);
+// Old logout URLs -> new logout
+app.get(["/logout", "/admindashboard/logout", "/userdashboard/logout"], (req, res) => {
+    res.redirect("/auth/logout");
+});
 
+// ==========================================
+// ACCESS GATES (everything below needs login + role)
+// A gate runs first for every router mounted on that prefix.
+// ==========================================
+app.use("/admindashboard", requireLogin, requireRole("admin"));
+app.use("/adminleaderboard", requireLogin, requireRole("admin"));
+app.use("/userdashboard", requireLogin, requireRole("user"));
+
+// ==========================================
+// ADMIN ROUTES
+// Smart admin API and the reports API are mounted BEFORE the admin
+// dashboard router so a catch-all or auth redirect in that router
+// can't swallow /api/team/* or /api/reports
+// ==========================================
+app.use("/admindashboard", smartAdminRouter);
+app.use("/admindashboard", adminReportsRouter);
+app.use("/admindashboard", adminDashboardRouter);
+app.use("/adminleaderboard", adminLeaderboardRouter);
+
+// ==========================================
+// USER ROUTES
+// ==========================================
 app.use("/userdashboard", dashboardRoutes);
 app.use("/userdashboard", tasksRoutes);
 app.use("/userdashboard", sessionRoutes);
@@ -149,8 +184,6 @@ app.use("/userdashboard", leaderboardRoutes);
 app.use("/userdashboard", profileRoutes);
 app.use("/userdashboard", smartUserRouter);
 
-app.use("/adminleaderboard", adminLeaderboardRouter);
-
 // ==========================================
 // 404 HANDLER
 // ==========================================
@@ -159,7 +192,7 @@ app.use((req, res) => {
         layout: false,
         title: "404",
         message: "Page Not Found",
-        error: {}
+        error: {},
     });
 });
 
@@ -173,7 +206,7 @@ app.use((err, req, res, next) => {
         layout: false,
         title: "Server Error",
         message: err.message || "Internal Server Error",
-        error: process.env.NODE_ENV === "development" ? err : {}
+        error: process.env.NODE_ENV === "development" ? err : {},
     });
 });
 

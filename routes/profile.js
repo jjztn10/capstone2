@@ -1,15 +1,15 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const router = express.Router();
 const { Query } = require("../database/db-helper");
+const { getUid, apiError } = require("../middleware/current-user");
 
 /* ==========================================
    PROFILE PAGE
 ========================================== */
 
 router.get("/profile", (req, res) => {
-
     res.render("pages/profile-page", {
         layout: "layout/main-layout",
         layoutType: "user",
@@ -17,9 +17,8 @@ router.get("/profile", (req, res) => {
         pageStyle: "profile.css",
         pageScript: "profile-script",
         currentPath: req.originalUrl,
-        user: null
+        user: req.session?.user || null
     });
-
 });
 
 /* ==========================================
@@ -27,45 +26,25 @@ router.get("/profile", (req, res) => {
 ========================================== */
 
 router.get("/api/profile", async (req, res) => {
-
     try {
-
-        const uid = 1; // Temporary test user
+        const uid = getUid(req);
 
         const rows = await Query(`
-            SELECT
-                uid,
-                name,
-                email,
-                study_streak,
-                total_points,
-                weekly_points,
-                created_at
+            SELECT uid, name, email, study_streak, total_points, weekly_points, created_at
             FROM users
             WHERE uid = ?
             LIMIT 1
         `, [uid]);
 
         if (!rows.length) {
-            return res.status(404).json({
-                error: "User not found"
-            });
+            return res.status(404).json({ error: "User not found" });
         }
 
-        res.json({
-            profile: rows[0]
-        });
-
+        res.set("Cache-Control", "no-store");
+        res.json({ profile: rows[0] });
     } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-            error: err.message
-        });
-
+        apiError(res, err);
     }
-
 });
 
 /* ==========================================
@@ -73,39 +52,31 @@ router.get("/api/profile", async (req, res) => {
 ========================================== */
 
 router.put("/api/profile", async (req, res) => {
-
     try {
-
-        const uid = 1; // Temporary test user
+        const uid = getUid(req);
         const name = String(req.body.name || "").trim();
 
         if (!name) {
-            return res.status(400).json({
-                error: "Name is required."
-            });
+            return res.status(400).json({ error: "Name is required." });
+        }
+        if (name.length > 100) {
+            return res.status(400).json({ error: "Name is too long (max 100)." });
         }
 
         await Query(`
             UPDATE users
-            SET name = ?
+            SET name = ?, updated_at = NOW()
             WHERE uid = ?
         `, [name, uid]);
 
-        res.json({
-            success: true,
-            message: "Profile updated."
-        });
+        // Keep the name in the session in sync with the database
+        if (req.session.user) req.session.user.name = name;
+        req.session.fullname = name;
 
+        res.json({ success: true, message: "Profile updated." });
     } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-            error: err.message
-        });
-
+        apiError(res, err);
     }
-
 });
 
 /* ==========================================
@@ -113,20 +84,15 @@ router.put("/api/profile", async (req, res) => {
 ========================================== */
 
 router.put("/api/profile/password", async (req, res) => {
-
     try {
-
-        const uid = 1; // Temporary test user
-
-        const {
-            currentPassword,
-            newPassword
-        } = req.body;
+        const uid = getUid(req);
+        const { currentPassword, newPassword } = req.body || {};
 
         if (!currentPassword || !newPassword) {
-            return res.status(400).json({
-                error: "All password fields are required."
-            });
+            return res.status(400).json({ error: "All password fields are required." });
+        }
+        if (String(newPassword).length < 8) {
+            return res.status(400).json({ error: "Password must be at least 8 characters." });
         }
 
         const rows = await Query(`
@@ -137,45 +103,27 @@ router.put("/api/profile/password", async (req, res) => {
         `, [uid]);
 
         if (!rows.length) {
-            return res.status(404).json({
-                error: "User not found."
-            });
+            return res.status(404).json({ error: "User not found." });
         }
 
-        const valid = await bcrypt.compare(
-            currentPassword,
-            rows[0].password
-        );
+        const valid = await bcrypt.compare(String(currentPassword), rows[0].password);
 
         if (!valid) {
-            return res.status(400).json({
-                error: "Current password is incorrect."
-            });
+            return res.status(400).json({ error: "Current password is incorrect." });
         }
 
-        const hash = await bcrypt.hash(newPassword, 10);
+        const hash = await bcrypt.hash(String(newPassword), 10);
 
         await Query(`
             UPDATE users
-            SET password = ?
+            SET password = ?, updated_at = NOW()
             WHERE uid = ?
         `, [hash, uid]);
 
-        res.json({
-            success: true,
-            message: "Password changed successfully."
-        });
-
+        res.json({ success: true, message: "Password changed successfully." });
     } catch (err) {
-
-        console.error(err);
-
-        res.status(500).json({
-            error: err.message
-        });
-
+        apiError(res, err);
     }
-
 });
 
 module.exports = router;

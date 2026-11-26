@@ -1,0 +1,79 @@
+<script>
+  $(document).ready(function () {
+    const $error = $("#loginError");
+    const $btn = $("#loginBtn");
+    const btnHtml = $btn.html();
+
+    function showError(msg) {
+      $error.text(msg).removeClass("d-none");
+    }
+
+    function setLoading(loading) {
+      $btn.prop("disabled", loading);
+      $btn.html(
+        loading
+          ? '<span class="spinner-border spinner-border-sm mr-2"></span>Logging in...'
+          : btnHtml
+      );
+    }
+
+    // ---------- LOGIN ----------
+    $("#loginForm")
+      .off("submit.login")
+      .on("submit.login", async function (e) {
+        e.preventDefault();
+        $error.addClass("d-none");
+
+        const payload = {
+          Username: ($("#username").val() || "").trim(),
+          Password: ($("#password").val() || "").trim(),
+        };
+
+        if (!payload.Username || !payload.Password) {
+          showError("Please enter your username or email and your password.");
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const res = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json().catch(() => ({}));
+
+          if (res.ok && data.success) {
+            window.location.href = data.redirectTo || "/userdashboard";
+          } else {
+            showError(data.message || "Login failed. Please try again.");
+            setLoading(false);
+          }
+        } catch (err) {
+          showError("Could not reach the server. Please try again.");
+          setLoading(false);
+        }
+      });
+
+    // ---------- SHOW / HIDE PASSWORD ----------
+    $("#togglePassword")
+      .off("click.password")
+      .on("click.password", function () {
+        const input = $("#password");
+        const isPassword = input.attr("type") === "password";
+
+        input.attr("type", isPassword ? "text" : "password");
+
+        $(this)
+          .html(
+            isPassword
+              ? '<i class="fas fa-eye-slash"></i>'
+              : '<i class="fas fa-eye"></i>'
+          )
+          .attr("aria-label", isPassword ? "Hide Password" : "Show Password")
+          .attr("title", isPassword ? "Hide Password" : "Show Password");
+      });
+  });
+</script>

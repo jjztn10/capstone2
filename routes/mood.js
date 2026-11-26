@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const router = express.Router();
 
 const { Query } = require("../database/db-helper");
-const { getUid } = require("../middleware/current-user");
+const { getUid, apiError } = require("../middleware/current-user");
 
 const VALID_MOODS = ["happy", "neutral", "sad", "stressed", "frustrated"];
 
@@ -70,8 +70,8 @@ router.get("/mood", (req, res) => {
 
 /* ==========================================================
    DAILY CHECK-IN STATUS  (used by the popup)
-   answered:        has the user logged a mood today?
-   day:             server's current date (yyyy-mm-dd)
+   answered:          has the user logged a mood today?
+   day:               server's current date (yyyy-mm-dd)
    secondsToMidnight: time until the day changes (server clock)
 ========================================================== */
 
@@ -93,8 +93,7 @@ router.get("/api/mood/today", async (req, res) => {
             secondsToMidnight: Math.max(1, Number(t[0].secs) || 60)
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 
@@ -149,8 +148,7 @@ router.get("/api/mood", async (req, res) => {
             }
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 
@@ -214,8 +212,7 @@ router.post("/api/mood", async (req, res) => {
 
         res.status(201).json({ success: true });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 

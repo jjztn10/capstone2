@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { Query } = require("../database/db-helper");
-const { getUid } = require("../middleware/current-user");
+const { getUid, apiError } = require("../middleware/current-user");
 
 /* ==========================================================
    ANALYTICS PAGE
@@ -54,27 +54,25 @@ router.get("/api/analytics", async (req, res) => {
         const completed = Number(taskSummary[0]?.completed || 0);
         const productivity = total ? Math.round((completed / total) * 100) : 0;
 
-        /* WEEKLY STUDY (one row per day) */
+        /* WEEKLY STUDY (one row per day, last 7 days with sessions) */
 
-       /* WEEKLY STUDY (one row per day, last 7 days with sessions) */
+        const studyRows = await Query(`
+            SELECT
+                DATE_FORMAT(session_date, '%b %d') AS label,
+                ROUND(SUM(duration_minutes) / 60, 2) AS hours
+            FROM study_sessions
+            WHERE uid = ?
+            GROUP BY session_date
+            ORDER BY session_date DESC
+            LIMIT 7
+        `, [uid]);
 
-const studyRows = await Query(`
-    SELECT
-        DATE_FORMAT(session_date, '%b %d') AS label,
-        ROUND(SUM(duration_minutes) / 60, 2) AS hours
-    FROM study_sessions
-    WHERE uid = ?
-    GROUP BY session_date
-    ORDER BY session_date DESC
-    LIMIT 7
-`, [uid]);
+        studyRows.reverse();
 
-studyRows.reverse();
-
-const study = studyRows.map((row) => ({
-    label: row.label,
-    hours: Number(row.hours)
-}));
+        const study = studyRows.map((row) => ({
+            label: row.label,
+            hours: Number(row.hours)
+        }));
 
         /* TASK STATUS */
 
@@ -115,6 +113,7 @@ const study = studyRows.map((row) => ({
 
         workload.reverse();
 
+        res.set("Cache-Control", "no-store");
         res.json({
             summary: {
                 productivity,
@@ -128,8 +127,7 @@ const study = studyRows.map((row) => ({
             workload
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 

@@ -1,5 +1,6 @@
 <%# SMARTWORK HEADER (Admin + User).
-    Optional locals: layoutType, user, headerTitle, headerDescription, headerIcon, showRefreshButton %>
+    Optional locals: layoutType, user, headerTitle, headerDescription, headerIcon, showRefreshButton
+    The name and role come from the session (res.locals.fullname / res.locals.roleName set in app.js). %>
 
 <%
 /* ------------------------------------------------
@@ -14,9 +15,7 @@ const headerDefaults = {
         icon: "fa-user-shield",
         showRefresh: false, // the dashboard page already has its own #refreshDashboardBtn
         fallbackUser: { name: "Administrator", role: "System Administrator" },
-        menu: [
-            { label: "Settings", icon: "fa-cog", url: "/admindashboard#settingsSection" }
-        ]
+        menu: [] // Settings removed
     },
     user: {
         title: "SmartWork Dashboard",
@@ -35,7 +34,23 @@ const hd = headerDefaults[hType];
 /* ------------------------------------------------
    2. Resolve values (page-level locals override defaults)
 ------------------------------------------------ */
-const hUser = (typeof user !== "undefined" && user) ? user : hd.fallbackUser;
+const hUser = (typeof user !== "undefined" && user) ? user : {};
+
+// Logged-in person, from the session locals set in app.js
+const sessionName = (typeof fullname !== "undefined" && fullname) ? String(fullname) : "";
+const sessionRole = (typeof roleName !== "undefined" && roleName) ? String(roleName).toLowerCase() : "";
+
+// Name: page-level user -> session fullname -> default
+const hName = hUser.name || hUser.fullname || hUser.fullName || hUser.full_name
+    || sessionName || hd.fallbackUser.name;
+
+// Role label: page-level user -> session role -> default
+let hRole = hUser.role;
+if (!hRole) {
+    if (sessionRole === "admin") hRole = "System Administrator";
+    else if (sessionRole) hRole = "Member";
+    else hRole = hd.fallbackUser.role;
+}
 
 const hTitle       = (typeof headerTitle !== "undefined" && headerTitle) ? headerTitle : hd.title;
 const hDescription = (typeof headerDescription !== "undefined" && headerDescription) ? headerDescription : hd.description;
@@ -78,8 +93,8 @@ const hRefresh     = (typeof showRefreshButton !== "undefined") ? showRefreshBut
                aria-expanded="false">
 
                 <div class="profile-info">
-                    <h6><%= hUser.name || hd.fallbackUser.name %></h6>
-                    <small><%= hUser.role || hd.fallbackUser.role %></small>
+                    <h6><%= hName %></h6>
+                    <small><%= hRole %></small>
                 </div>
 
                 <div class="profile-avatar">
@@ -102,9 +117,11 @@ const hRefresh     = (typeof showRefreshButton !== "undefined") ? showRefreshBut
                     </a>
                 <% }) %>
 
-                <div class="dropdown-divider"></div>
+                <% if (hd.menu.length) { %>
+                    <div class="dropdown-divider"></div>
+                <% } %>
 
-                <a class="dropdown-item text-danger" href="/logout">
+                <a class="dropdown-item" href="/auth/logout" id="btnLogout">
                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2"></i>
                     Logout
                 </a>

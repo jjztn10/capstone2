@@ -6,21 +6,22 @@
 
     const $ = (id) => document.getElementById(id);
 
+    // One color per mood, used by the badges, the pie chart and the cards
     const COLORS = {
         happy: "#2d5a3d",
         neutral: "#4e73df",
+        sad: "#36b9cc",
         stressed: "#f6c23e",
+        frustrated: "#e74a3b",
     };
 
-    const PALETTE = [
-        "#2d5a3d",
-        "#9bc27a",
-        "#4e73df",
-        "#f6c23e",
-        "#e74a3b",
-        "#858796",
-        "#17a2b8",
-    ];
+    const FALLBACK = ["#9bc27a", "#858796", "#17a2b8", "#e74a3b", "#6f42c1"];
+
+    // Returns the color for a mood label such as "Happy", "sad", "Stressed"
+    function colorFor(label, i) {
+        const key = String(label || "").toLowerCase().trim();
+        return COLORS[key] || FALLBACK[i % FALLBACK.length];
+    }
 
     const esc = (v) =>
         String(v ?? "").replace(/[&<>"']/g, (c) => ({
@@ -44,19 +45,20 @@
     function fmtShort(s) {
         const d = parseDay(s);
         return d
-            ? d.toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-              })
+            ? d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
             : s;
+    }
+
+    // Writes a value into an element only if it exists (never crashes)
+    function setText(id, value) {
+        const el = $(id);
+        if (el) el.textContent = value;
     }
 
     async function request(path = "") {
         const res = await fetch(API + path, {
             cache: "no-store",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
         });
 
         const data = await res.json().catch(() => ({}));
@@ -75,7 +77,6 @@
         if (!canvas || typeof Chart === "undefined") return;
 
         const oldChart = Chart.getChart(canvas);
-
         if (oldChart) oldChart.destroy();
 
         canvas.classList.toggle("d-none", !hasData);
@@ -90,98 +91,87 @@
     }
 
     function badge(log) {
-        let cls = "primary";
+        const cat = String(log.category || log.mood || "").toLowerCase();
 
-        if (log.category === "happy") cls = "success";
-        else if (log.category === "stressed") cls = "warning";
+        let cls = "primary";
+        if (cat === "happy") cls = "success";
+        else if (cat === "stressed") cls = "warning";
+        else if (cat === "sad") cls = "info";
+        else if (cat === "frustrated") cls = "danger";
 
         return `<span class="badge badge-${cls}">${esc(log.mood)}</span>`;
     }
 
-    function renderInsights(d) {
+    // Sad count: use the API value if it exists, otherwise find it
+    // in the distribution data, otherwise count it from the logs.
+    function getSadCount(d) {
+        if (d.stats && d.stats.sad != null) return d.stats.sad;
 
-        const {
-            currentStress,
-            previousStress,
-            repeatedStress
-        } = d.insights;
+        const labels = (d.distribution && d.distribution.labels) || [];
+        const values = (d.distribution && d.distribution.values) || [];
+        const idx = labels.findIndex((l) => String(l).toLowerCase().trim() === "sad");
+        if (idx !== -1) return values[idx] || 0;
+
+        return (d.logs || []).filter(
+            (l) => String(l.category || l.mood || "").toLowerCase() === "sad"
+        ).length;
+    }
+
+    function renderInsights(d) {
+        const { currentStress, previousStress, repeatedStress } = d.insights;
 
         const box = $("moodInsights");
+        if (!box) return;
 
         let html = "";
 
         if (currentStress == null) {
-
             html += `
                 <div class="alert alert-info">
                     <strong>Not enough data</strong>
-                    <p class="mb-0">
-                        No mood entries were logged in the last ${d.days} days.
-                    </p>
+                    <p class="mb-0">No mood entries were logged in the last ${d.days} days.</p>
                 </div>`;
-
         } else if (previousStress == null) {
-
             html += `
                 <div class="alert alert-info">
                     <strong>Average stress: ${currentStress.toFixed(1)}</strong>
-                    <p class="mb-0">
-                        There is no earlier period yet to compare with.
-                    </p>
+                    <p class="mb-0">There is no earlier period yet to compare with.</p>
                 </div>`;
-
         } else {
-
             const diff = currentStress - previousStress;
 
             if (diff <= -0.3) {
-
                 html += `
                     <div class="alert alert-success">
                         <strong>Positive Trend</strong>
-                        <p class="mb-0">
-                            Average stress fell from ${previousStress.toFixed(1)}
-                            to ${currentStress.toFixed(1)}.
-                        </p>
+                        <p class="mb-0">Average stress fell from ${previousStress.toFixed(1)} to ${currentStress.toFixed(1)}.</p>
                     </div>`;
-
             } else if (diff >= 0.3) {
-
                 html += `
                     <div class="alert alert-danger">
                         <strong>Rising Stress</strong>
-                        <p class="mb-0">
-                            Average stress rose from ${previousStress.toFixed(1)}
-                            to ${currentStress.toFixed(1)}.
-                        </p>
+                        <p class="mb-0">Average stress rose from ${previousStress.toFixed(1)} to ${currentStress.toFixed(1)}.</p>
                     </div>`;
-
             } else {
-
                 html += `
                     <div class="alert alert-info">
                         <strong>Stable</strong>
-                        <p class="mb-0">
-                            Stress level remains stable.
-                        </p>
+                        <p class="mb-0">Stress level remains stable.</p>
                     </div>`;
             }
         }
 
         if (repeatedStress.length) {
-
             html += `
                 <div class="alert alert-warning">
                     <strong>Attention Needed</strong>
                     <ul class="mb-0 pl-3">
                         ${repeatedStress
-                            .map(x => `<li>${esc(x.name)} (${x.count})</li>`)
+                            .map((x) => `<li>${esc(x.name)} (${x.count})</li>`)
                             .join("")}
                     </ul>
                 </div>`;
-
         } else {
-
             html += `
                 <div class="alert alert-success">
                     <strong>No repeated stress detected.</strong>
@@ -204,206 +194,166 @@
     }
 
     function render(d) {
+        // SUMMARY CARDS: Happy, Neutral, Sad, Stressed, Burnout Risk
+        setText("moodHappy", d.stats.happy ?? 0);
+        setText("moodNeutral", d.stats.neutral ?? 0);
+        setText("moodSad", getSadCount(d));
+        setText("moodStressed", d.stats.stressed ?? 0);
+        setText("moodBurnout", d.stats.burnout ?? 0);
 
-        $("moodHappy").textContent = d.stats.happy;
-        $("moodNeutral").textContent = d.stats.neutral;
-        $("moodStressed").textContent = d.stats.stressed;
-        $("moodBurnout").textContent = d.stats.burnout;
-
-        drawChart("moodTrendChart","moodTrendEmpty",d.trend.labels.length,{
-            type:"line",
-            data:{
-                labels:d.trend.labels.map(fmtShort),
-                datasets:[
+        drawChart("moodTrendChart", "moodTrendEmpty", d.trend.labels.length, {
+            type: "line",
+            data: {
+                labels: d.trend.labels.map(fmtShort),
+                datasets: [
                     {
-                        label:"Avg Stress",
-                        data:d.trend.stress,
-                        borderColor:"#e74a3b",
-                        fill:true,
-                        tension:.35
+                        label: "Avg Stress",
+                        data: d.trend.stress,
+                        borderColor: "#e74a3b",
+                        fill: true,
+                        tension: 0.35,
                     },
                     {
-                        label:"Avg Workload",
-                        data:d.trend.workload,
-                        borderColor:COLORS.happy,
-                        fill:true,
-                        tension:.35
-                    }
-                ]
+                        label: "Avg Workload",
+                        data: d.trend.workload,
+                        borderColor: COLORS.happy,
+                        fill: true,
+                        tension: 0.35,
+                    },
+                ],
             },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false
-            }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            },
         });
 
-        drawChart("moodPieChart","moodPieEmpty",d.distribution.values.length,{
-            type:"doughnut",
-            data:{
-                labels:d.distribution.labels,
-                datasets:[{
-                    data:d.distribution.values,
-                    backgroundColor:d.distribution.labels.map((_,i)=>PALETTE[i%PALETTE.length])
-                }]
+        drawChart("moodPieChart", "moodPieEmpty", d.distribution.values.length, {
+            type: "doughnut",
+            data: {
+                labels: d.distribution.labels,
+                datasets: [
+                    {
+                        data: d.distribution.values,
+                        backgroundColor: d.distribution.labels.map((l, i) =>
+                            colorFor(l, i)
+                        ),
+                    },
+                ],
             },
-            options:{
-                responsive:true,
-                maintainAspectRatio:false,
-                plugins:{
-                    legend:{position:"bottom"}
-                }
-            }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: "bottom" },
+                },
+            },
         });
 
-        $("moodTableBody").innerHTML =
-            d.logs.length
-                ? d.logs.map(l=>`
+        const body = $("moodTableBody");
+        if (body) {
+            body.innerHTML = d.logs.length
+                ? d.logs
+                      .map(
+                          (l) => `
 <tr>
 <td>${fmtDay(l.local_day)}</td>
 <td>
-<div class="font-weight-bold">${esc(l.user_name||"Unknown")}</div>
-<small class="text-muted">${esc(l.user_email||"")}</small>
+<div class="font-weight-bold">${esc(l.user_name || "Unknown")}</div>
+<small class="text-muted">${esc(l.user_email || "")}</small>
 </td>
 <td>${badge(l)}</td>
 <td>${esc(l.stress_level)}</td>
 <td>${esc(l.workload)}</td>
-<td>${esc(l.notes||"-")}</td>
-</tr>`).join("")
+<td>${esc(l.notes || "-")}</td>
+</tr>`
+                      )
+                      .join("")
                 : `<tr>
-<td colspan="6" class="text-center py-4 text-muted">
-No mood records found.
-</td>
+<td colspan="6" class="text-center py-4 text-muted">No mood records found.</td>
 </tr>`;
+        }
 
         renderInsights(d);
     }
 
-    function showError(err){
-
-        console.error(err);
-
-        if(window.Swal){
-
-            Swal.fire({
-                icon:"error",
-                title:"Unable to load mood data",
-                text:err.message,
-                confirmButtonColor:"#2d5a3d"
-            });
-
-        }else{
-
-            alert(err.message);
-
-        }
-
-    }
-
-   async function load(showSuccess = false) {
-
-    const btn = $("btnRefreshMood");
-
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML =
-            '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
-    }
-
-    if (showSuccess && window.Swal) {
-    Swal.fire({
-        title: "Refreshing Mood Analytics",
-        text: "Loading latest mood data...",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        showConfirmButton: false,
-        didOpen: () => {
-            Swal.showLoading();
-        },
-    });
-}
-
-    try {
-
-        const days = $("moodRange")
-            ? $("moodRange").value
-            : 30;
-
-        const data = await request(
-            "?days=" + encodeURIComponent(days)
-        );
-
-        render(data);
-
-       if (showSuccess && window.Swal) {
-
-    Swal.close();
-
-    Swal.fire({
-        icon: "success",
-        title: "Mood Analytics Updated",
-        text: "Latest mood data has been loaded.",
-        timer: 1500,
-        showConfirmButton: false,
-    });
-
-        }
-
-    } catch (err) {
-
-        console.error(err);
-
-        if (window.Swal) {
-            Swal.fire({
-                icon: "error",
-                title: "Unable to load mood data",
-                text: err.message,
-                confirmButtonColor: COLORS.happy,
-            });
-        } else {
-            alert(err.message);
-        }
-
-    } finally {
+    async function load(showSuccess = false) {
+        const btn = $("btnRefreshMood");
 
         if (btn) {
-            btn.disabled = false;
-            btn.innerHTML =
-                '<i class="fas fa-sync-alt"></i> Refresh';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
         }
 
+        if (showSuccess && window.Swal) {
+            Swal.fire({
+                title: "Refreshing Mood Analytics",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                },
+            });
+        }
+
+        try {
+            const days = $("moodRange") ? $("moodRange").value : 30;
+
+            const data = await request("?days=" + encodeURIComponent(days));
+
+            render(data);
+
+            if (showSuccess && window.Swal) {
+                Swal.close();
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Mood Analytics Refreshed",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+            }
+        } catch (err) {
+            console.error(err);
+
+            if (window.Swal) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Unable to load mood data",
+                    text: err.message,
+                    confirmButtonColor: COLORS.happy,
+                });
+            } else {
+                alert(err.message);
+            }
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Refresh';
+            }
+        }
     }
 
-}
-
-    document.addEventListener("change",(e)=>{
-
-        if(e.target.id==="moodRange"){
-
+    document.addEventListener("change", (e) => {
+        if (e.target.id === "moodRange") {
             load();
-
         }
-
     });
 
     document.addEventListener("click", (e) => {
+        const btn = e.target.closest("#btnRefreshMood");
 
-    const btn = e.target.closest("#btnRefreshMood");
+        if (btn) {
+            e.preventDefault();
+            load(true);
+        }
+    });
 
-    if (btn) {
-
-        e.preventDefault();
-
-        load(true);
-
-    }
-
-});
-
-    window.AdminMood={load};
+    window.AdminMood = { load };
 
     document.addEventListener("DOMContentLoaded", () => {
-    load(false);
-});
-
+        load(false);
+    });
 })();
 </script>

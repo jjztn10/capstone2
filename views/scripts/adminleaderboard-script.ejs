@@ -3,6 +3,7 @@
     "use strict";
 
     const API = "/admindashboard/api/leaderboard";
+    const GREEN = "#2d5a3d";
     const root = document.getElementById("adminLeaderboard");
 
     if (!root || root.dataset.initialized === "true") return;
@@ -84,13 +85,12 @@
 
       if (!rows.length) {
         body.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
-                        <i class="fas fa-search fa-2x mb-3 d-block"></i>
-                        No leaderboard records found.
-                    </td>
-                </tr>
-            `;
+          <tr>
+            <td colspan="7" class="text-center text-muted py-5">
+              <i class="fas fa-search fa-2x mb-3 d-block"></i>
+              No leaderboard records found.
+            </td>
+          </tr>`;
 
         setText("leaderboardResultCount", "0 users");
         setText("leaderboardFooterText", "Showing 0 users");
@@ -102,46 +102,29 @@
           const rank = user.rank || index + 1;
 
           return `
-                <tr>
-                    <td>
-                        <span class="rank-badge ${rankClass(rank)}">
-                            ${rank}
-                        </span>
-                    </td>
+          <tr>
+            <td>
+              <span class="rank-badge ${rankClass(rank)}">${rank}</span>
+            </td>
 
-                    <td class="user-cell">
-                        <span class="user-name">
-                            ${esc(user.name || "Unnamed User")}
-                        </span>
-                        <span class="user-email">
-                            ${esc(user.email || "No email")}
-                        </span>
-                    </td>
+            <td class="user-cell">
+              <span class="user-name">${esc(user.name || "Unnamed User")}</span>
+              <span class="user-email">${esc(user.email || "No email")}</span>
+            </td>
 
-                    <td>
-                        <span class="score-badge">
-                            ${number(user.score)}
-                        </span>
-                    </td>
+            <td><span class="score-badge">${number(user.score)}</span></td>
 
-                    <td class="points-cell">
-                        ${number(user.totalPoints)}
-                    </td>
+            <td class="points-cell">${number(user.totalPoints)}</td>
 
-                    <td>
-                        ${number(user.weeklyPoints)}
-                    </td>
+            <td>${number(user.weeklyPoints)}</td>
 
-                    <td>
-                        ${number(user.tasksCompleted)}
-                    </td>
+            <td>${number(user.tasksCompleted)}</td>
 
-                    <td class="streak-cell">
-                        <i class="fas fa-fire"></i>
-                        ${number(user.studyStreak)} day${Number(user.studyStreak) === 1 ? "" : "s"}
-                    </td>
-                </tr>
-            `;
+            <td class="streak-cell">
+              <i class="fas fa-fire"></i>
+              ${number(user.studyStreak)} day${Number(user.studyStreak) === 1 ? "" : "s"}
+            </td>
+          </tr>`;
         })
         .join("");
 
@@ -175,25 +158,38 @@
       renderTable(filteredData);
     }
 
-    async function load() {
+    // load(false) = quiet load (page open, auto refresh)
+    // load(true)  = Refresh button: shows the same popups as Mood Analytics
+    async function load(showSuccess = false) {
       const refreshButton = $("leaderboardRefresh");
+
       if (refreshButton) {
         refreshButton.disabled = true;
-        refreshButton.innerHTML = `
-                <i class="fas fa-spinner fa-spin"></i> Loading...
-            `;
+        refreshButton.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+      }
+
+      if (showSuccess && window.Swal) {
+        Swal.fire({
+          title: "Refreshing Leaderboard",
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
       }
 
       try {
         const response = await fetch(API, {
           method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
+          headers: { Accept: "application/json" },
           credentials: "same-origin",
+          cache: "no-store",
         });
 
-        const data = await response.json();
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok || !data.success) {
           throw new Error(data.error || "Unable to load leaderboard.");
@@ -214,6 +210,17 @@
           $("leaderboardSearch").value = "";
         }
 
+        if (showSuccess && window.Swal) {
+          Swal.close();
+
+          Swal.fire({
+            icon: "success",
+            title: "Leaderboard Refreshed",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        }
+
         return data;
       } catch (error) {
         console.error("Leaderboard error:", error);
@@ -221,21 +228,20 @@
         const body = $("leaderboardTableBody");
         if (body) {
           body.innerHTML = `
-                    <tr>
-                        <td colspan="7" class="text-center text-danger py-5">
-                            <i class="fas fa-exclamation-circle"></i>
-                            ${esc(error.message)}
-                        </td>
-                    </tr>
-                `;
+            <tr>
+              <td colspan="7" class="text-center text-danger py-5">
+                <i class="fas fa-exclamation-circle"></i>
+                ${esc(error.message)}
+              </td>
+            </tr>`;
         }
 
         if (window.Swal) {
           Swal.fire({
             icon: "error",
-            title: "Leaderboard Error",
+            title: "Unable to load leaderboard",
             text: error.message,
-            confirmButtonColor: "#2d5a3d",
+            confirmButtonColor: GREEN,
           });
         }
 
@@ -243,9 +249,8 @@
       } finally {
         if (refreshButton) {
           refreshButton.disabled = false;
-          refreshButton.innerHTML = `
-                    <i class="fas fa-sync-alt"></i> Refresh
-                `;
+          refreshButton.innerHTML =
+            '<i class="fas fa-sync-alt mr-2"></i>Refresh';
         }
       }
     }
@@ -263,15 +268,16 @@
       }
     });
 
-    // Refresh
-    $("leaderboardRefresh")?.addEventListener("click", () => {
-      load().catch(() => {});
+    // Refresh button (with popups)
+    $("leaderboardRefresh")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      load(true).catch(() => {});
     });
 
-    // Reload leaderboard when tasks/users change
+    // Reload quietly when tasks/users change
     ["users:changed", "tasks:changed"].forEach((eventName) => {
       document.addEventListener(eventName, () => {
-        load().catch(() => {});
+        load(false).catch(() => {});
       });
     });
 

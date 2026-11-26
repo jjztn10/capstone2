@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { Query } = require("../database/db-helper");
-const { getUid } = require("../middleware/current-user");
+const { getUid, apiError } = require("../middleware/current-user");
 
 const MOOD_LABELS = {
     happy: "Happy",
@@ -125,6 +125,7 @@ router.get("/api/dashboard", async (req, res) => {
         chartRows.reverse();
 
         /* RESPONSE */
+        res.set("Cache-Control", "no-store");
         res.json({
             summary: {
                 name: user.name || "User",
@@ -151,8 +152,7 @@ router.get("/api/dashboard", async (req, res) => {
             },
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: err.message });
+        apiError(res, err);
     }
 });
 
