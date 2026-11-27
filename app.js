@@ -38,6 +38,9 @@ const {
     adminRouter: smartAdminRouter,
 } = require("./routes/smart");
 
+// Gmail reminders for tasks that are almost due
+const { startDeadlineMailer } = require("./services/deadline-mailer");
+
 // ==========================================
 // APP INITIALIZATION
 // ==========================================
@@ -102,7 +105,9 @@ app.use((req, res, next) => {
 
 console.log("ENV FILE:", path.resolve(__dirname, ".env"));
 console.log("SESSION_SECRET loaded:", Boolean(process.env.SESSION_SECRET));
-console.log("ANTHROPIC_API_KEY loaded:", Boolean(process.env.ANTHROPIC_API_KEY));
+console.log("GEMINI_API_KEY loaded:", Boolean(process.env.GEMINI_API_KEY));
+console.log("MAIL_USER loaded:", Boolean(process.env.MAIL_USER));
+console.log("MAIL_APP_PASSWORD loaded:", Boolean(process.env.MAIL_APP_PASSWORD));
 
 // ==========================================
 // DATABASE CONNECTION TEST
@@ -114,6 +119,13 @@ testConnection()
     .catch((err) => {
         console.error("❌ Database connection failed:", err.message);
     });
+
+// ==========================================
+// DEADLINE EMAIL REMINDERS
+// Runs once a day (default 8:00). Does nothing unless
+// MAIL_USER and MAIL_APP_PASSWORD are set in .env.
+// ==========================================
+startDeadlineMailer();
 
 // ==========================================
 // VALIDATE ROUTERS

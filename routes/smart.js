@@ -65,8 +65,9 @@ userRouter.get("/api/focus", async (req, res) => {
 
 /* ==========================================================
    USER: CHAT ASSISTANT
-   Uses Claude when ANTHROPIC_API_KEY is set; otherwise a
-   rule-based answer from the same ranking (works offline).
+   Uses Google Gemini (free tier) when GEMINI_API_KEY is set;
+   otherwise a rule-based answer from the same ranking
+   (works offline).
 ========================================================== */
 
 const hits = new Map();   // simple per-user rate limit: 15 / minute
@@ -108,39 +109,94 @@ function offlineReply(f) {
     return msg;
 }
 
-async function askClaude(f, history, message) {
+async function askGemini(f, history, message) {
     const system =
-        "You are the assistant inside SmartWork, a workload management app for students and staff. " +
-        "Answer in at most 4 short sentences. Use ONLY the task and mood data provided; never invent tasks or deadlines. " +
+        "You are SmartWork Assistant, a friendly and helpful AI inside a workload management app for students and staff. " +
+        "You can answer general questions on any topic, such as study help, explanations, writing, and advice. " +
+        "When the user asks about their tasks, schedule, or what to work on, use the task and mood data below, and never invent tasks or deadlines. " +
+        "Keep answers concise, at most 5 short sentences unless the user asks for more detail. " +
         "If stress is 8 or higher, be gentle and suggest fewer or lighter tasks and a short break. " +
         "You are not a medical professional; for serious distress suggest talking to someone they trust.\n\n" +
+        `Today's date: ${new Date().toDateString()}\n` +
         contextText(f);
 
-    const msgs = history
+    // Gemini calls the assistant role "model"
+    const contents = history
         .filter(m => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
         .slice(-6)
-        .map(m => ({ role: m.role, content: m.content.slice(0, 500) }));
-    while (msgs.length && msgs[0].role !== "user") msgs.shift();
-    msgs.push({ role: "user", content: message });
+        .map(m => ({
+            role: m.role === "assistant" ? "model" : "user",
+            parts: [{ text: m.content.slice(0, 500) }]
+        }));
+    while (contents.length && contents[0].role !== "user") contents.shift();
+    contents.push({ role: "user", parts: [{ text: message }] });
 
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-            "content-type": "application/json",
-            "x-api-key": process.env.ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-            model: process.env.ANTHROPIC_MODEL || "claude-haiku-5-5",
-            max_tokens: 400,
-            system,
-            messages: msgs
-        })
+    // Tried in order. If one is overloaded or missing, the next one is used.
+    // Put your preferred model first with GEMINI_MODEL in .env.
+    const models = [...new Set([
+        process.env.GEMINI_MODEL,
+        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-4-hydrogen"
+    ].filter(Boolean))];
+
+    const body = JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents
     });
 
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error?.message || "AI request failed");
-    return data.content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+    const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    let lastError = "AI request failed";
+
+    for (const model of models) {
+        for (let attempt = 1; attempt <= 2; attempt++) {
+            let r, data;
+
+            try {
+                r = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "content-type": "application/json",
+                            "x-goog-api-key": process.env.GEMINI_API_KEY
+                        },
+                        body
+                    }
+                );
+                data = await r.json();
+            } catch (e) {
+                lastError = e.message;
+                await wait(800);
+                continue;                       // network hiccup: retry
+            }
+
+            if (r.ok) {
+                const text = (data.candidates?.[0]?.content?.parts || [])
+                    .map(p => p.text || "")
+                    .join("\n")
+                    .trim();
+                if (text) return text;
+                lastError = "The AI returned an empty answer.";
+                break;                          // try the next model
+            }
+
+            lastError = data.error?.message || `AI request failed (${r.status})`;
+            console.warn(`Gemini ${model} attempt ${attempt}: ${lastError}`);
+
+            // A bad key fails on every model, so stop right away
+            if (/api key/i.test(lastError) || r.status === 401) {
+                throw new Error(lastError);
+            }
+            // Model retired, not available, or not found: try the next model
+            if (r.status === 400 || r.status === 403 || r.status === 404) break;
+
+            // 429 / 500 / 503: busy, wait a moment and retry once
+            if (attempt < 2) await wait(1200);
+        }
+    }
+
+    throw new Error(lastError);
 }
 
 userRouter.post("/api/assistant", async (req, res) => {
@@ -153,16 +209,26 @@ userRouter.post("/api/assistant", async (req, res) => {
 
         const f = await focusFor(uid);
         let reply;
+        let aiError = "";
 
-        if (process.env.ANTHROPIC_API_KEY) {
+        if (!process.env.GEMINI_API_KEY) {
+            aiError = "GEMINI_API_KEY is not set (check .env and restart the server).";
+            console.error("Assistant AI error:", aiError);
+        } else {
             try {
-                reply = await askClaude(f, Array.isArray(req.body?.history) ? req.body.history : [], message);
+                reply = await askGemini(f, Array.isArray(req.body?.history) ? req.body.history : [], message);
+                if (!reply) aiError = "The AI returned an empty answer.";
             } catch (e) {
+                aiError = e.message;
                 console.error("Assistant AI error:", e.message);
             }
         }
 
-        res.json({ reply: reply || offlineReply(f), ai: !!reply });
+        // TEMPORARY: shows why the AI failed. Remove the aiError part once it works.
+        res.json({
+            reply: reply || `[AI unavailable: ${aiError}]\n\n${offlineReply(f)}`,
+            ai: !!reply
+        });
     } catch (err) {
         fail(res, err);
     }

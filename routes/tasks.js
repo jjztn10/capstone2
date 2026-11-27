@@ -29,15 +29,29 @@ const PRIORITY_LABEL_SQL = `
     END
 `;
 
+/* Deadline in, "YYYY-MM-DD HH:mm:ss" out (or null).
+   Accepts:  2026-11-28
+             2026-11-28 15:30        2026-11-28T15:30
+             2026-11-28 15:30:00     2026-11-28T15:30:00
+   A date without a time is saved as midnight (00:00:00). */
+function cleanDeadline(value) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(String(value ?? "").trim());
+    if (!m) return null;
+
+    const [, y, mo, d, h = "00", mi = "00", s = "00"] = m;
+
+    if (Number(mo) < 1 || Number(mo) > 12) return null;
+    if (Number(d) < 1 || Number(d) > 31) return null;
+    if (Number(h) > 23 || Number(mi) > 59 || Number(s) > 59) return null;
+
+    return `${y}-${mo}-${d} ${h}:${mi}:${s}`;
+}
+
 function clean(body = {}) {
     const title = String(body.title ?? "").trim().slice(0, 255);
     if (!title) return { error: "Title is required." };
 
     const priority = PRIORITY_TO_SCORE[body.priority] ? body.priority : "Medium";
-
-    const deadline = /^\d{4}-\d{2}-\d{2}/.test(body.deadline || "")
-        ? String(body.deadline).slice(0, 10)
-        : null;
 
     return {
         data: {
@@ -47,7 +61,7 @@ function clean(body = {}) {
             priority,
             score: PRIORITY_TO_SCORE[priority],
             status: STATUS_TO_DB[body.status] || "pending",
-            deadline
+            deadline: cleanDeadline(body.deadline)
         }
     };
 }
@@ -96,6 +110,16 @@ router.get("/tasks", (req, res) => {
 
 /* ==========================================================
    GET ALL TASKS
+
+   deadline is returned as "YYYY-MM-DDTHH:mm:ss" with no time zone
+   letter, so the browser reads it as the same local time that was
+   saved (no shifting by hours).
+
+   Overdue:
+   - deadline on an earlier day, or
+   - deadline has a real time (not midnight) and that time has passed.
+   A deadline at exactly 00:00:00 is treated as "date only", so it
+   stays Pending for the whole day.
 ========================================================== */
 
 router.get("/api/tasks", async (req, res) => {
@@ -112,11 +136,13 @@ router.get("/api/tasks", async (req, res) => {
                 tasks.subject,
                 tasks.description,
                 ${PRIORITY_LABEL_SQL} AS priority,
-                DATE_FORMAT(tasks.deadline, '%Y-%m-%d') AS deadline,
+                DATE_FORMAT(tasks.deadline, '%Y-%m-%dT%H:%i:%s') AS deadline,
                 CASE
                     WHEN tasks.status = 'completed' THEN 'Completed'
-                    WHEN tasks.deadline IS NOT NULL
-                         AND DATE(tasks.deadline) < CURDATE() THEN 'Overdue'
+                    WHEN tasks.deadline IS NOT NULL AND (
+                            DATE(tasks.deadline) < CURDATE()
+                            OR (TIME(tasks.deadline) <> '00:00:00' AND tasks.deadline < NOW())
+                         ) THEN 'Overdue'
                     WHEN tasks.status = 'in_progress' THEN 'In Progress'
                     ELSE 'Pending'
                 END AS status

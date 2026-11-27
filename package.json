@@ -13,6 +13,8 @@
     "mongo-connect": "^0.0.6",
     "morgan": "^1.12.1",
     "mysql2": "^3.24.6",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.6.1",
     "startbootstrap-sb-admin-2": "^4.1.4"
   },
   "name": "capstone2",

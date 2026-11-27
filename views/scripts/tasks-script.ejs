@@ -31,11 +31,42 @@ window.UserTasks = (() => {
             "'": "&#39;",
         })[c]);
 
-    function formatDate(v) {
+    const pad = (n) => String(n).padStart(2, "0");
+
+    // Table cell: date on the first line, time on the second.
+    // Older tasks were saved without a time (midnight), so they show the date only.
+    // The result is built from a Date object, so it is safe to insert as HTML.
+    function formatDeadline(v) {
         if (!v) return "-";
         const d = new Date(v);
         if (isNaN(d)) return "-";
-        return d.toLocaleDateString();
+
+        const date = d.toLocaleDateString(undefined, {
+            year: "numeric", month: "short", day: "numeric"
+        });
+
+        if (d.getHours() === 0 && d.getMinutes() === 0) return date;
+
+        const time = d.toLocaleTimeString(undefined, {
+            hour: "numeric", minute: "2-digit"
+        });
+
+        return date + '<br><small class="text-muted">' + time + "</small>";
+    }
+
+    // Saved deadline -> value for <input type="datetime-local"> (YYYY-MM-DDTHH:mm, local time)
+    function toInputValue(v) {
+        if (!v) return "";
+        const d = new Date(v);
+        if (isNaN(d)) return "";
+
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+               "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+
+    // <input type="datetime-local"> value -> "YYYY-MM-DD HH:mm:00" for the server
+    function toServerDateTime(v) {
+        return v ? String(v).replace("T", " ") + ":00" : "";
     }
 
     function notify(icon, title, text = "") {
@@ -185,7 +216,7 @@ window.UserTasks = (() => {
                 <td><strong>${esc(task.title)}</strong></td>
                 <td>${esc(task.subject)}</td>
                 <td><span class="badge priority-${esc(task.priority).toLowerCase()}">${esc(task.priority)}</span></td>
-                <td>${formatDate(task.deadline)}</td>
+                <td>${formatDeadline(task.deadline)}</td>
                 <td><span class="badge badge-${badge(task.status)}">${esc(task.status)}</span></td>
                 <td class="text-nowrap text-right">
                     <button type="button"
@@ -286,7 +317,7 @@ window.UserTasks = (() => {
             description: $("taskDescription").value.trim(),
             priority: $("taskPriority").value,
             status: $("taskStatus").value,
-            deadline: $("taskDeadline").value,
+            deadline: toServerDateTime($("taskDeadline").value),
         };
 
         if (!payload.title) {
@@ -346,7 +377,7 @@ window.UserTasks = (() => {
         $("taskDescription").value = task.description || "";
         $("taskPriority").value = task.priority;
         $("taskStatus").value = task.status === "Overdue" ? "Pending" : task.status;
-        $("taskDeadline").value = task.deadline ? String(task.deadline).substring(0, 10) : "";
+        $("taskDeadline").value = toInputValue(task.deadline);
 
         openModal("Edit Task");
     }
