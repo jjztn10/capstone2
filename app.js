@@ -16,7 +16,11 @@ const logger = require("morgan");
 const expressLayouts = require("express-ejs-layouts");
 
 const { testConnection } = require("./database/config/db");
-const { initSession } = require("./middleware/session");
+const {
+    initSession,
+    SESSION_COOKIE_NAME,
+    SESSION_IDLE_TIMEOUT_MS,
+} = require("./middleware/session");
 const { requireLogin, requireRole } = require("./middleware/auth");
 
 const authRouter = require("./routes/auth");
@@ -86,6 +90,40 @@ app.use(express.static(path.join(__dirname, "public")));
 // ==========================================
 initSession(app);
 
+app.use((req, res, next) => {
+    if (!req.session?.userId) return next();
+
+    const now = Date.now();
+    const lastActivityAt = Number(req.session.lastActivityAt);
+
+    if (!Number.isFinite(lastActivityAt) || lastActivityAt <= 0) {
+        req.session.lastActivityAt = now;
+        return next();
+    }
+
+    if (now - lastActivityAt < SESSION_IDLE_TIMEOUT_MS) return next();
+
+    req.session.destroy((err) => {
+        if (err) return next(err);
+
+        res.clearCookie(SESSION_COOKIE_NAME, { path: "/" });
+
+        const wantsJson = req.xhr
+            || (req.headers.accept || "").includes("application/json")
+            || req.path === "/auth/activity"
+            || req.path.indexOf("/api/") !== -1;
+
+        if (wantsJson) {
+            return res.status(401).json({
+                success: false,
+                message: "Session expired. Please log in again.",
+            });
+        }
+
+        res.redirect("/auth");
+    });
+});
+
 // ==========================================
 // VIEW LOCALS (available in every EJS view)
 // - currentPath: used by the sidebar for active links
@@ -95,6 +133,7 @@ initSession(app);
 // ==========================================
 app.use((req, res, next) => {
     res.locals.currentPath = req.originalUrl;
+    res.locals.sessionIdleTimeoutMs = SESSION_IDLE_TIMEOUT_MS;
     res.locals.roleName = req.session?.roleName || "";
     res.locals.fullname = req.session?.fullname || "";
     res.locals.PUBLIC_BASE_URL = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");

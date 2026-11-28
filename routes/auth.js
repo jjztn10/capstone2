@@ -5,6 +5,7 @@ const { Query } = require("./../database/config/db.js");
 const { Query: UserQuery } = require("./../database/db-helper");
 const { EncryptString } = require("./../database/cryptography.js");
 const { homeFor } = require("./../middleware/auth.js");
+const { SESSION_COOKIE_NAME } = require("./../middleware/session.js");
 
 const normalize = (s) => String(s ?? "").toLowerCase().replace(/[\s\-_]+/g, "");
 
@@ -130,6 +131,7 @@ router.post("/login", async function (req, res) {
       req.session.permissions = account.permissions;
       req.session.username = account.username;
       req.session.fullname = account.fullname;
+      req.session.lastActivityAt = Date.now();
       req.session.user = {
         id: account.id,
         uid: account.id,
@@ -148,6 +150,18 @@ router.post("/login", async function (req, res) {
     console.error(err);
     res.status(500).json({ success: false, message: "Server error." });
   }
+});
+
+router.post("/activity", function (req, res, next) {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: "Please log in again." });
+  }
+
+  req.session.lastActivityAt = Date.now();
+  req.session.save((err) => {
+    if (err) return next(err);
+    res.sendStatus(204);
+  });
 });
 
 // Re-read permissions without logging in again
@@ -175,7 +189,7 @@ function logout(req, res) {
       console.error(err);
       return res.redirect("/auth");
     }
-    res.clearCookie("connect.sid");
+    res.clearCookie(SESSION_COOKIE_NAME, { path: "/" });
     res.redirect("/auth");
   });
 }

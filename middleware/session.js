@@ -10,6 +10,8 @@ require("dotenv").config({
 });
 
 const MongoStore = connectMongo.default || connectMongo;
+const SESSION_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const SESSION_COOKIE_NAME = process.env.SESSION_NAME || "smartwork.sid";
 
 const initSession = (app) => {
     const mongoUrl = process.env.MONGODB_URL;
@@ -27,7 +29,7 @@ const initSession = (app) => {
         sessionStore = MongoStore.create({
             mongoUrl: mongoUrl,
             collectionName: process.env.SESSION_COLLECTION || "sessions",
-            ttl: 24 * 60 * 60, // 24 hours
+            ttl: SESSION_IDLE_TIMEOUT_MS / 1000,
         });
 
         console.log("✅ MongoDB session store configured");
@@ -47,16 +49,17 @@ const initSession = (app) => {
     app.use(
         session({
             store: sessionStore,
-            name: process.env.SESSION_NAME || "smartwork.sid",
+            name: SESSION_COOKIE_NAME,
             secret: sessionSecret,
             resave: false,
             saveUninitialized: false,
+            rolling: true,
 
             cookie: {
                 httpOnly: true,
                 sameSite: "lax",
                 secure: process.env.NODE_ENV === "production",
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                maxAge: SESSION_IDLE_TIMEOUT_MS,
             },
         })
     );
@@ -64,4 +67,8 @@ const initSession = (app) => {
     console.log("✅ Session middleware initialized");
 };
 
-module.exports = { initSession };
+module.exports = {
+    initSession,
+    SESSION_COOKIE_NAME,
+    SESSION_IDLE_TIMEOUT_MS,
+};
