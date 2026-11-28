@@ -35,36 +35,48 @@ window.UserTasks = (() => {
 
     // Table cell: date on the first line, time on the second.
     // Older tasks were saved without a time (midnight), so they show the date only.
-    // The result is built from a Date object, so it is safe to insert as HTML.
     function formatDeadline(v) {
         if (!v) return "-";
+
         const d = new Date(v);
+
         if (isNaN(d)) return "-";
 
         const date = d.toLocaleDateString(undefined, {
-            year: "numeric", month: "short", day: "numeric"
+            year: "numeric",
+            month: "short",
+            day: "numeric"
         });
 
-        if (d.getHours() === 0 && d.getMinutes() === 0) return date;
+        if (d.getHours() === 0 && d.getMinutes() === 0) {
+            return date;
+        }
 
         const time = d.toLocaleTimeString(undefined, {
-            hour: "numeric", minute: "2-digit"
+            hour: "numeric",
+            minute: "2-digit"
         });
 
         return date + '<br><small class="text-muted">' + time + "</small>";
     }
 
-    // Saved deadline -> value for <input type="datetime-local"> (YYYY-MM-DDTHH:mm, local time)
+    // Saved deadline -> value for <input type="datetime-local">
     function toInputValue(v) {
         if (!v) return "";
+
         const d = new Date(v);
+
         if (isNaN(d)) return "";
 
-        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
-               "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+        return d.getFullYear() + "-" +
+               pad(d.getMonth() + 1) + "-" +
+               pad(d.getDate()) +
+               "T" +
+               pad(d.getHours()) + ":" +
+               pad(d.getMinutes());
     }
 
-    // <input type="datetime-local"> value -> "YYYY-MM-DD HH:mm:00" for the server
+    // <input type="datetime-local"> value -> server format
     function toServerDateTime(v) {
         return v ? String(v).replace("T", " ") + ":00" : "";
     }
@@ -80,12 +92,16 @@ window.UserTasks = (() => {
                 timerProgressBar: icon === "success",
             });
         }
+
         alert(text ? title + "\n" + text : title);
     }
 
     async function request(path = "", options = {}) {
+
         const res = await fetch(API + path, {
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json"
+            },
             ...options,
         });
 
@@ -94,28 +110,34 @@ window.UserTasks = (() => {
         if (!res.ok) {
             throw new Error(data.error || "Request failed");
         }
+
         return data;
     }
 
     async function confirmAdd(title) {
+
         if (window.Swal) {
+
             const result = await Swal.fire({
                 icon: "question",
                 title: "Add this task?",
-                text: "Are you sure you want to add \"" + title + "\"?",
+                text: 'Are you sure you want to add "' + title + '"?',
                 showCancelButton: true,
                 confirmButtonColor: GREEN,
                 cancelButtonColor: "#6c757d",
                 confirmButtonText: "Yes, add it",
                 cancelButtonText: "Cancel",
             });
+
             return result.isConfirmed;
         }
+
         return confirm("Are you sure you want to add this task?");
     }
 
-    // Generic confirm popup (falls back to the browser confirm if Swal is missing)
+    // Generic confirmation popup
     async function confirmAction(options = {}) {
+
         const {
             icon = "question",
             title = "Are you sure?",
@@ -125,6 +147,7 @@ window.UserTasks = (() => {
         } = options;
 
         if (window.Swal) {
+
             const result = await Swal.fire({
                 icon,
                 title,
@@ -135,13 +158,16 @@ window.UserTasks = (() => {
                 confirmButtonText: confirmText,
                 cancelButtonText: "Cancel",
                 reverseButtons: true,
-                focusCancel: true,          // Enter won't accidentally confirm
+                focusCancel: true,
                 allowOutsideClick: false
             });
+
             return result.isConfirmed === true;
         }
 
-        return window.confirm(text ? title + "\n" + text : title);
+        return window.confirm(
+            text ? title + "\n" + text : title
+        );
     }
 
     /* ======================================================
@@ -149,19 +175,32 @@ window.UserTasks = (() => {
     ====================================================== */
 
     async function load() {
+
         try {
+
             const data = await request();
+
             tasks = data.tasks || [];
+
             applyFilters();
             renderSummary();
+
         } catch (err) {
+
             console.error(err);
-            notify("error", "Unable to load tasks", err.message);
+
+            notify(
+                "error",
+                "Unable to load tasks",
+                err.message
+            );
         }
     }
 
     function changed() {
-        document.dispatchEvent(new CustomEvent("tasks:changed"));
+        document.dispatchEvent(
+            new CustomEvent("tasks:changed")
+        );
     }
 
     /* ======================================================
@@ -169,9 +208,15 @@ window.UserTasks = (() => {
     ====================================================== */
 
     function renderSummary() {
-        const count = (s) => tasks.filter(t => t.status === s).length;
 
-        const set = (id, v) => { if ($(id)) $(id).textContent = v; };
+        const count = (s) =>
+            tasks.filter(t => t.status === s).length;
+
+        const set = (id, v) => {
+            if ($(id)) {
+                $(id).textContent = v;
+            }
+        };
 
         set("totalTasks", tasks.length);
         set("pendingCount", count("Pending"));
@@ -184,64 +229,107 @@ window.UserTasks = (() => {
     ====================================================== */
 
     function badge(status) {
+
         switch (status) {
-            case "Completed":   return "success";
-            case "Pending":     return "warning";
-            case "In Progress": return "primary";
-            case "Overdue":     return "danger";
-            default:            return "secondary";
+
+            case "Completed":
+                return "success";
+
+            case "Pending":
+                return "warning";
+
+            case "In Progress":
+                return "primary";
+
+            case "Overdue":
+                return "danger";
+
+            default:
+                return "secondary";
         }
     }
 
     /* ======================================================
-       TABLE (shows every task, no pagination)
+       TABLE
+       Shows every task, no pagination.
+       Actions: Edit + Delete only.
     ====================================================== */
 
     function renderTable() {
+
         const tbody = $("taskTableBody");
+
         if (!tbody) return;
 
         if (!filtered.length) {
+
             tbody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center py-5 text-muted">
                         No tasks found.
                     </td>
-                </tr>`;
+                </tr>
+            `;
+
             return;
         }
 
         tbody.innerHTML = filtered.map(task => `
+
             <tr>
-                <td><strong>${esc(task.title)}</strong></td>
-                <td>${esc(task.subject)}</td>
-                <td><span class="badge priority-${esc(task.priority).toLowerCase()}">${esc(task.priority)}</span></td>
-                <td>${formatDeadline(task.deadline)}</td>
-                <td><span class="badge badge-${badge(task.status)}">${esc(task.status)}</span></td>
+
+                <td>
+                    <strong>${esc(task.title)}</strong>
+                </td>
+
+                <td>
+                    ${esc(task.subject)}
+                </td>
+
+                <td>
+                    <span class="badge priority-${esc(task.priority).toLowerCase()}">
+                        ${esc(task.priority)}
+                    </span>
+                </td>
+
+                <td>
+                    ${formatDeadline(task.deadline)}
+                </td>
+
+                <td>
+                    <span class="badge badge-${badge(task.status)}">
+                        ${esc(task.status)}
+                    </span>
+                </td>
+
                 <td class="text-nowrap text-right">
-                    <button type="button"
+
+                    <!-- EDIT -->
+                    <button
+                        type="button"
                         class="btn btn-sm btn-primary btn-edit"
-                        title="Edit" aria-label="Edit task"
-                        data-id="${esc(task.task_id)}">
+                        title="Edit"
+                        aria-label="Edit task"
+                        data-id="${esc(task.task_id)}"
+                    >
                         <i class="fas fa-edit"></i>
                     </button>
 
-                    <button type="button"
-                        class="btn btn-sm btn-success btn-complete"
-                        title="Mark complete" aria-label="Mark task complete"
-                        data-id="${esc(task.task_id)}"
-                        ${task.status === "Completed" ? "disabled" : ""}>
-                        <i class="fas fa-check"></i>
-                    </button>
-
-                    <button type="button"
+                    <!-- DELETE -->
+                    <button
+                        type="button"
                         class="btn btn-sm btn-danger btn-delete"
-                        title="Delete" aria-label="Delete task"
-                        data-id="${esc(task.task_id)}">
+                        title="Delete"
+                        aria-label="Delete task"
+                        data-id="${esc(task.task_id)}"
+                    >
                         <i class="fas fa-trash"></i>
                     </button>
+
                 </td>
+
             </tr>
+
         `).join("");
     }
 
@@ -250,20 +338,42 @@ window.UserTasks = (() => {
     ====================================================== */
 
     function applyFilters() {
-        const keyword = ($("searchTask")?.value || "").trim().toLowerCase();
-        const status = $("filterStatus")?.value;
-        const priority = $("filterPriority")?.value;
+
+        const keyword =
+            ($("searchTask")?.value || "")
+            .trim()
+            .toLowerCase();
+
+        const status =
+            $("filterStatus")?.value;
+
+        const priority =
+            $("filterPriority")?.value;
 
         filtered = tasks.filter(task => {
+
             const matchKeyword =
                 !keyword ||
-                String(task.title ?? "").toLowerCase().includes(keyword) ||
-                String(task.subject ?? "").toLowerCase().includes(keyword);
+                String(task.title ?? "")
+                    .toLowerCase()
+                    .includes(keyword) ||
+                String(task.subject ?? "")
+                    .toLowerCase()
+                    .includes(keyword);
 
-            const matchStatus = !status || task.status === status;
-            const matchPriority = !priority || task.priority === priority;
+            const matchStatus =
+                !status ||
+                task.status === status;
 
-            return matchKeyword && matchStatus && matchPriority;
+            const matchPriority =
+                !priority ||
+                task.priority === priority;
+
+            return (
+                matchKeyword &&
+                matchStatus &&
+                matchPriority
+            );
         });
 
         renderTable();
@@ -271,11 +381,10 @@ window.UserTasks = (() => {
 
     /* ======================================================
        MODAL
-       NOTE: $ is getElementById here, so jQuery must be
-       called explicitly through window.jQuery.
     ====================================================== */
 
     function clearForm() {
+
         $("taskId").value = "";
         $("taskTitle").value = "";
         $("taskSubject").value = "";
@@ -286,142 +395,248 @@ window.UserTasks = (() => {
     }
 
     function modalAction(action) {
+
         const el = $("taskModal");
+
         if (!el) return;
 
-        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+        if (
+            window.jQuery &&
+            window.jQuery.fn &&
+            window.jQuery.fn.modal
+        ) {
+
             window.jQuery(el).modal(action);
+
         } else if (window.bootstrap) {
-            const inst = bootstrap.Modal.getOrCreateInstance(el);
-            action === "show" ? inst.show() : inst.hide();
+
+            const inst =
+                bootstrap.Modal.getOrCreateInstance(el);
+
+            action === "show"
+                ? inst.show()
+                : inst.hide();
         }
     }
 
     const openModal = (title = "Add Task") => {
+
         $("taskModalTitle").textContent = title;
+
         modalAction("show");
     };
 
-    const closeModal = () => modalAction("hide");
+    const closeModal = () =>
+        modalAction("hide");
 
     /* ======================================================
-       SAVE (asks for confirmation only when adding)
+       SAVE
+       Asks for confirmation only when adding.
     ====================================================== */
 
     async function saveTask() {
+
         if (saving) return;
 
         const payload = {
-            title: $("taskTitle").value.trim(),
-            subject: $("taskSubject").value.trim(),
-            description: $("taskDescription").value.trim(),
-            priority: $("taskPriority").value,
-            status: $("taskStatus").value,
-            deadline: toServerDateTime($("taskDeadline").value),
+
+            title:
+                $("taskTitle").value.trim(),
+
+            subject:
+                $("taskSubject").value.trim(),
+
+            description:
+                $("taskDescription").value.trim(),
+
+            priority:
+                $("taskPriority").value,
+
+            status:
+                $("taskStatus").value,
+
+            deadline:
+                toServerDateTime(
+                    $("taskDeadline").value
+                ),
         };
 
         if (!payload.title) {
-            notify("warning", "Task title is required");
+
+            notify(
+                "warning",
+                "Task title is required"
+            );
+
             return;
         }
 
         const id = $("taskId").value;
 
         // Ask only when adding a new task
-        if (!id && !(await confirmAdd(payload.title))) return;
+        if (
+            !id &&
+            !(await confirmAdd(payload.title))
+        ) {
+            return;
+        }
 
         saving = true;
+
         const btn = $("btnSaveTask");
-        if (btn) btn.disabled = true;
+
+        if (btn) {
+            btn.disabled = true;
+        }
 
         try {
+
             if (id) {
-                await request("/" + id, { method: "PUT", body: JSON.stringify(payload) });
+
+                await request("/" + id, {
+                    method: "PUT",
+                    body: JSON.stringify(payload)
+                });
+
             } else {
-                await request("", { method: "POST", body: JSON.stringify(payload) });
+
+                await request("", {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
             }
 
             closeModal();
-            notify("success", id ? "Task Updated" : "Task Added");
+
+            notify(
+                "success",
+                id ? "Task Updated" : "Task Added"
+            );
+
             await load();
+
             changed();
 
         } catch (err) {
+
             console.error(err);
-            notify("error", "Save Failed", err.message);
+
+            notify(
+                "error",
+                "Save Failed",
+                err.message
+            );
+
         } finally {
+
             saving = false;
-            if (btn) btn.disabled = false;
+
+            if (btn) {
+                btn.disabled = false;
+            }
         }
     }
 
     /* ======================================================
-       ROW ACTIONS (each one asks first)
+       EDIT TASK
     ====================================================== */
 
     async function editTask(id) {
-        const task = tasks.find(x => String(x.task_id) === String(id));
+
+        const task = tasks.find(
+            x => String(x.task_id) === String(id)
+        );
+
         if (!task) return;
 
         const ok = await confirmAction({
+
             icon: "question",
+
             title: "Edit this task?",
-            text: `Do you want to edit "${task.title}"?`,
+
+            text:
+                `Do you want to edit "${task.title}"?`,
+
             confirmText: "Yes, edit it"
         });
+
         if (!ok) return;
 
-        $("taskId").value = task.task_id;
-        $("taskTitle").value = task.title || "";
-        $("taskSubject").value = task.subject || "";
-        $("taskDescription").value = task.description || "";
-        $("taskPriority").value = task.priority;
-        $("taskStatus").value = task.status === "Overdue" ? "Pending" : task.status;
-        $("taskDeadline").value = toInputValue(task.deadline);
+        $("taskId").value =
+            task.task_id;
+
+        $("taskTitle").value =
+            task.title || "";
+
+        $("taskSubject").value =
+            task.subject || "";
+
+        $("taskDescription").value =
+            task.description || "";
+
+        $("taskPriority").value =
+            task.priority;
+
+        $("taskStatus").value =
+            task.status === "Overdue"
+                ? "Pending"
+                : task.status;
+
+        $("taskDeadline").value =
+            toInputValue(task.deadline);
 
         openModal("Edit Task");
     }
 
-    async function completeTask(id) {
-        const task = tasks.find(x => String(x.task_id) === String(id));
-
-        const ok = await confirmAction({
-            icon: "question",
-            title: "Mark as done?",
-            text: `Are you sure "${task?.title || "this task"}" is already done?`,
-            confirmText: "Yes, it's done"
-        });
-        if (!ok) return;
-
-        try {
-            await request("/" + id + "/complete", { method: "PUT" });
-            notify("success", "Task Completed");
-            await load();
-            changed();
-        } catch (err) {
-            notify("error", "Unable to complete task", err.message);
-        }
-    }
+    /* ======================================================
+       DELETE TASK
+    ====================================================== */
 
     async function deleteTask(id) {
-        const task = tasks.find(x => String(x.task_id) === String(id));
+
+        const task = tasks.find(
+            x => String(x.task_id) === String(id)
+        );
 
         const ok = await confirmAction({
+
             icon: "warning",
+
             title: "Delete this task?",
-            text: `"${task?.title || "This task"}" will be deleted. This action cannot be undone.`,
+
+            text:
+                `"${task?.title || "This task"}" will be deleted. This action cannot be undone.`,
+
             confirmText: "Yes, delete it",
+
             confirmColor: "#d33"
         });
+
         if (!ok) return;
 
         try {
-            await request("/" + id, { method: "DELETE" });
-            notify("success", "Task Deleted");
+
+            await request("/" + id, {
+                method: "DELETE"
+            });
+
+            notify(
+                "success",
+                "Task Deleted"
+            );
+
             await load();
+
             changed();
+
         } catch (err) {
-            notify("error", "Delete Failed", err.message);
+
+            notify(
+                "error",
+                "Delete Failed",
+                err.message
+            );
         }
     }
 
@@ -430,61 +645,127 @@ window.UserTasks = (() => {
     ====================================================== */
 
     async function refresh() {
+
         if (window.Swal) {
+
             Swal.fire({
+
                 title: "Refreshing...",
+
                 allowOutsideClick: false,
+
                 showConfirmButton: false,
-                didOpen: () => Swal.showLoading(),
+
+                didOpen: () =>
+                    Swal.showLoading(),
             });
         }
 
         await load();
 
-        if (window.Swal) Swal.close();
-        notify("success", "Tasks Updated");
+        if (window.Swal) {
+            Swal.close();
+        }
+
+        notify(
+            "success",
+            "Tasks Updated"
+        );
     }
 
     /* ======================================================
-       INITIALIZE (listeners are bound ONCE, here only)
+       INITIALIZE
+       Listeners are bound ONCE.
     ====================================================== */
 
     function init() {
+
         if (initialized) return;
+
         initialized = true;
 
-        // Static buttons
-        $("btnAddTask")?.addEventListener("click", () => {
-            clearForm();
-            openModal("Add Task");
-        });
+        /* ---------- STATIC BUTTONS ---------- */
 
-        $("btnSaveTask")?.addEventListener("click", saveTask);
-        $("btnRefreshTasks")?.addEventListener("click", refresh);
+        $("btnAddTask")?.addEventListener(
+            "click",
+            () => {
 
-        // Filters
-        $("searchTask")?.addEventListener("input", applyFilters);
-        $("filterStatus")?.addEventListener("change", applyFilters);
-        $("filterPriority")?.addEventListener("change", applyFilters);
+                clearForm();
 
-        // Row buttons via delegation
-        document.addEventListener("click", (e) => {
-            const edit = e.target.closest(".btn-edit");
-            if (edit) return editTask(edit.dataset.id);
+                openModal("Add Task");
+            }
+        );
 
-            const complete = e.target.closest(".btn-complete");
-            if (complete) return completeTask(complete.dataset.id);
+        $("btnSaveTask")?.addEventListener(
+            "click",
+            saveTask
+        );
 
-            const del = e.target.closest(".btn-delete");
-            if (del) return deleteTask(del.dataset.id);
-        });
+        $("btnRefreshTasks")?.addEventListener(
+            "click",
+            refresh
+        );
+
+        /* ---------- FILTERS ---------- */
+
+        $("searchTask")?.addEventListener(
+            "input",
+            applyFilters
+        );
+
+        $("filterStatus")?.addEventListener(
+            "change",
+            applyFilters
+        );
+
+        $("filterPriority")?.addEventListener(
+            "change",
+            applyFilters
+        );
+
+        /* ---------- ROW BUTTONS ---------- */
+
+        document.addEventListener(
+            "click",
+            (e) => {
+
+                const edit =
+                    e.target.closest(".btn-edit");
+
+                if (edit) {
+                    return editTask(
+                        edit.dataset.id
+                    );
+                }
+
+                const del =
+                    e.target.closest(".btn-delete");
+
+                if (del) {
+                    return deleteTask(
+                        del.dataset.id
+                    );
+                }
+
+            }
+        );
 
         load();
     }
 
+    /* ======================================================
+       START
+    ====================================================== */
+
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            init
+        );
+
     } else {
+
         init();
     }
 
@@ -492,7 +773,11 @@ window.UserTasks = (() => {
        PUBLIC METHODS
     ====================================================== */
 
-    return { load, refresh: load };
+    return {
+        load,
+        refresh: load
+    };
 
 })();
+
 </script>

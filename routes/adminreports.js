@@ -4,84 +4,79 @@
 
 const express = require("express");
 const router = express.Router();
-const db = require("../database/config/db");
+const { Query } = require("../database/db-helper");
 
 /* ==========================================================
-   !!  CHANGE THESE TO MATCH YOUR DATABASE  !!
-   I could not see your schema, so these names are guesses.
-   Everything the report needs is listed here, in one place.
+   Real schema names (from your project).
+   Only change these if a column name differs in your DB.
 ========================================================== */
-const T = {
-    users:    { table: "users",         id: "id", name: "fullname", email: "email" },
-    tasks:    { table: "tasks",         userId: "user_id", status: "status", doneValue: "completed", createdAt: "created_at" },
-    sessions: { table: "work_sessions", userId: "user_id", startedAt: "started_at", endedAt: "ended_at" },
-    moods:    { table: "mood_logs",     userId: "user_id", score: "mood_score", createdAt: "created_at" },
+const MOOD_SCORE_COLUMN = "mood";          // numeric mood value in mood_entries
+const DONE = `COALESCE(LOWER(status), '') IN ('completed', 'done')`;
 
-    // Optional: leave admins out of the report, e.g. "AND u.role = 'user'"
-    userFilter: "",
-};
-
-// mysql2 promise pool: db.pool, or db itself exposing .query()
-const runner = db.pool || db;
+// Optional: leave admins out of the report, e.g. "AND u.role = 'user'"
+const USER_FILTER = "";
 
 const isDate = (v) => /^\d{4}-\d{2}-\d{2}$/.test(v || "");
+const iso = (d) => d.toISOString().slice(0, 10);
 
 router.get("/api/reports", async (req, res) => {
     try {
         // Default range: last 30 days
-        const today = new Date();
-        const past = new Date(Date.now() - 29 * 86400000);
-        const iso = (d) => d.toISOString().slice(0, 10);
-
-        const from = isDate(req.query.from) ? req.query.from : iso(past);
-        const to = isDate(req.query.to) ? req.query.to : iso(today);
+        const from = isDate(req.query.from)
+            ? req.query.from
+            : iso(new Date(Date.now() - 29 * 86400000));
+        const to = isDate(req.query.to) ? req.query.to : iso(new Date());
 
         if (from > to) {
-            return res.status(400).json({ success: false, message: "'From' date must be before 'To' date." });
+            return res.status(400).json({
+                success: false,
+                message: "'From' date must be before 'To' date."
+            });
         }
 
         const start = `${from} 00:00:00`;
         const end = `${to} 23:59:59`;
 
-        const sql = `
+        const rows = await Query(`
             SELECT
-                u.${T.users.id}    AS id,
-                u.${T.users.name}  AS name,
-                u.${T.users.email} AS email,
+                u.uid   AS id,
+                u.name  AS name,
+                u.email AS email,
                 COALESCE(t.total, 0)   AS tasksTotal,
                 COALESCE(t.done, 0)    AS tasksDone,
                 COALESCE(s.minutes, 0) AS workMinutes,
                 m.avgMood              AS avgMood
-            FROM ${T.users.table} u
-            LEFT JOIN (
-                SELECT ${T.tasks.userId} AS uid,
-                       COUNT(*) AS total,
-                       SUM(${T.tasks.status} = ?) AS done
-                FROM ${T.tasks.table}
-                WHERE ${T.tasks.createdAt} BETWEEN ? AND ?
-                GROUP BY ${T.tasks.userId}
-            ) t ON t.uid = u.${T.users.id}
-            LEFT JOIN (
-                SELECT ${T.sessions.userId} AS uid,
-                       SUM(TIMESTAMPDIFF(MINUTE, ${T.sessions.startedAt}, ${T.sessions.endedAt})) AS minutes
-                FROM ${T.sessions.table}
-                WHERE ${T.sessions.endedAt} IS NOT NULL
-                  AND ${T.sessions.startedAt} BETWEEN ? AND ?
-                GROUP BY ${T.sessions.userId}
-            ) s ON s.uid = u.${T.users.id}
-            LEFT JOIN (
-                SELECT ${T.moods.userId} AS uid,
-                       AVG(${T.moods.score}) AS avgMood
-                FROM ${T.moods.table}
-                WHERE ${T.moods.createdAt} BETWEEN ? AND ?
-                GROUP BY ${T.moods.userId}
-            ) m ON m.uid = u.${T.users.id}
-            WHERE 1 = 1 ${T.userFilter}
-            ORDER BY tasksDone DESC, workMinutes DESC
-        `;
+            FROM users u
 
-        const params = [T.tasks.doneValue, start, end, start, end, start, end];
-        const [rows] = await runner.query(sql, params);
+            LEFT JOIN (
+                SELECT uid,
+                       COUNT(*) AS total,
+                       SUM(CASE WHEN ${DONE} THEN 1 ELSE 0 END) AS done
+                FROM tasks
+                WHERE created_at BETWEEN ? AND ?
+                GROUP BY uid
+            ) t ON t.uid = u.uid
+
+            LEFT JOIN (
+                SELECT uid,
+                       SUM(duration_minutes) AS minutes
+                FROM study_sessions
+                WHERE ended_at IS NOT NULL
+                  AND session_date BETWEEN ? AND ?
+                GROUP BY uid
+            ) s ON s.uid = u.uid
+
+            LEFT JOIN (
+                SELECT uid,
+                       AVG(\`${MOOD_SCORE_COLUMN}\`) AS avgMood
+                FROM mood_entries
+                WHERE created_at BETWEEN ? AND ?
+                GROUP BY uid
+            ) m ON m.uid = u.uid
+
+            WHERE 1 = 1 ${USER_FILTER}
+            ORDER BY tasksDone DESC, workMinutes DESC
+        `, [start, end, from, to, start, end]);
 
         const users = rows.map((r) => ({
             id: r.id,
@@ -89,7 +84,7 @@ router.get("/api/reports", async (req, res) => {
             email: r.email,
             tasksTotal: Number(r.tasksTotal) || 0,
             tasksDone: Number(r.tasksDone) || 0,
-            workMinutes: Number(r.workMinutes) || 0,
+            workMinutes: Math.round(Number(r.workMinutes) || 0),
             avgMood: r.avgMood === null ? null : Number(Number(r.avgMood).toFixed(2)),
         }));
 
@@ -98,6 +93,7 @@ router.get("/api/reports", async (req, res) => {
         const workMinutes = users.reduce((a, u) => a + u.workMinutes, 0);
         const moods = users.filter((u) => u.avgMood !== null);
 
+        res.set("Cache-Control", "no-store");
         res.json({
             success: true,
             range: { from, to },

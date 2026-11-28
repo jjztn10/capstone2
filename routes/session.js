@@ -9,6 +9,10 @@ const { getUid, apiError } = require("../middleware/current-user");
    HELPERS
 ========================================================== */
 
+// A task is available for a session if it is not finished.
+// (Accepts 'pending', 'in progress', NULL, etc. - anything not completed.)
+const OPEN_TASK = `(status IS NULL OR LOWER(status) NOT IN ('completed', 'done', 'cancelled'))`;
+
 // Looks up the real primary key of study_sessions once (name + whether
 // it is AUTO_INCREMENT), so the queries don't depend on a guessed name.
 let meta = null;
@@ -64,7 +68,6 @@ router.get("/api/session", async (req, res) => {
         const uid = getUid(req);
         const { pk } = await getMeta();
 
-        // status is derived: no end time = still running
         const sessions = await Query(`
             SELECT
                 s.\`${pk}\` AS session_id,
@@ -106,7 +109,7 @@ router.get("/api/session", async (req, res) => {
 });
 
 /* ==========================================================
-   PENDING TASKS (for the picker)
+   AVAILABLE TASKS (for the picker)
 ========================================================== */
 
 router.get("/api/session/tasks", async (req, res) => {
@@ -116,7 +119,7 @@ router.get("/api/session/tasks", async (req, res) => {
         const tasks = await Query(`
             SELECT id, title, subject
             FROM tasks
-            WHERE uid = ? AND status = 'pending'
+            WHERE uid = ? AND ${OPEN_TASK}
             ORDER BY priority_score DESC, deadline ASC
         `, [uid]);
 
@@ -154,7 +157,6 @@ router.post("/api/session/start", async (req, res) => {
             });
         }
 
-        // the task must be chosen, belong to this user, and still be pending
         if (!task_id) {
             return res.status(400).json({ error: "Please choose a task first." });
         }
@@ -162,7 +164,7 @@ router.post("/api/session/start", async (req, res) => {
         const task = await Query(`
             SELECT id
             FROM tasks
-            WHERE id = ? AND uid = ? AND status = 'pending'
+            WHERE id = ? AND uid = ? AND ${OPEN_TASK}
             LIMIT 1
         `, [task_id, uid]);
 
@@ -217,6 +219,18 @@ router.put("/api/session/stop", async (req, res) => {
             return res.status(400).json({ error: "session_id is required." });
         }
 
+        // find the running session (and its task) first
+        const running = await Query(`
+            SELECT task_id
+            FROM study_sessions
+            WHERE \`${pk}\` = ? AND uid = ? AND ended_at IS NULL
+            LIMIT 1
+        `, [session_id, uid]);
+
+        if (!running.length) {
+            return res.status(404).json({ error: "No running session found." });
+        }
+
         await Query(`
             UPDATE study_sessions
             SET ended_at = NOW(),
@@ -224,7 +238,17 @@ router.put("/api/session/stop", async (req, res) => {
             WHERE \`${pk}\` = ? AND uid = ? AND ended_at IS NULL
         `, [session_id, uid]);
 
-        res.json({ success: true });
+        // ending the session completes its task automatically
+        // (if your tasks table has a completed_at column, add: , completed_at = NOW())
+        if (running[0].task_id) {
+            await Query(`
+                UPDATE tasks
+                SET status = 'completed'
+                WHERE id = ? AND uid = ?
+            `, [running[0].task_id, uid]);
+        }
+
+        res.json({ success: true, task_completed: !!running[0].task_id });
     } catch (err) {
         apiError(res, err);
     }

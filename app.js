@@ -93,6 +93,7 @@ app.use((req, res, next) => {
     res.locals.currentPath = req.originalUrl;
     res.locals.roleName = req.session?.roleName || "";
     res.locals.fullname = req.session?.fullname || "";
+    res.locals.PUBLIC_BASE_URL = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
 
     if (req.path.startsWith("/admin")) {
         res.locals.layoutType = "admin";
@@ -148,6 +149,32 @@ mustBeRouter(smartAdminRouter, "routes/smart.js (adminRouter)");
 // PUBLIC ROUTES (no login needed)
 // ==========================================
 app.use("/auth", authRouter);
+
+// Public health check for deployment platforms
+app.get("/healthz", (req, res) => {
+    res.status(200).json({ status: "ok" });
+});
+
+// Basic search-engine discovery
+app.get("/robots.txt", (req, res) => {
+    const baseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
+    res.type("text/plain").send([
+        "User-agent: *",
+        "Allow: /",
+        baseUrl ? `Sitemap: ${baseUrl}/sitemap.xml` : "",
+    ].filter(Boolean).join("\n"));
+});
+
+app.get("/sitemap.xml", (req, res) => {
+    const baseUrl = String(process.env.PUBLIC_BASE_URL || "").replace(/\/$/, "");
+    const origin = baseUrl || `${req.protocol}://${req.get("host")}`;
+    res.type("application/xml").send(
+        '<?xml version="1.0" encoding="UTF-8"?>' +
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">` +
+        `<url><loc>${origin}/auth</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>` +
+        `</urlset>`
+    );
+});
 
 // "/" sends visitors to login, or to their own home if already logged in.
 // Declared before indexRouter so it wins for the exact "/" path.

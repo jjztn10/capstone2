@@ -5,6 +5,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title><%= typeof title !== "undefined" ? title : "SmartWork" %></title>
+    <meta name="description" content="SmartWork is an AI management system for tasks, study sessions, mood tracking, analytics, and team productivity." />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:title" content="<%= typeof title !== "undefined" ? title : "SmartWork" %>" />
+    <meta property="og:description" content="AI-powered task and productivity management for students and teams." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/images/logo.png" />
+    <% if (typeof PUBLIC_BASE_URL !== "undefined" && PUBLIC_BASE_URL) { %>
+        <link rel="canonical" href="<%= PUBLIC_BASE_URL %>/auth" />
+    <% } %>
 
     <!-- Apply saved theme before paint (prevents a light flash in dark mode) -->
     <script>

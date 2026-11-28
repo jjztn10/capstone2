@@ -1,24 +1,16 @@
 <script>
 /* ==========================================================
-   SESSION SCRIPT  — one file for BOTH user and admin pages.
+   SESSION SCRIPT  - one file for BOTH user and admin pages.
 
    Configure with data- attributes on the page's root element:
 
      <div class="admin-section"
           data-session-app
           data-session-api="/userdashboard/api/session"
-          data-session-mode="user">          user = timer + start/stop
-                                             admin = read-only history
-
-   Optional:  data-show-user="true"   adds a User cell to each history row
-                                      (admin mode turns this on by default)
-
-   Every element is optional: whatever isn't on the page is skipped.
-   Defaults (no attributes) = the normal user page.
+          data-session-mode="user">
 
    User mode: a task must be chosen before a session can start, and
-   navigation is LOCKED while a session is running (links blocked, back
-   button trapped, refresh/close asks for confirmation). Stop Session
+   navigation is LOCKED while a session is running. Stop Session
    removes the lock.
 ========================================================== */
 (() => {
@@ -45,7 +37,7 @@
         return {
             api: d.sessionApi || "/userdashboard/api/session",
             mode,
-            tracking: mode === "user",                       // timer + start/stop + lock
+            tracking: mode === "user",
             showUser: d.showUser ? d.showUser === "true" : mode === "admin"
         };
     }
@@ -123,6 +115,7 @@
     async function request(path = "", options = {}) {
         const res = await fetch(cfg.api + path, {
             headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
             ...options
         });
 
@@ -166,7 +159,7 @@
         warnLocked();
     }
 
-    // refresh, close tab, typed address (browser shows its own message)
+    // refresh, close tab, typed address
     function onBeforeUnload(e) {
         if (!isLocked()) return;
         e.preventDefault();
@@ -250,7 +243,7 @@
         const keep = currentTaskId || sel.value;
 
         sel.innerHTML =
-            `<option value="">${tasks.length ? "-- Choose a task --" : "No pending tasks. Add one in My Tasks"}</option>` +
+            `<option value="">${tasks.length ? "-- Choose a task --" : "No available tasks. Add one in My Tasks"}</option>` +
             tasks.map(t => `
                 <option value="${esc(t.id)}">
                     ${esc(t.title)}${t.subject ? " (" + esc(t.subject) + ")" : ""}
@@ -315,7 +308,6 @@
         const tbody = $("sessionTableBody");
         if (!tbody) return;
 
-        // colspan follows the real number of header columns
         const cols = tbody.closest("table")?.querySelectorAll("thead th").length
             || (cfg.showUser ? 7 : 6);
 
@@ -491,7 +483,7 @@
     }
 
     /* ==========================================
-       INIT  (listeners bound once, after the DOM exists)
+       INIT
     ========================================== */
 
     function init() {
@@ -506,7 +498,7 @@
         $("sessionTask")?.addEventListener("change", setButtons);
 
         if (cfg.tracking) {
-            document.addEventListener("click", onLinkClick, true);   // capture: runs before other handlers
+            document.addEventListener("click", onLinkClick, true);
             window.addEventListener("beforeunload", onBeforeUnload);
             window.addEventListener("popstate", onPopState);
         }
@@ -514,7 +506,6 @@
         setButtons();
 
         initialize().then(() => {
-            // the server sends people back here with ?locked=1
             if (new URLSearchParams(location.search).has("locked")) {
                 history.replaceState(history.state, "", location.pathname);
                 if (sessionRunning) warnLocked();
@@ -533,6 +524,7 @@
     ========================================== */
 
     window.SessionApp = { load: initialize, refresh: initialize };
-    window.UserSessions = window.SessionApp;   // keeps old calls working
+    window.UserSessions = window.SessionApp;
 
 })();
+</script>
