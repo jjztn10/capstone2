@@ -22,6 +22,14 @@ services:
       - key: DB_NAME
         value: capstone
       - key: DB_PORT
-        value: 3306
+        value: 4000
+      - key: DB_SSL
+        value: "true"
       - key: MONGODB_URL
+        sync: false
+      - key: _ENCRYPTION_ALGORITHM
+        sync: false
+      - key: _ENCRYPTION_IV
+        sync: false
+      - key: _ENCRYPTION_KEY
         sync: false
