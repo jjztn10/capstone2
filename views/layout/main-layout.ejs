@@ -106,6 +106,7 @@
         <!-- Sidebar (single merged component for admin + user) -->
         <% if (lt === "admin" || lt === "user") { %>
             <%- include("../components/sidebar", { layoutType: lt, currentPath: cp }) %>
+            <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close navigation" hidden></button>
         <% } %>
 
         <div id="content-wrapper" class="d-flex flex-column">

@@ -676,15 +676,66 @@ body #accordionSidebar{
    14. MOBILE
 ========================================================== */
 
+.mobile-sidebar-toggle{
+    display:none;
+}
+
 @media (max-width:991px){
+
+    .mobile-sidebar-toggle{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        flex:0 0 44px;
+        width:44px;
+        height:44px;
+        padding:0;
+        border:1px solid rgba(255,255,255,.25);
+        border-radius:12px;
+        background:rgba(255,255,255,.10);
+        color:#fff;
+        font-size:18px;
+        cursor:pointer;
+    }
+
+    .mobile-sidebar-toggle:hover,
+    .mobile-sidebar-toggle:focus-visible{
+        background:rgba(255,255,255,.18);
+        outline:2px solid #9bc17a;
+        outline-offset:2px;
+    }
 
     #accordionSidebar{
         left:-280px;
-        transition:left .35s ease;
+        z-index:1040;
+        visibility:hidden;
+        transition:left .35s ease, visibility 0s linear .35s;
     }
 
     #accordionSidebar.show{
         left:0;
+        visibility:visible;
+        transition:left .35s ease, visibility 0s;
+    }
+
+    .sidebar-backdrop{
+        position:fixed;
+        inset:0;
+        z-index:1039;
+        width:100%;
+        height:100%;
+        padding:0;
+        border:0;
+        background:rgba(0,0,0,.48);
+        cursor:pointer;
+    }
+
+    .sidebar-backdrop[hidden]{
+        display:none !important;
+    }
+
+    body.sidebar-open{
+        overflow:hidden;
     }
 
     #content-wrapper,
