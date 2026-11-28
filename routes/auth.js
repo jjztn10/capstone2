@@ -10,7 +10,7 @@ const normalize = (s) => String(s ?? "").toLowerCase().replace(/[\s\-_]+/g, "");
 
 function validateCredentials(body) {
   const identifier = (body.Username ?? body.username ?? "").toString().trim();
-  const password = (body.Password ?? body.password ?? "").toString().trim();
+  const password = (body.Password ?? body.password ?? "").toString();
 
   if (!identifier) return { error: "Username or email is required." };
   if (!password) return { error: "Password is required." };
